@@ -20,7 +20,6 @@ describe("WhenSettingBaseURL", function () {
       "AgenticAIAgentCollection"
     );
     const agenticAIAgentCollection = await AgenticAIAgentCollection.deploy();
-    await agenticAIAgentCollection.addSigner(otherAccount.address);
 
     return { agenticAIAgentCollection, owner, otherAccount };
   }
