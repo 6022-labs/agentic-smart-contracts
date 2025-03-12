@@ -37,10 +37,15 @@ describe("WhenMintingWithSignature", function () {
     _otherAccount = otherAccount;
   });
 
+  function generateRandomAddress() {
+    return ethers.Wallet.createRandom().address;
+  }
+
   // Function to generate a valid EIP-712 signature
   async function signMintRequest(
     signer: HardhatEthersSigner,
     to: string,
+    agentAddresses: string[],
     nonce: string
   ) {
     const domain = {
@@ -53,12 +58,18 @@ describe("WhenMintingWithSignature", function () {
     const types = {
       MintRequest: [
         { name: "to", type: "address" },
+        { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
         { name: "nonce", type: "bytes32" },
       ],
     };
 
+    const agentAddressesHash = ethers.keccak256(
+      ethers.solidityPacked(["address[]"], [agentAddresses])
+    );
+
     const message = {
       to,
+      agentAddressesHash,
       nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
     };
 
@@ -69,9 +80,11 @@ describe("WhenMintingWithSignature", function () {
     describe("Given a valid signature used twice", function () {
       it("Should revert with 'UsedNonce' error on second attempt", async function () {
         const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
+          agentAddresses,
           "1"
         );
 
@@ -79,6 +92,7 @@ describe("WhenMintingWithSignature", function () {
           .connect(_otherAccount)
           .mintWithSignature(
             _otherAccount.address,
+            agentAddresses,
             ethers.id(nonce),
             signature
           );
@@ -88,6 +102,7 @@ describe("WhenMintingWithSignature", function () {
             .connect(_otherAccount)
             .mintWithSignature(
               _otherAccount.address,
+              agentAddresses,
               ethers.id(nonce),
               signature
             )
@@ -98,16 +113,23 @@ describe("WhenMintingWithSignature", function () {
     describe("Given a signature that does not match parameters", function () {
       it("Should revert with 'InvalidSignature' error", async function () {
         const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
+          agentAddresses,
           nonce
         );
 
         await expect(
           _agenticAIAgentCollection
             .connect(_otherAccount)
-            .mintWithSignature(_signer.address, ethers.id(nonce), signature) // Wrong recipient
+            .mintWithSignature(
+              _signer.address,
+              agentAddresses,
+              ethers.id(nonce),
+              signature
+            ) // Wrong recipient
         ).to.be.revertedWithCustomError(
           _agenticAIAgentCollection,
           "InvalidSignature"
@@ -118,9 +140,11 @@ describe("WhenMintingWithSignature", function () {
     describe("Given a signature that matches parameters", function () {
       it("Should mint the token", async function () {
         const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
+          agentAddresses,
           nonce
         );
 
@@ -129,6 +153,7 @@ describe("WhenMintingWithSignature", function () {
             .connect(_otherAccount)
             .mintWithSignature(
               _otherAccount.address,
+              agentAddresses,
               ethers.id(nonce),
               signature
             )
@@ -139,9 +164,11 @@ describe("WhenMintingWithSignature", function () {
 
       it("Should assign the NFT to the correct recipient", async function () {
         const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
+          agentAddresses,
           nonce
         );
 
@@ -149,6 +176,7 @@ describe("WhenMintingWithSignature", function () {
           .connect(_otherAccount)
           .mintWithSignature(
             _otherAccount.address,
+            agentAddresses,
             ethers.id(nonce),
             signature
           );
@@ -161,14 +189,18 @@ describe("WhenMintingWithSignature", function () {
       it("Should mint the NFT with the expected token ID", async function () {
         const nonce1 = "1";
         const nonce2 = "2";
+        const agentAddresses1 = [generateRandomAddress()];
+        const agentAddresses2 = [generateRandomAddress()];
         const signature1 = await signMintRequest(
           _signer,
           _otherAccount.address,
+          agentAddresses1,
           nonce1
         );
         const signature2 = await signMintRequest(
           _signer,
           _otherAccount.address,
+          agentAddresses2,
           nonce2
         );
 
@@ -176,6 +208,7 @@ describe("WhenMintingWithSignature", function () {
           .connect(_otherAccount)
           .mintWithSignature(
             _otherAccount.address,
+            agentAddresses1,
             ethers.id(nonce1),
             signature1
           );
@@ -184,6 +217,7 @@ describe("WhenMintingWithSignature", function () {
           .connect(_otherAccount)
           .mintWithSignature(
             _otherAccount.address,
+            agentAddresses2,
             ethers.id(nonce2),
             signature2
           );
@@ -199,14 +233,18 @@ describe("WhenMintingWithSignature", function () {
       it("Should increment next token ID", async function () {
         const nonce1 = "1";
         const nonce2 = "2";
+        const agentAddresses1 = [generateRandomAddress()];
+        const agentAddresses2 = [generateRandomAddress()];
         const signature1 = await signMintRequest(
           _signer,
           _otherAccount.address,
+          agentAddresses1,
           nonce1
         );
         const signature2 = await signMintRequest(
           _signer,
           _otherAccount.address,
+          agentAddresses2,
           nonce2
         );
 
@@ -214,6 +252,7 @@ describe("WhenMintingWithSignature", function () {
           .connect(_otherAccount)
           .mintWithSignature(
             _otherAccount.address,
+            agentAddresses1,
             ethers.id(nonce1),
             signature1
           );
@@ -224,6 +263,7 @@ describe("WhenMintingWithSignature", function () {
           .connect(_otherAccount)
           .mintWithSignature(
             _otherAccount.address,
+            agentAddresses2,
             ethers.id(nonce2),
             signature2
           );
@@ -233,9 +273,12 @@ describe("WhenMintingWithSignature", function () {
 
       it("Should mark the nonce as used", async function () {
         const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
+
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
+          agentAddresses,
           nonce
         );
 
@@ -243,6 +286,7 @@ describe("WhenMintingWithSignature", function () {
           .connect(_otherAccount)
           .mintWithSignature(
             _otherAccount.address,
+            agentAddresses,
             ethers.id(nonce),
             signature
           );
@@ -259,16 +303,23 @@ describe("WhenMintingWithSignature", function () {
   describe("Given a signature from a non-signer", function () {
     it("Should revert with 'InvalidSignature' error", async function () {
       const nonce = "1";
+      const agentAddresses = [generateRandomAddress()];
       const signature = await signMintRequest(
         _otherAccount,
         _otherAccount.address,
+        agentAddresses,
         nonce
       );
 
       await expect(
         _agenticAIAgentCollection
           .connect(_otherAccount)
-          .mintWithSignature(_otherAccount.address, ethers.id(nonce), signature)
+          .mintWithSignature(
+            _otherAccount.address,
+            agentAddresses,
+            ethers.id(nonce),
+            signature
+          )
       ).to.be.revertedWithCustomError(
         _agenticAIAgentCollection,
         "InvalidSignature"

@@ -34,7 +34,10 @@ interface IAgenticAIAgentCollection is IERC721 {
 
     function mintWithSignature(
         address to,
+        address[] memory agentAddresses,
         bytes32 nonce,
         bytes memory signature
     ) external;
+
+    function tokenToWallet(uint256 tokenId) external returns (address[] memory);
 }

@@ -11,23 +11,25 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IAgenticAIAgentCollection} from "./interfaces/IAgenticAIAgentCollection.sol";
 
+struct MintRequest {
+    address to;
+    bytes32 agentAddressesHash;
+    bytes32 nonce;
+}
+
 contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAgentCollection {
     using ECDSA for bytes32;
 
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
 
-    string public baseURI;
     uint256 public nextTokenId;
-
     mapping(bytes32 => bool) public usedNonces;
+
+    string private baseURI;
+    mapping(uint256 => address[]) private _tokenToWallet;
 
     string private constant SIGNING_DOMAIN = "VerifiedMintNFT";
     string private constant SIGNATURE_VERSION = "1";
-
-    struct MintRequest {
-        address to;
-        bytes32 nonce;
-    }
 
     constructor()
         ERC721("AgenticAIAgentCollection", "AIAgent") 
@@ -40,17 +42,17 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         return ERC721.supportsInterface(interfaceId) || AccessControl.supportsInterface(interfaceId);
     }
 
-    function addSigner(address signer) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function addSigner(address signer) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(SIGNER_ROLE, signer);
         emit SignerAdded(signer);
     }
 
-    function removeSigner(address signer) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function removeSigner(address signer) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _revokeRole(SIGNER_ROLE, signer);
         emit SignerRemoved(signer);
     }
 
-    function setBaseURI(string memory newBaseURI) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setBaseURI(string memory newBaseURI) external onlyRole(DEFAULT_ADMIN_ROLE) {
         baseURI = newBaseURI;
     }
 
@@ -58,34 +60,51 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         return baseURI;
     }
 
+    function tokenToWallet(uint256 tokenId) external view returns (address[] memory) {
+        return _tokenToWallet[tokenId];
+    }
+
     function mintWithSignature(
         address to,
+        address[] memory agentAddresses,
         bytes32 nonce,
         bytes memory signature
     ) public {
         if (usedNonces[nonce]) {
             revert UsedNonce(nonce);
         }
-        if (!_isValidSignature(to, nonce, signature)) {
+        if (!_isValidSignature(to, agentAddresses, nonce, signature)) {
             revert InvalidSignature(signature);
         }
 
         usedNonces[nonce] = true;
+        _tokenToWallet[nextTokenId] = agentAddresses;
+
         _safeMint(to, nextTokenId);
+
+        emit MintedWithSignature(to, nextTokenId);
+
         nextTokenId++;
     }
 
     function _isValidSignature(
         address to,
+        address[] memory agentAddresses,
         bytes32 nonce,
         bytes memory signature
     ) internal view returns (bool) {
+        // Hash the agentAddresses array separately
+        bytes32 agentAddressesHash = keccak256(abi.encodePacked(agentAddresses));
+
+        // Hash the entire struct
         bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
-            keccak256("MintRequest(address to,bytes32 nonce)"),
+            keccak256("MintRequest(address to,bytes32 agentAddressesHash,bytes32 nonce)"),
             to,
+            agentAddressesHash,
             nonce
         )));
 
+        // Recover signer and check role
         address recoveredSigner = ECDSA.recover(digest, signature);
         return hasRole(SIGNER_ROLE, recoveredSigner);
     }
