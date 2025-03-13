@@ -59,6 +59,7 @@ describe("WhenMintingWithSignature", function () {
       MintRequest: [
         { name: "to", type: "address" },
         { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
+        { name: "signer", type: "address" },
         { name: "nonce", type: "bytes32" },
       ],
     };
@@ -70,6 +71,7 @@ describe("WhenMintingWithSignature", function () {
     const message = {
       to,
       agentAddressesHash,
+      signer: signer.address,
       nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
     };
 
@@ -77,7 +79,7 @@ describe("WhenMintingWithSignature", function () {
   }
 
   describe("Given a signature from signer", function () {
-    describe("Given a valid signature used twice", function () {
+    describe("Given a valid nonce used twice", function () {
       it("Should revert with 'UsedNonce' error on second attempt", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
@@ -93,6 +95,7 @@ describe("WhenMintingWithSignature", function () {
           .mintWithSignature(
             _otherAccount.address,
             agentAddresses,
+            _signer.address,
             ethers.id(nonce),
             signature
           );
@@ -103,6 +106,7 @@ describe("WhenMintingWithSignature", function () {
             .mintWithSignature(
               _otherAccount.address,
               agentAddresses,
+              _signer.address,
               ethers.id(nonce),
               signature
             )
@@ -127,9 +131,10 @@ describe("WhenMintingWithSignature", function () {
             .mintWithSignature(
               _signer.address,
               agentAddresses,
+              _signer.address,
               ethers.id(nonce),
               signature
-            ) // Wrong recipient
+            )
         ).to.be.revertedWithCustomError(
           _agenticAIAgentCollection,
           "InvalidSignature"
@@ -154,6 +159,7 @@ describe("WhenMintingWithSignature", function () {
             .mintWithSignature(
               _otherAccount.address,
               agentAddresses,
+              _signer.address,
               ethers.id(nonce),
               signature
             )
@@ -177,6 +183,7 @@ describe("WhenMintingWithSignature", function () {
           .mintWithSignature(
             _otherAccount.address,
             agentAddresses,
+            _signer.address,
             ethers.id(nonce),
             signature
           );
@@ -209,6 +216,7 @@ describe("WhenMintingWithSignature", function () {
           .mintWithSignature(
             _otherAccount.address,
             agentAddresses1,
+            _signer.address,
             ethers.id(nonce1),
             signature1
           );
@@ -218,6 +226,7 @@ describe("WhenMintingWithSignature", function () {
           .mintWithSignature(
             _otherAccount.address,
             agentAddresses2,
+            _signer.address,
             ethers.id(nonce2),
             signature2
           );
@@ -253,6 +262,7 @@ describe("WhenMintingWithSignature", function () {
           .mintWithSignature(
             _otherAccount.address,
             agentAddresses1,
+            _signer.address,
             ethers.id(nonce1),
             signature1
           );
@@ -264,6 +274,7 @@ describe("WhenMintingWithSignature", function () {
           .mintWithSignature(
             _otherAccount.address,
             agentAddresses2,
+            _signer.address,
             ethers.id(nonce2),
             signature2
           );
@@ -287,6 +298,7 @@ describe("WhenMintingWithSignature", function () {
           .mintWithSignature(
             _otherAccount.address,
             agentAddresses,
+            _signer.address,
             ethers.id(nonce),
             signature
           );
@@ -296,6 +308,62 @@ describe("WhenMintingWithSignature", function () {
             ethers.keccak256(ethers.toUtf8Bytes(nonce.toString()))
           )
         ).to.be.true;
+      });
+
+      it("Should emit a MintedWithSignature event", async function () {
+        const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
+        const signature = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          nonce
+        );
+
+        await expect(
+          _agenticAIAgentCollection
+            .connect(_otherAccount)
+            .mintWithSignature(
+              _otherAccount.address,
+              agentAddresses,
+              _signer.address,
+              ethers.id(nonce),
+              signature
+            )
+        )
+          .to.emit(_agenticAIAgentCollection, "MintedWithSignature")
+          .withArgs(_otherAccount.address, _signer.address, nextTokenId);
+      });
+
+      it("Should assign signer to the token", async function () {
+        const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
+        const signature = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          nonce
+        );
+
+        await _agenticAIAgentCollection
+          .connect(_otherAccount)
+          .mintWithSignature(
+            _otherAccount.address,
+            agentAddresses,
+            _signer.address,
+            ethers.id(nonce),
+            signature
+          );
+
+        expect(
+          await _agenticAIAgentCollection.tokenSigner(nextTokenId)
+        ).to.equal(_signer.address);
       });
     });
   });
@@ -317,6 +385,7 @@ describe("WhenMintingWithSignature", function () {
           .mintWithSignature(
             _otherAccount.address,
             agentAddresses,
+            _signer.address,
             ethers.id(nonce),
             signature
           )

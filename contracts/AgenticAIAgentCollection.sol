@@ -26,7 +26,8 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
     mapping(bytes32 => bool) public usedNonces;
 
     string private baseURI;
-    mapping(uint256 => address[]) private _tokenToWallet;
+    mapping(uint256 => address) private _tokenToSigner;
+    mapping(uint256 => address[]) private _tokenToWallets;
 
     string private constant SIGNING_DOMAIN = "VerifiedMintNFT";
     string private constant SIGNATURE_VERSION = "1";
@@ -60,36 +61,52 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         return baseURI;
     }
 
-    function tokenToWallet(uint256 tokenId) external view returns (address[] memory) {
-        return _tokenToWallet[tokenId];
+    function tokenSigner(uint256 tokenId) external view returns (address) {
+        return _tokenToSigner[tokenId];
+    }
+
+    function tokenWallets(uint256 tokenId) external view returns (address[] memory) {
+        return _tokenToWallets[tokenId];
     }
 
     function mintWithSignature(
         address to,
         address[] memory agentAddresses,
+        address signer,
         bytes32 nonce,
         bytes memory signature
     ) public {
         if (usedNonces[nonce]) {
             revert UsedNonce(nonce);
         }
-        if (!_isValidSignature(to, agentAddresses, nonce, signature)) {
+        if (!_isValidSignature(to, agentAddresses, signer, nonce, signature)) {
             revert InvalidSignature(signature);
         }
 
         usedNonces[nonce] = true;
-        _tokenToWallet[nextTokenId] = agentAddresses;
+        _tokenToSigner[nextTokenId] = signer;
+        _tokenToWallets[nextTokenId] = agentAddresses;
 
         _safeMint(to, nextTokenId);
 
-        emit MintedWithSignature(to, nextTokenId);
+        emit MintedWithSignature(to, signer, nextTokenId);
 
         nextTokenId++;
+    }
+
+    function updateTokenSigner(uint256 tokenId, address newSigner) onlyRole(SIGNER_ROLE) external {
+        if (!hasRole(SIGNER_ROLE, newSigner)) {
+            revert AddressIsNotSigner();
+        }
+
+        _tokenToSigner[tokenId] = newSigner;
+        emit TokenSignerUpdated(tokenId, _msgSender(), newSigner);
     }
 
     function _isValidSignature(
         address to,
         address[] memory agentAddresses,
+        address signer,
         bytes32 nonce,
         bytes memory signature
     ) internal view returns (bool) {
@@ -98,14 +115,15 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
 
         // Hash the entire struct
         bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
-            keccak256("MintRequest(address to,bytes32 agentAddressesHash,bytes32 nonce)"),
+            keccak256("MintRequest(address to,bytes32 agentAddressesHash,address signer,bytes32 nonce)"),
             to,
             agentAddressesHash,
+            signer,
             nonce
         )));
 
         // Recover signer and check role
         address recoveredSigner = ECDSA.recover(digest, signature);
-        return hasRole(SIGNER_ROLE, recoveredSigner);
+        return hasRole(SIGNER_ROLE, recoveredSigner) && recoveredSigner == signer;
     }
 }

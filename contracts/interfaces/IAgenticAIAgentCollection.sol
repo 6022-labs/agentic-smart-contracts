@@ -10,7 +10,7 @@ interface IAgenticAIAgentCollection is IERC721 {
     /**
      * @dev Emitted when a token is minted with a signature.
      */
-    event MintedWithSignature(address indexed to, uint256 tokenId);
+    event MintedWithSignature(address indexed to, address indexed signer, uint256 tokenId);
 
     /**
      * @dev Emitted when a signer is added.
@@ -23,6 +23,11 @@ interface IAgenticAIAgentCollection is IERC721 {
     event SignerRemoved(address signer);
 
     /**
+     * @dev Emitted when a token signer is updated.
+     */
+    event TokenSignerUpdated(uint256 tokenId, address oldSigner, address newSigner);
+
+    /**
      * @dev Error when the nonce has already been used.
      */
     error UsedNonce(bytes32 nonce);
@@ -32,12 +37,20 @@ interface IAgenticAIAgentCollection is IERC721 {
      */
     error InvalidSignature(bytes signature);
 
+    /**
+     * @dev Error when the address is not a signer.
+     */
+    error AddressIsNotSigner();
+
     function mintWithSignature(
         address to,
         address[] memory agentAddresses,
+        address signer,
         bytes32 nonce,
         bytes memory signature
     ) external;
 
-    function tokenToWallet(uint256 tokenId) external returns (address[] memory);
+    function tokenSigner(uint256 tokenId) external returns (address);
+
+    function tokenWallets(uint256 tokenId) external returns (address[] memory);
 }
