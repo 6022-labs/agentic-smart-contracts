@@ -79,8 +79,10 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         if (usedNonces[nonce]) {
             revert UsedNonce(nonce);
         }
-        if (!_isValidSignature(to, agentAddresses, signer, nonce, signature)) {
-            revert InvalidSignature(signature);
+
+        (address recoveredAddress, bool isValid) = _isValidSignature(to, agentAddresses, signer, nonce, signature);
+        if (!isValid) {
+            revert InvalidSignature(signature, recoveredAddress);
         }
 
         usedNonces[nonce] = true;
@@ -109,7 +111,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         address signer,
         bytes32 nonce,
         bytes memory signature
-    ) internal view returns (bool) {
+    ) internal view returns (address, bool) {
         // Hash the agentAddresses array separately
         bytes32 agentAddressesHash = keccak256(abi.encodePacked(agentAddresses));
 
@@ -124,6 +126,6 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
 
         // Recover signer and check role
         address recoveredSigner = ECDSA.recover(digest, signature);
-        return hasRole(SIGNER_ROLE, recoveredSigner) && recoveredSigner == signer;
+        return (recoveredSigner, hasRole(SIGNER_ROLE, recoveredSigner) && recoveredSigner == signer);
     }
 }

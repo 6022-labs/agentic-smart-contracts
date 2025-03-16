@@ -35,7 +35,7 @@ interface IAgenticAIAgentCollection is IERC721 {
     /**
      * @dev Error when the signature is invalid.
      */
-    error InvalidSignature(bytes signature);
+    error InvalidSignature(bytes signature, address recoveredSigner);
 
     /**
      * @dev Error when the address is not a signer.

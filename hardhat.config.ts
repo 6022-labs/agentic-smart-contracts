@@ -1,7 +1,10 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import addSigner from "./tasks/add-signer";
 
 require("dotenv").config();
+
+addSigner.setDescription("Add a signer to a collection");
 
 const infuraKey = process?.env?.INFURA_KEY?.trim() ?? "";
 const privateKey = process?.env?.PRIVATE_KEY?.trim() ?? "";
