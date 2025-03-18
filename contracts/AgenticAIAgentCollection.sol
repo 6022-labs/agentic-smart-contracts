@@ -11,12 +11,6 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IAgenticAIAgentCollection} from "./interfaces/IAgenticAIAgentCollection.sol";
 
-struct MintRequest {
-    address to;
-    bytes32 agentAddressesHash;
-    bytes32 nonce;
-}
-
 contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAgentCollection {
     using ECDSA for bytes32;
 
@@ -69,6 +63,25 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         return _tokenToWallets[tokenId];
     }
 
+    function updateTokenSigner(uint256 tokenId, address newSigner) external {
+        if (ownerOf(tokenId) != _msgSender()) {
+            revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
+        }
+
+        if (!hasRole(SIGNER_ROLE, newSigner)) {
+            revert NotSigner();
+        }
+
+        address currentSigner = _tokenToSigner[tokenId];
+        if (currentSigner == newSigner) {
+            revert SignerUnchanged(currentSigner);
+        }
+
+        _tokenToSigner[tokenId] = newSigner;
+
+        emit TokenSignerChanged(tokenId, currentSigner, newSigner);
+    }
+
     function mintWithSignature(
         address to,
         address[] memory agentAddresses,
@@ -92,17 +105,9 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         _safeMint(to, nextTokenId);
 
         emit MintedWithSignature(to, signer, nextTokenId);
+        emit TokenSignerChanged(nextTokenId, address(0), signer);
 
         nextTokenId++;
-    }
-
-    function updateTokenSigner(uint256 tokenId, address newSigner) onlyRole(SIGNER_ROLE) external {
-        if (!hasRole(SIGNER_ROLE, newSigner)) {
-            revert AddressIsNotSigner();
-        }
-
-        _tokenToSigner[tokenId] = newSigner;
-        emit TokenSignerUpdated(tokenId, _msgSender(), newSigner);
     }
 
     function _isValidSignature(
@@ -115,14 +120,16 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         // Hash the agentAddresses array separately
         bytes32 agentAddressesHash = keccak256(abi.encodePacked(agentAddresses));
 
-        // Hash the entire struct
-        bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
+        bytes32 typedDataHash = keccak256(abi.encode(
             keccak256("MintRequest(address to,bytes32 agentAddressesHash,address signer,bytes32 nonce)"),
             to,
             agentAddressesHash,
             signer,
             nonce
-        )));
+        ));
+
+        // Hash the entire struct
+        bytes32 digest = _hashTypedDataV4(typedDataHash);
 
         // Recover signer and check role
         address recoveredSigner = ECDSA.recover(digest, signature);

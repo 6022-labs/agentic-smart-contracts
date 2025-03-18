@@ -23,9 +23,9 @@ interface IAgenticAIAgentCollection is IERC721 {
     event SignerRemoved(address signer);
 
     /**
-     * @dev Emitted when a token signer is updated.
+     * @dev Emitted when a token signer has changed.
      */
-    event TokenSignerUpdated(uint256 tokenId, address oldSigner, address newSigner);
+    event TokenSignerChanged(uint256 indexed tokenId, address oldSigner, address newSigner);
 
     /**
      * @dev Error when the nonce has already been used.
@@ -40,7 +40,17 @@ interface IAgenticAIAgentCollection is IERC721 {
     /**
      * @dev Error when the address is not a signer.
      */
-    error AddressIsNotSigner();
+    error NotSigner();
+
+    /**
+     * @dev Error when the signer is the same as the current signer.
+     */
+    error SignerUnchanged(address signer);
+
+    /**
+     * @dev Error when the sender is not the owner of the token.
+     */
+    error OwnableUnauthorizedAccount(address sender, uint256 tokenId);
 
     function mintWithSignature(
         address to,

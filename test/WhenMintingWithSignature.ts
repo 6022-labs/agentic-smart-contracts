@@ -338,6 +338,34 @@ describe("WhenMintingWithSignature", function () {
           .withArgs(_otherAccount.address, _signer.address, nextTokenId);
       });
 
+      it("Should emit a TokenSignerChanged event", async function () {
+        const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
+        const signature = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          nonce
+        );
+
+        await expect(
+          _agenticAIAgentCollection
+            .connect(_otherAccount)
+            .mintWithSignature(
+              _otherAccount.address,
+              agentAddresses,
+              _signer.address,
+              ethers.id(nonce),
+              signature
+            )
+        )
+          .to.emit(_agenticAIAgentCollection, "TokenSignerChanged")
+          .withArgs(nextTokenId, ethers.ZeroAddress, _signer.address);
+      });
+
       it("Should assign signer to the token", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
