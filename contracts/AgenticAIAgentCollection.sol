@@ -23,7 +23,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
     mapping(uint256 => address) private _tokenToSigner;
     mapping(uint256 => address[]) private _tokenToWallets;
 
-    string private constant SIGNING_DOMAIN = "VerifiedMintNFT";
+    string private constant SIGNING_DOMAIN = "AgenticAIAgentCollection";
     string private constant SIGNATURE_VERSION = "1";
 
     constructor()
@@ -63,7 +63,16 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         return _tokenToWallets[tokenId];
     }
 
-    function updateTokenSigner(uint256 tokenId, address newSigner) external {
+    function updateTokenSigner(
+        uint256 tokenId,
+        address newSigner,
+        bytes32 nonce,
+        bytes memory signature
+    ) external {
+        if (usedNonces[nonce]) {
+            revert UsedNonce(nonce);
+        }
+
         if (ownerOf(tokenId) != _msgSender()) {
             revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
         }
@@ -72,28 +81,49 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
             revert NotSigner();
         }
 
-        address currentSigner = _tokenToSigner[tokenId];
-        if (currentSigner == newSigner) {
-            revert SignerUnchanged(currentSigner);
+        address oldSigner = _tokenToSigner[tokenId];
+        if (oldSigner == newSigner) {
+            revert SignerUnchanged(oldSigner);
+        }
+
+        (address recoveredAddress, bool isValid) = _isValidUpdateTokenSignerSignature(
+            tokenId,
+            newSigner,
+            nonce,
+            signature
+        );
+        if (!isValid) {
+            revert InvalidSignature(signature, recoveredAddress);
+        }
+        if (recoveredAddress != oldSigner) {
+            revert InvalidSigner(recoveredAddress, oldSigner);
         }
 
         _tokenToSigner[tokenId] = newSigner;
+        usedNonces[nonce] = true;
 
-        emit TokenSignerChanged(tokenId, currentSigner, newSigner);
+        emit TokenSignerChanged(tokenId, oldSigner, newSigner);
     }
 
-    function mintWithSignature(
+    function mint(
         address to,
         address[] memory agentAddresses,
         address signer,
         bytes32 nonce,
         bytes memory signature
-    ) public {
+    ) external {
         if (usedNonces[nonce]) {
             revert UsedNonce(nonce);
         }
 
-        (address recoveredAddress, bool isValid) = _isValidSignature(to, agentAddresses, signer, nonce, signature);
+        (address recoveredAddress, bool isValid) = _isValidMintSignature(
+            to,
+            agentAddresses,
+            signer,
+            nonce,
+            signature
+        );
+
         if (!isValid) {
             revert InvalidSignature(signature, recoveredAddress);
         }
@@ -104,13 +134,34 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
 
         _safeMint(to, nextTokenId);
 
-        emit MintedWithSignature(to, signer, nextTokenId);
+        emit Minted(to, signer, nextTokenId);
         emit TokenSignerChanged(nextTokenId, address(0), signer);
 
         nextTokenId++;
     }
 
-    function _isValidSignature(
+    function _isValidUpdateTokenSignerSignature(
+        uint256 tokenId,
+        address newSigner,
+        bytes32 nonce,
+        bytes memory signature
+    ) internal view returns (address, bool) {
+        bytes32 typedDataHash = keccak256(abi.encode(
+            keccak256("UpdateTokenSignerRequest(uint256 tokenId,address newSigner,bytes32 nonce)"),
+            tokenId,
+            newSigner,
+            nonce
+        ));
+
+        // Hash the entire struct
+        bytes32 digest = _hashTypedDataV4(typedDataHash);
+
+        // Recover signer and check role
+        address recoveredSigner = ECDSA.recover(digest, signature);
+        return (recoveredSigner, hasRole(SIGNER_ROLE, recoveredSigner));
+    }
+
+    function _isValidMintSignature(
         address to,
         address[] memory agentAddresses,
         address signer,

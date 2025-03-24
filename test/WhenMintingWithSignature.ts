@@ -49,7 +49,7 @@ describe("WhenMintingWithSignature", function () {
     nonce: string
   ) {
     const domain = {
-      name: "VerifiedMintNFT",
+      name: "AgenticAIAgentCollection",
       version: "1",
       chainId: (await ethers.provider.getNetwork()).chainId,
       verifyingContract: await _agenticAIAgentCollection.getAddress(),
@@ -92,7 +92,7 @@ describe("WhenMintingWithSignature", function () {
 
         await _agenticAIAgentCollection
           .connect(_otherAccount)
-          .mintWithSignature(
+          .mint(
             _otherAccount.address,
             agentAddresses,
             _signer.address,
@@ -103,7 +103,7 @@ describe("WhenMintingWithSignature", function () {
         await expect(
           _agenticAIAgentCollection
             .connect(_otherAccount)
-            .mintWithSignature(
+            .mint(
               _otherAccount.address,
               agentAddresses,
               _signer.address,
@@ -128,7 +128,7 @@ describe("WhenMintingWithSignature", function () {
         await expect(
           _agenticAIAgentCollection
             .connect(_otherAccount)
-            .mintWithSignature(
+            .mint(
               _signer.address,
               agentAddresses,
               _signer.address,
@@ -156,7 +156,7 @@ describe("WhenMintingWithSignature", function () {
         await expect(
           _agenticAIAgentCollection
             .connect(_otherAccount)
-            .mintWithSignature(
+            .mint(
               _otherAccount.address,
               agentAddresses,
               _signer.address,
@@ -180,7 +180,7 @@ describe("WhenMintingWithSignature", function () {
 
         await _agenticAIAgentCollection
           .connect(_otherAccount)
-          .mintWithSignature(
+          .mint(
             _otherAccount.address,
             agentAddresses,
             _signer.address,
@@ -213,7 +213,7 @@ describe("WhenMintingWithSignature", function () {
 
         await _agenticAIAgentCollection
           .connect(_otherAccount)
-          .mintWithSignature(
+          .mint(
             _otherAccount.address,
             agentAddresses1,
             _signer.address,
@@ -223,7 +223,7 @@ describe("WhenMintingWithSignature", function () {
 
         await _agenticAIAgentCollection
           .connect(_otherAccount)
-          .mintWithSignature(
+          .mint(
             _otherAccount.address,
             agentAddresses2,
             _signer.address,
@@ -259,7 +259,7 @@ describe("WhenMintingWithSignature", function () {
 
         await _agenticAIAgentCollection
           .connect(_otherAccount)
-          .mintWithSignature(
+          .mint(
             _otherAccount.address,
             agentAddresses1,
             _signer.address,
@@ -271,7 +271,7 @@ describe("WhenMintingWithSignature", function () {
 
         await _agenticAIAgentCollection
           .connect(_otherAccount)
-          .mintWithSignature(
+          .mint(
             _otherAccount.address,
             agentAddresses2,
             _signer.address,
@@ -295,7 +295,7 @@ describe("WhenMintingWithSignature", function () {
 
         await _agenticAIAgentCollection
           .connect(_otherAccount)
-          .mintWithSignature(
+          .mint(
             _otherAccount.address,
             agentAddresses,
             _signer.address,
@@ -310,7 +310,7 @@ describe("WhenMintingWithSignature", function () {
         ).to.be.true;
       });
 
-      it("Should emit a MintedWithSignature event", async function () {
+      it("Should emit a Minted event", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
@@ -326,7 +326,7 @@ describe("WhenMintingWithSignature", function () {
         await expect(
           _agenticAIAgentCollection
             .connect(_otherAccount)
-            .mintWithSignature(
+            .mint(
               _otherAccount.address,
               agentAddresses,
               _signer.address,
@@ -334,7 +334,7 @@ describe("WhenMintingWithSignature", function () {
               signature
             )
         )
-          .to.emit(_agenticAIAgentCollection, "MintedWithSignature")
+          .to.emit(_agenticAIAgentCollection, "Minted")
           .withArgs(_otherAccount.address, _signer.address, nextTokenId);
       });
 
@@ -354,7 +354,7 @@ describe("WhenMintingWithSignature", function () {
         await expect(
           _agenticAIAgentCollection
             .connect(_otherAccount)
-            .mintWithSignature(
+            .mint(
               _otherAccount.address,
               agentAddresses,
               _signer.address,
@@ -381,7 +381,7 @@ describe("WhenMintingWithSignature", function () {
 
         await _agenticAIAgentCollection
           .connect(_otherAccount)
-          .mintWithSignature(
+          .mint(
             _otherAccount.address,
             agentAddresses,
             _signer.address,
@@ -410,7 +410,7 @@ describe("WhenMintingWithSignature", function () {
       await expect(
         _agenticAIAgentCollection
           .connect(_otherAccount)
-          .mintWithSignature(
+          .mint(
             _otherAccount.address,
             agentAddresses,
             _signer.address,

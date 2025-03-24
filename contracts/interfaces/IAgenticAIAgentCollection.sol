@@ -10,7 +10,7 @@ interface IAgenticAIAgentCollection is IERC721 {
     /**
      * @dev Emitted when a token is minted with a signature.
      */
-    event MintedWithSignature(address indexed to, address indexed signer, uint256 tokenId);
+    event Minted(address indexed to, address indexed signer, uint256 tokenId);
 
     /**
      * @dev Emitted when a signer is added.
@@ -38,6 +38,11 @@ interface IAgenticAIAgentCollection is IERC721 {
     error InvalidSignature(bytes signature, address recoveredSigner);
 
     /**
+     * @dev Error when the signer is invalid.
+     */
+    error InvalidSigner(address signer, address expectedSigner);
+
+    /**
      * @dev Error when the address is not a signer.
      */
     error NotSigner();
@@ -52,7 +57,7 @@ interface IAgenticAIAgentCollection is IERC721 {
      */
     error OwnableUnauthorizedAccount(address sender, uint256 tokenId);
 
-    function mintWithSignature(
+    function mint(
         address to,
         address[] memory agentAddresses,
         address signer,
