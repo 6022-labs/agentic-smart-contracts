@@ -115,7 +115,7 @@ describe("WhenMintingWithSignature", function () {
     });
 
     describe("Given a signature that does not match parameters", function () {
-      it("Should revert with 'InvalidSignature' error", async function () {
+      it("Should revert with 'NotSigner' error", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
         const signature = await signMintRequest(
@@ -135,10 +135,7 @@ describe("WhenMintingWithSignature", function () {
               ethers.id(nonce),
               signature
             )
-        ).to.be.revertedWithCustomError(
-          _agenticAIAgentCollection,
-          "InvalidSignature"
-        );
+        ).to.be.revertedWithCustomError(_agenticAIAgentCollection, "NotSigner");
       });
     });
 
@@ -397,7 +394,7 @@ describe("WhenMintingWithSignature", function () {
   });
 
   describe("Given a signature from a non-signer", function () {
-    it("Should revert with 'InvalidSignature' error", async function () {
+    it("Should revert with 'NotSigner' error", async function () {
       const nonce = "1";
       const agentAddresses = [generateRandomAddress()];
       const signature = await signMintRequest(
@@ -417,10 +414,7 @@ describe("WhenMintingWithSignature", function () {
             ethers.id(nonce),
             signature
           )
-      ).to.be.revertedWithCustomError(
-        _agenticAIAgentCollection,
-        "InvalidSignature"
-      );
+      ).to.be.revertedWithCustomError(_agenticAIAgentCollection, "NotSigner");
     });
   });
 });

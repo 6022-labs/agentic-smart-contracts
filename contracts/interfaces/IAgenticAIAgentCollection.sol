@@ -33,11 +33,6 @@ interface IAgenticAIAgentCollection is IERC721 {
     error UsedNonce(bytes32 nonce);
 
     /**
-     * @dev Error when the signature is invalid.
-     */
-    error InvalidSignature(bytes signature, address recoveredSigner);
-
-    /**
      * @dev Error when the signer is invalid.
      */
     error InvalidSigner(address signer, address expectedSigner);

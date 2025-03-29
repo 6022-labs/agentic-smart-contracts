@@ -261,7 +261,7 @@ describe("WhenUpdatingTokenSigner", function () {
   });
 
   describe("Given signature is invalid", function () {
-    it("Should revert with 'InvalidSignature' error", async function () {
+    it("Should revert with 'NotSigner' error", async function () {
       const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
 
       await mintWithSignature(_signer, await _owner.getAddress());
@@ -284,10 +284,7 @@ describe("WhenUpdatingTokenSigner", function () {
             ethers.id(secondNonce),
             invalidSignature
           )
-      ).to.be.revertedWithCustomError(
-        _agenticAIAgentCollection,
-        "InvalidSignature"
-      );
+      ).to.be.revertedWithCustomError(_agenticAIAgentCollection, "NotSigner");
     });
   });
 

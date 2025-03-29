@@ -86,14 +86,15 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
             revert SignerUnchanged(oldSigner);
         }
 
-        (address recoveredAddress, bool isValid) = _isValidUpdateTokenSignerSignature(
+        address recoveredAddress = _recoverUpdateTokenSignerSigner(
             tokenId,
             newSigner,
             nonce,
             signature
         );
-        if (!isValid) {
-            revert InvalidSignature(signature, recoveredAddress);
+
+        if (!hasRole(SIGNER_ROLE, recoveredAddress)) {
+            revert NotSigner();
         }
         if (recoveredAddress != oldSigner) {
             revert InvalidSigner(recoveredAddress, oldSigner);
@@ -116,7 +117,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
             revert UsedNonce(nonce);
         }
 
-        (address recoveredAddress, bool isValid) = _isValidMintSignature(
+        address recoveredAddress = _recoverMintSigner(
             to,
             agentAddresses,
             signer,
@@ -124,8 +125,11 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
             signature
         );
 
-        if (!isValid) {
-            revert InvalidSignature(signature, recoveredAddress);
+        if (!hasRole(SIGNER_ROLE, recoveredAddress)) {
+            revert NotSigner();
+        }
+        if (recoveredAddress != signer) {
+            revert InvalidSigner(recoveredAddress, signer);
         }
 
         usedNonces[nonce] = true;
@@ -140,12 +144,12 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         nextTokenId++;
     }
 
-    function _isValidUpdateTokenSignerSignature(
+    function _recoverUpdateTokenSignerSigner(
         uint256 tokenId,
         address newSigner,
         bytes32 nonce,
         bytes memory signature
-    ) internal view returns (address, bool) {
+    ) internal view returns (address) {
         bytes32 typedDataHash = keccak256(abi.encode(
             keccak256("UpdateTokenSignerRequest(uint256 tokenId,address newSigner,bytes32 nonce)"),
             tokenId,
@@ -157,17 +161,16 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         bytes32 digest = _hashTypedDataV4(typedDataHash);
 
         // Recover signer and check role
-        address recoveredSigner = ECDSA.recover(digest, signature);
-        return (recoveredSigner, hasRole(SIGNER_ROLE, recoveredSigner));
+        return ECDSA.recover(digest, signature);
     }
 
-    function _isValidMintSignature(
+    function _recoverMintSigner(
         address to,
         address[] memory agentAddresses,
         address signer,
         bytes32 nonce,
         bytes memory signature
-    ) internal view returns (address, bool) {
+    ) internal view returns (address) {
         // Hash the agentAddresses array separately
         bytes32 agentAddressesHash = keccak256(abi.encodePacked(agentAddresses));
 
@@ -183,7 +186,6 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         bytes32 digest = _hashTypedDataV4(typedDataHash);
 
         // Recover signer and check role
-        address recoveredSigner = ECDSA.recover(digest, signature);
-        return (recoveredSigner, hasRole(SIGNER_ROLE, recoveredSigner) && recoveredSigner == signer);
+        return ECDSA.recover(digest, signature);
     }
 }
