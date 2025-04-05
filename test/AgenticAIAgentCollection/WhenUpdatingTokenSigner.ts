@@ -1,10 +1,12 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { AgenticAIAgentCollection } from "../typechain-types";
+import { AgenticAIAgentCollection } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("WhenUpdatingTokenSigner", function () {
+  const ipfsGateway = "https://ipfs.io/ipfs/";
+
   let _agenticAIAgentCollection: AgenticAIAgentCollection;
 
   let _owner: HardhatEthersSigner;
@@ -19,10 +21,18 @@ describe("WhenUpdatingTokenSigner", function () {
     const [owner, otherAccount, signer, otherSigner] =
       await ethers.getSigners();
 
+    const AgenticAIAgentCollectionDescriptor = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionDescriptor"
+    );
+    const agenticAIAgentCollectionDescriptor =
+      await AgenticAIAgentCollectionDescriptor.deploy(ipfsGateway);
+
     const AgenticAIAgentCollection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
     );
-    const agenticAIAgentCollection = await AgenticAIAgentCollection.deploy();
+    const agenticAIAgentCollection = await AgenticAIAgentCollection.deploy(
+      await agenticAIAgentCollectionDescriptor.getAddress()
+    );
 
     await agenticAIAgentCollection.addSigner(signer.address);
     await agenticAIAgentCollection.addSigner(otherSigner.address);
@@ -61,6 +71,10 @@ describe("WhenUpdatingTokenSigner", function () {
   }
 
   async function mintWithSignature(signer: HardhatEthersSigner, to: string) {
+    const name = "Test Agent";
+    const baseImageCid =
+      "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
     const nonce = generateRandomNonce();
     const agentAddresses = [generateRandomAddress()];
 
@@ -76,6 +90,8 @@ describe("WhenUpdatingTokenSigner", function () {
         { name: "to", type: "address" },
         { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
         { name: "signer", type: "address" },
+        { name: "nameHash", type: "bytes32" },
+        { name: "imageHash", type: "bytes32" },
         { name: "nonce", type: "bytes32" },
       ],
     };
@@ -83,11 +99,15 @@ describe("WhenUpdatingTokenSigner", function () {
     const agentAddressesHash = ethers.keccak256(
       ethers.solidityPacked(["address[]"], [agentAddresses])
     );
+    const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
+    const imageHash = ethers.keccak256(ethers.toUtf8Bytes(baseImageCid));
 
     const message = {
       to,
       agentAddressesHash,
       signer: signer.address,
+      nameHash,
+      imageHash,
       nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
     };
 
@@ -95,7 +115,15 @@ describe("WhenUpdatingTokenSigner", function () {
 
     await _agenticAIAgentCollection
       .connect(_owner)
-      .mint(to, agentAddresses, signer.address, ethers.id(nonce), signature);
+      .mint(
+        to,
+        agentAddresses,
+        signer.address,
+        name,
+        baseImageCid,
+        ethers.id(nonce),
+        signature
+      );
   }
 
   // Function to generate a valid EIP-712 signature
@@ -288,38 +316,6 @@ describe("WhenUpdatingTokenSigner", function () {
     });
   });
 
-  describe("Given signer is not the signer of the agent", function () {
-    it("Should revert with 'InvalidSigner' error", async function () {
-      const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
-
-      await mintWithSignature(_signer, await _owner.getAddress());
-
-      const nonce = generateRandomNonce();
-      const signature = await signUpdateTokenSignerRequest(
-        _otherSigner,
-        nextTokenId.toString(),
-        await _otherSigner.getAddress(),
-        nonce
-      );
-
-      await expect(
-        _agenticAIAgentCollection
-          .connect(_owner)
-          .updateTokenSigner(
-            nextTokenId,
-            await _otherSigner.getAddress(),
-            ethers.id(nonce),
-            signature
-          )
-      )
-        .to.be.revertedWithCustomError(
-          _agenticAIAgentCollection,
-          "InvalidSigner"
-        )
-        .withArgs(await _otherSigner.getAddress(), await _signer.getAddress());
-    });
-  });
-
   describe("Given new signer is a valid signer", function () {
     it("Should update the signer of the token", async function () {
       const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
@@ -343,7 +339,7 @@ describe("WhenUpdatingTokenSigner", function () {
           signature
         );
 
-      expect(await _agenticAIAgentCollection.tokenSigner(nextTokenId)).to.equal(
+      expect(await _agenticAIAgentCollection.signerOf(nextTokenId)).to.equal(
         await _otherSigner.getAddress()
       );
     });

@@ -40,7 +40,7 @@ interface IAgenticAIAgentCollection is IERC721 {
     /**
      * @dev Error when the address is not a signer.
      */
-    error NotSigner();
+    error NotSigner(address);
 
     /**
      * @dev Error when the signer is the same as the current signer.
@@ -56,11 +56,26 @@ interface IAgenticAIAgentCollection is IERC721 {
         address to,
         address[] memory agentAddresses,
         address signer,
+        string memory name,
+        string memory image,
         bytes32 nonce,
         bytes memory signature
     ) external;
 
-    function tokenSigner(uint256 tokenId) external returns (address);
+    function updateTokenSigner(
+        uint256 tokenId,
+        address newSigner,
+        bytes32 nonce,
+        bytes memory signature
+    ) external;
 
-    function tokenWallets(uint256 tokenId) external returns (address[] memory);
+    function signerOf(uint256 tokenId) external view returns (address);
+
+    function creatorOf(uint256 tokenId) external view returns (address);
+
+    function nameOf(uint256 tokenId) external view returns (string memory);
+
+    function baseImageOf(uint256 tokenId) external view returns (string memory);
+
+    function walletsOf(uint256 tokenId) external view returns (address[] memory);
 }

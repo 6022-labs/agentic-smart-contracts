@@ -6,7 +6,7 @@ require("dotenv").config();
 
 addSigner.setDescription("Add a signer to a collection");
 
-const infuraKey = process?.env?.INFURA_KEY?.trim() ?? "";
+const alchemyKey = process?.env?.ALCHEMY_KEY?.trim() ?? "";
 const privateKey = process?.env?.PRIVATE_KEY?.trim() ?? "";
 const polygonScanApiKey = process?.env?.POLYGONSCAN_API_KEY?.trim() ?? "";
 
@@ -21,7 +21,7 @@ const config: HardhatUserConfig = {
       throwOnCallFailures: true,
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
-      url: "https://polygon-mainnet.infura.io/v3/" + infuraKey,
+      url: "https://polygon-mainnet.g.alchemy.com/v2/" + alchemyKey,
     },
     amoy: {
       gas: "auto",
@@ -31,7 +31,7 @@ const config: HardhatUserConfig = {
       throwOnCallFailures: true,
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
-      url: "https://polygon-amoy.infura.io/v3/" + infuraKey,
+      url: "https://polygon-amoy.g.alchemy.com/v2/" + alchemyKey,
     },
   },
   etherscan: {

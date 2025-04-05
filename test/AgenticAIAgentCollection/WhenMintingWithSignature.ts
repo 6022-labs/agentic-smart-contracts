@@ -1,10 +1,12 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { AgenticAIAgentCollection } from "../typechain-types";
+import { AgenticAIAgentCollection } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("WhenMintingWithSignature", function () {
+  const ipfsGateway = "https://ipfs.io/ipfs/";
+
   let _agenticAIAgentCollection: AgenticAIAgentCollection;
 
   let _owner: HardhatEthersSigner;
@@ -16,10 +18,18 @@ describe("WhenMintingWithSignature", function () {
 
     const [owner, signer, otherAccount] = await ethers.getSigners();
 
+    const AgenticAIAgentCollectionDescriptor = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionDescriptor"
+    );
+    const agenticAIAgentCollectionDescriptor =
+      await AgenticAIAgentCollectionDescriptor.deploy(ipfsGateway);
+
     const AgenticAIAgentCollection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
     );
-    const agenticAIAgentCollection = await AgenticAIAgentCollection.deploy();
+    const agenticAIAgentCollection = await AgenticAIAgentCollection.deploy(
+      await agenticAIAgentCollectionDescriptor.getAddress()
+    );
 
     // Assign SIGNER_ROLE to _signer
     await agenticAIAgentCollection.connect(owner).addSigner(signer.address);
@@ -46,6 +56,8 @@ describe("WhenMintingWithSignature", function () {
     signer: HardhatEthersSigner,
     to: string,
     agentAddresses: string[],
+    name: string,
+    image: string,
     nonce: string
   ) {
     const domain = {
@@ -60,6 +72,8 @@ describe("WhenMintingWithSignature", function () {
         { name: "to", type: "address" },
         { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
         { name: "signer", type: "address" },
+        { name: "nameHash", type: "bytes32" },
+        { name: "imageHash", type: "bytes32" },
         { name: "nonce", type: "bytes32" },
       ],
     };
@@ -67,11 +81,15 @@ describe("WhenMintingWithSignature", function () {
     const agentAddressesHash = ethers.keccak256(
       ethers.solidityPacked(["address[]"], [agentAddresses])
     );
+    const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
+    const imageHash = ethers.keccak256(ethers.toUtf8Bytes(image));
 
     const message = {
       to,
       agentAddressesHash,
       signer: signer.address,
+      nameHash,
+      imageHash,
       nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
     };
 
@@ -82,11 +100,16 @@ describe("WhenMintingWithSignature", function () {
     describe("Given a valid nonce used twice", function () {
       it("Should revert with 'UsedNonce' error on second attempt", async function () {
         const nonce = "1";
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
+          name,
+          baseImageCid,
           "1"
         );
 
@@ -96,6 +119,8 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            name,
+            baseImageCid,
             ethers.id(nonce),
             signature
           );
@@ -107,6 +132,8 @@ describe("WhenMintingWithSignature", function () {
               _otherAccount.address,
               agentAddresses,
               _signer.address,
+              name,
+              baseImageCid,
               ethers.id(nonce),
               signature
             )
@@ -117,11 +144,16 @@ describe("WhenMintingWithSignature", function () {
     describe("Given a signature that does not match parameters", function () {
       it("Should revert with 'NotSigner' error", async function () {
         const nonce = "1";
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
+          name,
+          baseImageCid,
           nonce
         );
 
@@ -132,6 +164,8 @@ describe("WhenMintingWithSignature", function () {
               _signer.address,
               agentAddresses,
               _signer.address,
+              name,
+              baseImageCid,
               ethers.id(nonce),
               signature
             )
@@ -142,11 +176,16 @@ describe("WhenMintingWithSignature", function () {
     describe("Given a signature that matches parameters", function () {
       it("Should mint the token", async function () {
         const nonce = "1";
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
+          name,
+          baseImageCid,
           nonce
         );
 
@@ -157,6 +196,8 @@ describe("WhenMintingWithSignature", function () {
               _otherAccount.address,
               agentAddresses,
               _signer.address,
+              name,
+              baseImageCid,
               ethers.id(nonce),
               signature
             )
@@ -165,13 +206,18 @@ describe("WhenMintingWithSignature", function () {
           .withArgs(ethers.ZeroAddress, _otherAccount.address, 0);
       });
 
-      it("Should assign the NFT to the correct recipient", async function () {
+      it("Should assign the owner of the token", async function () {
         const nonce = "1";
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
+          name,
+          baseImageCid,
           nonce
         );
 
@@ -181,6 +227,8 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            name,
+            baseImageCid,
             ethers.id(nonce),
             signature
           );
@@ -195,16 +243,25 @@ describe("WhenMintingWithSignature", function () {
         const nonce2 = "2";
         const agentAddresses1 = [generateRandomAddress()];
         const agentAddresses2 = [generateRandomAddress()];
+
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
         const signature1 = await signMintRequest(
           _signer,
           _otherAccount.address,
           agentAddresses1,
+          name,
+          baseImageCid,
           nonce1
         );
         const signature2 = await signMintRequest(
           _signer,
           _otherAccount.address,
           agentAddresses2,
+          name,
+          baseImageCid,
           nonce2
         );
 
@@ -214,6 +271,8 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses1,
             _signer.address,
+            name,
+            baseImageCid,
             ethers.id(nonce1),
             signature1
           );
@@ -224,6 +283,8 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses2,
             _signer.address,
+            name,
+            baseImageCid,
             ethers.id(nonce2),
             signature2
           );
@@ -241,16 +302,25 @@ describe("WhenMintingWithSignature", function () {
         const nonce2 = "2";
         const agentAddresses1 = [generateRandomAddress()];
         const agentAddresses2 = [generateRandomAddress()];
+
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
         const signature1 = await signMintRequest(
           _signer,
           _otherAccount.address,
           agentAddresses1,
+          name,
+          baseImageCid,
           nonce1
         );
         const signature2 = await signMintRequest(
           _signer,
           _otherAccount.address,
           agentAddresses2,
+          name,
+          baseImageCid,
           nonce2
         );
 
@@ -260,6 +330,8 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses1,
             _signer.address,
+            name,
+            baseImageCid,
             ethers.id(nonce1),
             signature1
           );
@@ -272,6 +344,8 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses2,
             _signer.address,
+            name,
+            baseImageCid,
             ethers.id(nonce2),
             signature2
           );
@@ -283,10 +357,16 @@ describe("WhenMintingWithSignature", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
+          name,
+          baseImageCid,
           nonce
         );
 
@@ -296,6 +376,8 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            name,
+            baseImageCid,
             ethers.id(nonce),
             signature
           );
@@ -307,9 +389,13 @@ describe("WhenMintingWithSignature", function () {
         ).to.be.true;
       });
 
-      it("Should emit a Minted event", async function () {
+      it("Should assign signer of the token", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
+
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
         const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
 
@@ -317,6 +403,194 @@ describe("WhenMintingWithSignature", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          name,
+          baseImageCid,
+          nonce
+        );
+
+        await _agenticAIAgentCollection
+          .connect(_otherAccount)
+          .mint(
+            _otherAccount.address,
+            agentAddresses,
+            _signer.address,
+            name,
+            baseImageCid,
+            ethers.id(nonce),
+            signature
+          );
+
+        expect(await _agenticAIAgentCollection.signerOf(nextTokenId)).to.equal(
+          _signer.address
+        );
+      });
+
+      it("Should assign agent addresses to the token", async function () {
+        const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
+
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
+        const signature = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          name,
+          baseImageCid,
+          nonce
+        );
+
+        await _agenticAIAgentCollection
+          .connect(_otherAccount)
+          .mint(
+            _otherAccount.address,
+            agentAddresses,
+            _signer.address,
+            name,
+            baseImageCid,
+            ethers.id(nonce),
+            signature
+          );
+
+        const walletsOf = await _agenticAIAgentCollection.walletsOf(
+          nextTokenId
+        );
+
+        expect(walletsOf.length).to.equal(agentAddresses.length);
+
+        for (let i = 0; i < agentAddresses.length; i++) {
+          expect(agentAddresses).to.include(walletsOf[i]);
+        }
+      });
+
+      it("Should assign name to the token", async function () {
+        const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
+
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
+        const signature = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          name,
+          baseImageCid,
+          nonce
+        );
+
+        await _agenticAIAgentCollection
+          .connect(_otherAccount)
+          .mint(
+            _otherAccount.address,
+            agentAddresses,
+            _signer.address,
+            name,
+            baseImageCid,
+            ethers.id(nonce),
+            signature
+          );
+
+        expect(await _agenticAIAgentCollection.nameOf(nextTokenId)).to.equal(
+          name
+        );
+      });
+
+      it("Should assign base image to the token", async function () {
+        const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
+
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
+        const signature = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          name,
+          baseImageCid,
+          nonce
+        );
+
+        await _agenticAIAgentCollection
+          .connect(_otherAccount)
+          .mint(
+            _otherAccount.address,
+            agentAddresses,
+            _signer.address,
+            name,
+            baseImageCid,
+            ethers.id(nonce),
+            signature
+          );
+
+        expect(
+          await _agenticAIAgentCollection.baseImageOf(nextTokenId)
+        ).to.equal(baseImageCid);
+      });
+
+      it("Should assign creator to the token", async function () {
+        const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
+
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
+        const signature = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          name,
+          baseImageCid,
+          nonce
+        );
+
+        await _agenticAIAgentCollection
+          .connect(_otherAccount)
+          .mint(
+            _otherAccount.address,
+            agentAddresses,
+            _signer.address,
+            name,
+            baseImageCid,
+            ethers.id(nonce),
+            signature
+          );
+
+        expect(await _agenticAIAgentCollection.creatorOf(nextTokenId)).to.equal(
+          _otherAccount.address
+        );
+      });
+
+      it("Should emit a Minted event", async function () {
+        const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
+
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
+        const signature = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          name,
+          baseImageCid,
           nonce
         );
 
@@ -327,6 +601,8 @@ describe("WhenMintingWithSignature", function () {
               _otherAccount.address,
               agentAddresses,
               _signer.address,
+              name,
+              baseImageCid,
               ethers.id(nonce),
               signature
             )
@@ -339,12 +615,18 @@ describe("WhenMintingWithSignature", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
         const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
 
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
+          name,
+          baseImageCid,
           nonce
         );
 
@@ -355,40 +637,14 @@ describe("WhenMintingWithSignature", function () {
               _otherAccount.address,
               agentAddresses,
               _signer.address,
+              name,
+              baseImageCid,
               ethers.id(nonce),
               signature
             )
         )
           .to.emit(_agenticAIAgentCollection, "TokenSignerChanged")
           .withArgs(nextTokenId, ethers.ZeroAddress, _signer.address);
-      });
-
-      it("Should assign signer to the token", async function () {
-        const nonce = "1";
-        const agentAddresses = [generateRandomAddress()];
-
-        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
-
-        const signature = await signMintRequest(
-          _signer,
-          _otherAccount.address,
-          agentAddresses,
-          nonce
-        );
-
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses,
-            _signer.address,
-            ethers.id(nonce),
-            signature
-          );
-
-        expect(
-          await _agenticAIAgentCollection.tokenSigner(nextTokenId)
-        ).to.equal(_signer.address);
       });
     });
   });
@@ -397,10 +653,17 @@ describe("WhenMintingWithSignature", function () {
     it("Should revert with 'NotSigner' error", async function () {
       const nonce = "1";
       const agentAddresses = [generateRandomAddress()];
+
+      const name = "Test Agent";
+      const baseImageCid =
+        "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
       const signature = await signMintRequest(
         _otherAccount,
         _otherAccount.address,
         agentAddresses,
+        name,
+        baseImageCid,
         nonce
       );
 
@@ -411,6 +674,8 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            name,
+            baseImageCid,
             ethers.id(nonce),
             signature
           )

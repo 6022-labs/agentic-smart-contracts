@@ -10,6 +10,7 @@ import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IAgenticAIAgentCollection} from "./interfaces/IAgenticAIAgentCollection.sol";
+import {IAgenticAIAgentCollectionDescriptor} from "./interfaces/IAgenticAIAgentCollectionDescriptor.sol";
 
 contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAgentCollection {
     using ECDSA for bytes32;
@@ -19,17 +20,24 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
     uint256 public nextTokenId;
     mapping(bytes32 => bool) public usedNonces;
 
-    string private baseURI;
-    mapping(uint256 => address) private _tokenToSigner;
-    mapping(uint256 => address[]) private _tokenToWallets;
+    mapping(uint256 => address) private _signerOf;
+    mapping(uint256 => address) private _creatorOf;
+    mapping(uint256 => address[]) private _walletsOf;
+
+    mapping(uint256 => string) private _nameOf;
+    mapping(uint256 => string) private _baseImageOf;
 
     string private constant SIGNING_DOMAIN = "AgenticAIAgentCollection";
     string private constant SIGNATURE_VERSION = "1";
 
-    constructor()
+    IAgenticAIAgentCollectionDescriptor private _agentDescriptor;
+
+    constructor(address agentDescriptor)
         ERC721("AgenticAIAgentCollection", "AIAgent") 
         EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION)
     {
+        _agentDescriptor = IAgenticAIAgentCollectionDescriptor(agentDescriptor);
+
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -47,20 +55,32 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         emit SignerRemoved(signer);
     }
 
-    function setBaseURI(string memory newBaseURI) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        baseURI = newBaseURI;
+    function updateAgentDescriptor(address agentDescriptor) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _agentDescriptor = IAgenticAIAgentCollectionDescriptor(agentDescriptor);
     }
 
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        return _agentDescriptor.buildTokenURI(this, tokenId);
     }
 
-    function tokenSigner(uint256 tokenId) external view returns (address) {
-        return _tokenToSigner[tokenId];
+    function signerOf(uint256 tokenId) external view returns (address) {
+        return _signerOf[tokenId];
     }
 
-    function tokenWallets(uint256 tokenId) external view returns (address[] memory) {
-        return _tokenToWallets[tokenId];
+    function creatorOf(uint256 tokenId) external view returns (address) {
+        return _creatorOf[tokenId];
+    }
+
+    function walletsOf(uint256 tokenId) external view returns (address[] memory) {
+        return _walletsOf[tokenId];
+    }
+
+    function nameOf(uint256 tokenId) external view returns (string memory) {
+        return _nameOf[tokenId];
+    }
+
+    function baseImageOf(uint256 tokenId) external view returns (string memory) {
+        return _baseImageOf[tokenId];
     }
 
     function updateTokenSigner(
@@ -78,10 +98,10 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         }
 
         if (!hasRole(SIGNER_ROLE, newSigner)) {
-            revert NotSigner();
+            revert NotSigner(newSigner);
         }
 
-        address oldSigner = _tokenToSigner[tokenId];
+        address oldSigner = _signerOf[tokenId];
         if (oldSigner == newSigner) {
             revert SignerUnchanged(oldSigner);
         }
@@ -94,13 +114,10 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         );
 
         if (!hasRole(SIGNER_ROLE, recoveredAddress)) {
-            revert NotSigner();
-        }
-        if (recoveredAddress != oldSigner) {
-            revert InvalidSigner(recoveredAddress, oldSigner);
+            revert NotSigner(recoveredAddress);
         }
 
-        _tokenToSigner[tokenId] = newSigner;
+        _signerOf[tokenId] = newSigner;
         usedNonces[nonce] = true;
 
         emit TokenSignerChanged(tokenId, oldSigner, newSigner);
@@ -110,6 +127,8 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         address to,
         address[] memory agentAddresses,
         address signer,
+        string memory name,
+        string memory image,
         bytes32 nonce,
         bytes memory signature
     ) external {
@@ -121,20 +140,25 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
             to,
             agentAddresses,
             signer,
+            name,
+            image,
             nonce,
             signature
         );
 
         if (!hasRole(SIGNER_ROLE, recoveredAddress)) {
-            revert NotSigner();
+            revert NotSigner(recoveredAddress);
         }
         if (recoveredAddress != signer) {
             revert InvalidSigner(recoveredAddress, signer);
         }
 
         usedNonces[nonce] = true;
-        _tokenToSigner[nextTokenId] = signer;
-        _tokenToWallets[nextTokenId] = agentAddresses;
+        _nameOf[nextTokenId] = name;
+        _signerOf[nextTokenId] = signer;
+        _creatorOf[nextTokenId] = _msgSender();
+        _walletsOf[nextTokenId] = agentAddresses;
+        _baseImageOf[nextTokenId] = image;
 
         _safeMint(to, nextTokenId);
 
@@ -168,17 +192,23 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         address to,
         address[] memory agentAddresses,
         address signer,
+        string memory name,
+        string memory image,
         bytes32 nonce,
         bytes memory signature
     ) internal view returns (address) {
         // Hash the agentAddresses array separately
         bytes32 agentAddressesHash = keccak256(abi.encodePacked(agentAddresses));
+        bytes32 nameHash = keccak256(abi.encodePacked(name));
+        bytes32 imageHash = keccak256(abi.encodePacked(image));
 
         bytes32 typedDataHash = keccak256(abi.encode(
-            keccak256("MintRequest(address to,bytes32 agentAddressesHash,address signer,bytes32 nonce)"),
+            keccak256("MintRequest(address to,bytes32 agentAddressesHash,address signer,bytes32 nameHash,bytes32 imageHash,bytes32 nonce)"),
             to,
             agentAddressesHash,
             signer,
+            nameHash,
+            imageHash,
             nonce
         ));
 
