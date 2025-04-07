@@ -17,8 +17,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
 
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
 
-    uint256 public nextTokenId;
-    mapping(bytes32 => bool) public usedNonces;
+    uint256 private _nextTokenId;
 
     mapping(uint256 => address) private _signerOf;
     mapping(uint256 => address) private _creatorOf;
@@ -26,6 +25,9 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
 
     mapping(uint256 => string) private _nameOf;
     mapping(uint256 => string) private _baseImageOf;
+
+    mapping(string => bool) private _isNameTaken;
+    mapping(bytes32 => bool) private _isNonceUsed;
 
     string private constant SIGNING_DOMAIN = "AgenticAIAgentCollection";
     string private constant SIGNATURE_VERSION = "1";
@@ -59,6 +61,10 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         _agentDescriptor = IAgenticAIAgentCollectionDescriptor(agentDescriptor);
     }
 
+    function nextTokenId() external view returns (uint256) {
+        return _nextTokenId;
+    }
+
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         return _agentDescriptor.buildTokenURI(this, tokenId);
     }
@@ -83,13 +89,21 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         return _baseImageOf[tokenId];
     }
 
+    function isNameTaken(string memory name) external view returns (bool) {
+        return _isNameTaken[name];
+    }
+
+    function isNonceUsed(bytes32 nonce) external view returns (bool) {
+        return _isNonceUsed[nonce];
+    }
+
     function updateTokenSigner(
         uint256 tokenId,
         address newSigner,
         bytes32 nonce,
         bytes memory signature
     ) external {
-        if (usedNonces[nonce]) {
+        if (_isNonceUsed[nonce]) {
             revert UsedNonce(nonce);
         }
 
@@ -118,7 +132,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         }
 
         _signerOf[tokenId] = newSigner;
-        usedNonces[nonce] = true;
+        _isNonceUsed[nonce] = true;
 
         emit TokenSignerChanged(tokenId, oldSigner, newSigner);
     }
@@ -132,8 +146,12 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         bytes32 nonce,
         bytes memory signature
     ) external {
-        if (usedNonces[nonce]) {
+        if (_isNonceUsed[nonce]) {
             revert UsedNonce(nonce);
+        }
+
+        if (_isNameTaken[name]) {
+            revert UsedName(name);
         }
 
         address recoveredAddress = _recoverMintSigner(
@@ -153,19 +171,21 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
             revert InvalidSigner(recoveredAddress, signer);
         }
 
-        usedNonces[nonce] = true;
-        _nameOf[nextTokenId] = name;
-        _signerOf[nextTokenId] = signer;
-        _creatorOf[nextTokenId] = _msgSender();
-        _walletsOf[nextTokenId] = agentAddresses;
-        _baseImageOf[nextTokenId] = image;
+        _isNonceUsed[nonce] = true;
+        _nameOf[_nextTokenId] = name;
+        _signerOf[_nextTokenId] = signer;
+        _creatorOf[_nextTokenId] = _msgSender();
+        _walletsOf[_nextTokenId] = agentAddresses;
+        _baseImageOf[_nextTokenId] = image;
 
-        _safeMint(to, nextTokenId);
+        _isNameTaken[name] = true;
 
-        emit Minted(to, signer, nextTokenId);
-        emit TokenSignerChanged(nextTokenId, address(0), signer);
+        _safeMint(to, _nextTokenId);
 
-        nextTokenId++;
+        emit Minted(to, signer, _nextTokenId);
+        emit TokenSignerChanged(_nextTokenId, address(0), signer);
+
+        _nextTokenId++;
     }
 
     function _recoverUpdateTokenSignerSigner(

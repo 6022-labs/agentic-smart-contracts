@@ -33,6 +33,11 @@ interface IAgenticAIAgentCollection is IERC721 {
     error UsedNonce(bytes32 nonce);
 
     /**
+     * @dev Error when the name is already in use.
+     */
+    error UsedName(string name);
+
+    /**
      * @dev Error when the signer is invalid.
      */
     error InvalidSigner(address signer, address expectedSigner);
@@ -78,4 +83,6 @@ interface IAgenticAIAgentCollection is IERC721 {
     function baseImageOf(uint256 tokenId) external view returns (string memory);
 
     function walletsOf(uint256 tokenId) external view returns (address[] memory);
+
+    function isNameTaken(string memory name) external view returns (bool);
 }

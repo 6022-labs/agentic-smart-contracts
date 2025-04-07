@@ -4,7 +4,7 @@ import { AgenticAIAgentCollection } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
-describe("WhenMintingWithSignature", function () {
+describe("WhenMinting", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _agenticAIAgentCollection: AgenticAIAgentCollection;
@@ -110,7 +110,7 @@ describe("WhenMintingWithSignature", function () {
           agentAddresses,
           name,
           baseImageCid,
-          "1"
+          nonce
         );
 
         await _agenticAIAgentCollection
@@ -138,6 +138,61 @@ describe("WhenMintingWithSignature", function () {
               signature
             )
         ).to.be.revertedWithCustomError(_agenticAIAgentCollection, "UsedNonce");
+      });
+    });
+
+    describe("Given a name already taken", function () {
+      it("Should revert with 'UsedName' error", async function () {
+        const nonce1 = "1";
+        const nonce2 = "2";
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+        const agentAddresses = [generateRandomAddress()];
+
+        const signature1 = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          name,
+          baseImageCid,
+          nonce1
+        );
+
+        const signature2 = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          name,
+          baseImageCid,
+          nonce2
+        );
+
+        await _agenticAIAgentCollection
+          .connect(_otherAccount)
+          .mint(
+            _otherAccount.address,
+            agentAddresses,
+            _signer.address,
+            name,
+            baseImageCid,
+            ethers.id(nonce1),
+            signature1
+          );
+
+        await expect(
+          _agenticAIAgentCollection
+            .connect(_otherAccount)
+            .mint(
+              _otherAccount.address,
+              agentAddresses,
+              _signer.address,
+              name,
+              baseImageCid,
+              ethers.id(nonce2),
+              signature2
+            )
+        ).to.be.revertedWithCustomError(_agenticAIAgentCollection, "UsedName");
       });
     });
 
@@ -244,7 +299,8 @@ describe("WhenMintingWithSignature", function () {
         const agentAddresses1 = [generateRandomAddress()];
         const agentAddresses2 = [generateRandomAddress()];
 
-        const name = "Test Agent";
+        const name1 = "Test Agent 1";
+        const name2 = "Test Agent 2";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -252,7 +308,7 @@ describe("WhenMintingWithSignature", function () {
           _signer,
           _otherAccount.address,
           agentAddresses1,
-          name,
+          name1,
           baseImageCid,
           nonce1
         );
@@ -260,7 +316,7 @@ describe("WhenMintingWithSignature", function () {
           _signer,
           _otherAccount.address,
           agentAddresses2,
-          name,
+          name2,
           baseImageCid,
           nonce2
         );
@@ -271,7 +327,7 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses1,
             _signer.address,
-            name,
+            name1,
             baseImageCid,
             ethers.id(nonce1),
             signature1
@@ -283,7 +339,7 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses2,
             _signer.address,
-            name,
+            name2,
             baseImageCid,
             ethers.id(nonce2),
             signature2
@@ -303,7 +359,8 @@ describe("WhenMintingWithSignature", function () {
         const agentAddresses1 = [generateRandomAddress()];
         const agentAddresses2 = [generateRandomAddress()];
 
-        const name = "Test Agent";
+        const name1 = "Test Agent 1";
+        const name2 = "Test Agent 2";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -311,7 +368,7 @@ describe("WhenMintingWithSignature", function () {
           _signer,
           _otherAccount.address,
           agentAddresses1,
-          name,
+          name1,
           baseImageCid,
           nonce1
         );
@@ -319,7 +376,7 @@ describe("WhenMintingWithSignature", function () {
           _signer,
           _otherAccount.address,
           agentAddresses2,
-          name,
+          name2,
           baseImageCid,
           nonce2
         );
@@ -330,7 +387,7 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses1,
             _signer.address,
-            name,
+            name1,
             baseImageCid,
             ethers.id(nonce1),
             signature1
@@ -344,7 +401,7 @@ describe("WhenMintingWithSignature", function () {
             _otherAccount.address,
             agentAddresses2,
             _signer.address,
-            name,
+            name2,
             baseImageCid,
             ethers.id(nonce2),
             signature2
@@ -383,7 +440,7 @@ describe("WhenMintingWithSignature", function () {
           );
 
         expect(
-          await _agenticAIAgentCollection.usedNonces(
+          await _agenticAIAgentCollection.isNonceUsed(
             ethers.keccak256(ethers.toUtf8Bytes(nonce.toString()))
           )
         ).to.be.true;
@@ -573,6 +630,38 @@ describe("WhenMintingWithSignature", function () {
         expect(await _agenticAIAgentCollection.creatorOf(nextTokenId)).to.equal(
           _otherAccount.address
         );
+      });
+
+      it("Should mark name as taken", async function () {
+        const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
+
+        const name = "Test Agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
+        const signature = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          name,
+          baseImageCid,
+          nonce
+        );
+
+        await _agenticAIAgentCollection
+          .connect(_otherAccount)
+          .mint(
+            _otherAccount.address,
+            agentAddresses,
+            _signer.address,
+            name,
+            baseImageCid,
+            ethers.id(nonce),
+            signature
+          );
+
+        expect(await _agenticAIAgentCollection.isNameTaken(name)).to.be.true;
       });
 
       it("Should emit a Minted event", async function () {
