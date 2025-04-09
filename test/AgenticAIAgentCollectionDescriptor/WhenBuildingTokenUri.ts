@@ -126,30 +126,32 @@ describe("WhenBuildingTokenUri", function () {
   });
 
   describe("Given token id exists", function () {
-    let _tokenId: number = 0;
-    let _name: string = "Test Agent";
-    let _baseImageCid: string =
+    let _tokenId: bigint;
+    let _name = "agent";
+    let _imageCid: string =
       "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
-    let _agentAddresses: string[] = [generateRandomAddress()];
 
     beforeEach(async function () {
       const nonce = "1";
+      const agentAddresses = [generateRandomAddress()];
+
+      _tokenId = await _agenticAIAgentCollection.nextTokenId();
 
       const signature = await signMintRequest(
         _signer,
         _owner.address,
-        _agentAddresses,
+        agentAddresses,
         _name,
-        _baseImageCid,
+        _imageCid,
         nonce
       );
 
       await _agenticAIAgentCollection.mint(
         _owner.address,
-        _agentAddresses,
+        agentAddresses,
         _signer.address,
         _name,
-        _baseImageCid,
+        _imageCid,
         ethers.id(nonce),
         signature
       );
@@ -217,19 +219,8 @@ describe("WhenBuildingTokenUri", function () {
       ).toString("utf-8");
       const parsedTokenURI = JSON.parse(decodedTokenURI);
 
-      const parsedImage = Buffer.from(
-        parsedTokenURI.image.replace("data:image/svg+xml;base64,", ""),
-        "base64"
-      ).toString("utf-8");
-
-      // Image is a SVG
-      expect(parsedImage).to.contain(ipfsGateway + _baseImageCid);
-      expect(parsedImage).to.contain(_tokenId);
-      expect(parsedImage).to.contain(_name);
-      expect(parsedImage).to.contain(
-        (await _signer.getAddress()).toLowerCase()
-      );
-      expect(parsedImage).to.contain(_agentAddresses[0].toLowerCase());
+      expect(parsedTokenURI.image).to.contain(ipfsGateway);
+      expect(parsedTokenURI.image).to.contain(_imageCid);
     });
   });
 });

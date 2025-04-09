@@ -100,7 +100,7 @@ describe("WhenMinting", function () {
     describe("Given a valid nonce used twice", function () {
       it("Should revert with 'UsedNonce' error on second attempt", async function () {
         const nonce = "1";
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
@@ -145,7 +145,7 @@ describe("WhenMinting", function () {
       it("Should revert with 'UsedName' error", async function () {
         const nonce1 = "1";
         const nonce2 = "2";
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
@@ -199,7 +199,7 @@ describe("WhenMinting", function () {
     describe("Given a signature that does not match parameters", function () {
       it("Should revert with 'NotSigner' error", async function () {
         const nonce = "1";
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
@@ -231,10 +231,11 @@ describe("WhenMinting", function () {
     describe("Given a signature that matches parameters", function () {
       it("Should mint the token", async function () {
         const nonce = "1";
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
+
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
@@ -258,15 +259,18 @@ describe("WhenMinting", function () {
             )
         )
           .to.emit(_agenticAIAgentCollection, "Transfer")
-          .withArgs(ethers.ZeroAddress, _otherAccount.address, 0);
+          .withArgs(ethers.ZeroAddress, _otherAccount.address, 1);
       });
 
       it("Should assign the owner of the token", async function () {
         const nonce = "1";
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
         const signature = await signMintRequest(
           _signer,
           _otherAccount.address,
@@ -288,7 +292,7 @@ describe("WhenMinting", function () {
             signature
           );
 
-        expect(await _agenticAIAgentCollection.ownerOf(0)).to.equal(
+        expect(await _agenticAIAgentCollection.ownerOf(nextTokenId)).to.equal(
           _otherAccount.address
         );
       });
@@ -299,10 +303,12 @@ describe("WhenMinting", function () {
         const agentAddresses1 = [generateRandomAddress()];
         const agentAddresses2 = [generateRandomAddress()];
 
-        const name1 = "Test Agent 1";
-        const name2 = "Test Agent 2";
+        const name1 = "test-agent-1";
+        const name2 = "test-agent-2";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
+        const baseNextTokenId = await _agenticAIAgentCollection.nextTokenId();
 
         const signature1 = await signMintRequest(
           _signer,
@@ -345,12 +351,13 @@ describe("WhenMinting", function () {
             signature2
           );
 
-        expect(await _agenticAIAgentCollection.ownerOf(0)).to.equal(
-          _otherAccount.address
-        );
-        expect(await _agenticAIAgentCollection.ownerOf(1)).to.equal(
-          _otherAccount.address
-        );
+        expect(
+          await _agenticAIAgentCollection.ownerOf(baseNextTokenId)
+        ).to.equal(_otherAccount.address);
+
+        expect(
+          await _agenticAIAgentCollection.ownerOf(baseNextTokenId + BigInt(1))
+        ).to.equal(_otherAccount.address);
       });
 
       it("Should increment next token ID", async function () {
@@ -359,10 +366,12 @@ describe("WhenMinting", function () {
         const agentAddresses1 = [generateRandomAddress()];
         const agentAddresses2 = [generateRandomAddress()];
 
-        const name1 = "Test Agent 1";
-        const name2 = "Test Agent 2";
+        const name1 = "test-agent-1";
+        const name2 = "test-agent-2";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
+        const baseNextTokenId = await _agenticAIAgentCollection.nextTokenId();
 
         const signature1 = await signMintRequest(
           _signer,
@@ -393,7 +402,9 @@ describe("WhenMinting", function () {
             signature1
           );
 
-        expect(await _agenticAIAgentCollection.nextTokenId()).to.equal(1);
+        expect(await _agenticAIAgentCollection.nextTokenId()).to.equal(
+          baseNextTokenId + BigInt(1)
+        );
 
         await _agenticAIAgentCollection
           .connect(_otherAccount)
@@ -407,14 +418,16 @@ describe("WhenMinting", function () {
             signature2
           );
 
-        expect(await _agenticAIAgentCollection.nextTokenId()).to.equal(2);
+        expect(await _agenticAIAgentCollection.nextTokenId()).to.equal(
+          baseNextTokenId + BigInt(2)
+        );
       });
 
       it("Should mark the nonce as used", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -450,7 +463,7 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -486,7 +499,7 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -528,7 +541,7 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -564,7 +577,7 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -591,16 +604,16 @@ describe("WhenMinting", function () {
             signature
           );
 
-        expect(
-          await _agenticAIAgentCollection.baseImageOf(nextTokenId)
-        ).to.equal(baseImageCid);
+        expect(await _agenticAIAgentCollection.imageOf(nextTokenId)).to.equal(
+          baseImageCid
+        );
       });
 
       it("Should assign creator to the token", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -632,11 +645,11 @@ describe("WhenMinting", function () {
         );
       });
 
-      it("Should mark name as taken", async function () {
+      it("Should assign token id to name", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -648,6 +661,8 @@ describe("WhenMinting", function () {
           baseImageCid,
           nonce
         );
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
 
         await _agenticAIAgentCollection
           .connect(_otherAccount)
@@ -661,14 +676,16 @@ describe("WhenMinting", function () {
             signature
           );
 
-        expect(await _agenticAIAgentCollection.isNameTaken(name)).to.be.true;
+        expect(await _agenticAIAgentCollection.tokenIdOf(name)).to.be.equal(
+          nextTokenId
+        );
       });
 
       it("Should emit a Minted event", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -704,7 +721,7 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
 
-        const name = "Test Agent";
+        const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -743,7 +760,7 @@ describe("WhenMinting", function () {
       const nonce = "1";
       const agentAddresses = [generateRandomAddress()];
 
-      const name = "Test Agent";
+      const name = "test-agent";
       const baseImageCid =
         "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 

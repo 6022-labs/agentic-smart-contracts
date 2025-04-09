@@ -43,6 +43,11 @@ interface IAgenticAIAgentCollection is IERC721 {
     error InvalidSigner(address signer, address expectedSigner);
 
     /**
+     * @dev Error when the name is invalid.
+     */
+    error InvalidName(string name);
+
+    /**
      * @dev Error when the address is not a signer.
      */
     error NotSigner(address);
@@ -80,9 +85,9 @@ interface IAgenticAIAgentCollection is IERC721 {
 
     function nameOf(uint256 tokenId) external view returns (string memory);
 
-    function baseImageOf(uint256 tokenId) external view returns (string memory);
+    function imageOf(uint256 tokenId) external view returns (string memory);
 
     function walletsOf(uint256 tokenId) external view returns (address[] memory);
 
-    function isNameTaken(string memory name) external view returns (bool);
+    function tokenIdOf(string memory name) external view returns (uint256);
 }

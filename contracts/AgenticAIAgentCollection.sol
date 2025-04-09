@@ -17,16 +17,16 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
 
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
 
-    uint256 private _nextTokenId;
+    uint256 private _nextTokenId = 1;
 
     mapping(uint256 => address) private _signerOf;
     mapping(uint256 => address) private _creatorOf;
     mapping(uint256 => address[]) private _walletsOf;
 
     mapping(uint256 => string) private _nameOf;
-    mapping(uint256 => string) private _baseImageOf;
+    mapping(uint256 => string) private _imageOf;
+    mapping(string => uint256) private _tokenIdOf;
 
-    mapping(string => bool) private _isNameTaken;
     mapping(bytes32 => bool) private _isNonceUsed;
 
     string private constant SIGNING_DOMAIN = "AgenticAIAgentCollection";
@@ -66,31 +66,43 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        _requireMinted(tokenId);
+
         return _agentDescriptor.buildTokenURI(this, tokenId);
     }
 
     function signerOf(uint256 tokenId) external view returns (address) {
+        _requireMinted(tokenId);
+
         return _signerOf[tokenId];
     }
 
     function creatorOf(uint256 tokenId) external view returns (address) {
+        _requireMinted(tokenId);
+
         return _creatorOf[tokenId];
     }
 
     function walletsOf(uint256 tokenId) external view returns (address[] memory) {
+        _requireMinted(tokenId);
+
         return _walletsOf[tokenId];
     }
 
     function nameOf(uint256 tokenId) external view returns (string memory) {
+        _requireMinted(tokenId);
+
         return _nameOf[tokenId];
     }
 
-    function baseImageOf(uint256 tokenId) external view returns (string memory) {
-        return _baseImageOf[tokenId];
+    function imageOf(uint256 tokenId) external view returns (string memory) {
+        _requireMinted(tokenId);
+
+        return _imageOf[tokenId];
     }
 
-    function isNameTaken(string memory name) external view returns (bool) {
-        return _isNameTaken[name];
+    function tokenIdOf(string memory name) external view returns (uint256) {
+        return _tokenIdOf[name];
     }
 
     function isNonceUsed(bytes32 nonce) external view returns (bool) {
@@ -146,11 +158,15 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         bytes32 nonce,
         bytes memory signature
     ) external {
+        if (!_isValidENSName(name)) {
+            revert InvalidName(name);
+        }
+
         if (_isNonceUsed[nonce]) {
             revert UsedNonce(nonce);
         }
 
-        if (_isNameTaken[name]) {
+        if (_tokenIdOf[name] != 0) {
             revert UsedName(name);
         }
 
@@ -176,9 +192,9 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         _signerOf[_nextTokenId] = signer;
         _creatorOf[_nextTokenId] = _msgSender();
         _walletsOf[_nextTokenId] = agentAddresses;
-        _baseImageOf[_nextTokenId] = image;
+        _imageOf[_nextTokenId] = image;
 
-        _isNameTaken[name] = true;
+        _tokenIdOf[name] = _nextTokenId;
 
         _safeMint(to, _nextTokenId);
 
@@ -237,5 +253,35 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
 
         // Recover signer and check role
         return ECDSA.recover(digest, signature);
+    }
+
+    function _isValidENSName(string memory name) internal pure returns (bool) {
+        bytes memory nameBytes = bytes(name);
+        if (nameBytes.length == 0) {
+            return false;
+        }
+
+        for (uint256 i = 0; i < nameBytes.length; i++) {
+            bytes1 char = nameBytes[i];
+            if (
+                !(char >= 0x61 && char <= 0x7A) && // a-z
+                !(char >= 0x30 && char <= 0x39) && // 0-9
+                !(char == 0x2D)                   // -
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @dev Reverts if the `tokenId` doesn't have a current owner (it hasn't been minted, or it has been burned).
+     */
+    function _requireMinted(uint256 tokenId) internal view returns (address) {
+        if (tokenId == 0 || tokenId >= _nextTokenId) {
+            revert ERC721NonexistentToken(tokenId);
+        }
+        return _ownerOf(tokenId);
     }
 }

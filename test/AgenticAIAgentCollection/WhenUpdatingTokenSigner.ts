@@ -71,7 +71,7 @@ describe("WhenUpdatingTokenSigner", function () {
   }
 
   async function mintWithSignature(signer: HardhatEthersSigner, to: string) {
-    const name = "Test Agent";
+    const name = "test-agent";
     const baseImageCid =
       "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 

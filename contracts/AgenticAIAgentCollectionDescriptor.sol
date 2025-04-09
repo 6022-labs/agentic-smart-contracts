@@ -4,7 +4,6 @@ pragma solidity ^0.8.28;
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 
-import { AgentImageSvg } from "./libraries/AgentImageSvg.sol";
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IAgenticAIAgentCollection } from "./interfaces/IAgenticAIAgentCollection.sol";
@@ -24,25 +23,17 @@ contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescript
     }
 
     function buildTokenURI(IAgenticAIAgentCollection collection, uint256 tokenId) external view returns (string memory) {
-        address signer = collection.signerOf(tokenId);
-        address creator = collection.creatorOf(tokenId);
         string memory name = collection.nameOf(tokenId);
-        address[] memory wallets = collection.walletsOf(tokenId);
-        string memory baseImage = collection.baseImageOf(tokenId); 
+        string memory image = collection.imageOf(tokenId); 
 
         string memory description = _generateDescription(
             _escapeQuotes(name),
             tokenId
         );
 
-        string memory image = Base64.encode(bytes(_generateSVGImage(
-            name,
-            tokenId,
-            signer,
-            creator,
-            wallets,
-            baseImage
-        )));
+        string memory imageUrl = _generateImageUrl(
+            image
+        );
 
         return
             string(
@@ -56,8 +47,7 @@ contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescript
                                 '", "description":"',
                                 description,
                                 '", "image": "',
-                                "data:image/svg+xml;base64,",
-                                image,
+                                imageUrl,
                                 '"}'
                             )
                         )
@@ -111,64 +101,15 @@ contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescript
             );
     }
 
-    function _generateSVGImage(
-        string memory name,
-        uint256 tokenId,
-        address signer,
-        address creator,
-        address[] memory wallets,
-        string memory baseImage
-    ) internal view returns (string memory svg) {
-        bytes32 hash = keccak256(abi.encodePacked(tokenId));
-        uint256 numberOfColors = 3 + (uint256(uint8(hash[0])) % 8); // Random number between 3 and 10
-
-        string[] memory borderColors = new string[](numberOfColors);
-
-        for (uint256 i = 0; i < numberOfColors; i++) {
-            string memory borderColor = _colorFromHash(hash, uint8(i * 3));
-            borderColors[i] = borderColor;
-        }
-
-        AgentImageSvg.SVGParams memory svgParams = AgentImageSvg.SVGParams({
-            name: name,
-            tokenId: tokenId,
-            signer: signer,
-            creator: creator,
-            wallets: wallets,
-            borderColors: borderColors,
-            baseImage: baseImage,
-            ipfsGateway: _ipfsGateway
-        });
-
-        return AgentImageSvg.generateSVG(svgParams);
-    }
-
-    function _colorFromHash(
-        bytes32 hash,
-        uint8 offset
-    ) private pure returns (string memory) {
-        uint8 r = uint8(hash[offset]);
-        uint8 g = uint8(hash[offset + 1]);
-        uint8 b = uint8(hash[offset + 2]);
+    function _generateImageUrl(
+        string memory image
+    ) internal view returns (string memory) {
         return
             string(
                 abi.encodePacked(
-                    "#",
-                    _toHexString(r),
-                    _toHexString(g),
-                    _toHexString(b)
+                    _ipfsGateway,
+                    image
                 )
             );
-    }
-
-    function _toHexString(uint8 value) private pure returns (string memory) {
-        bytes memory buffer = new bytes(2);
-        buffer[0] = _hexChar(value / 16);
-        buffer[1] = _hexChar(value % 16);
-        return string(buffer);
-    }
-
-    function _hexChar(uint8 value) private pure returns (bytes1) {
-        return value < 10 ? bytes1(value + 48) : bytes1(value + 87);
     }
 }
