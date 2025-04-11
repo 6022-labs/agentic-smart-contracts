@@ -7,7 +7,7 @@ pragma solidity ^0.8.28;
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IAgenticAIAgentCollection } from "./interfaces/IAgenticAIAgentCollection.sol";
-import { IAgenticAIAgentCollectionDescriptor } from "./interfaces/IAgenticAIAgentCollectionDescriptor.sol";
+import { AgentInformation, IAgenticAIAgentCollectionDescriptor } from "./interfaces/IAgenticAIAgentCollectionDescriptor.sol";
 
 contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescriptor {
     using Strings for uint256;
@@ -22,18 +22,19 @@ contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescript
         _ipfsGateway = ipfsGateway;
     }
 
-    function buildTokenURI(IAgenticAIAgentCollection collection, uint256 tokenId) external view returns (string memory) {
+    function buildTokenURI(
+        IAgenticAIAgentCollection collection,
+        uint256 tokenId
+    ) external view returns (string memory) {
         string memory name = collection.nameOf(tokenId);
-        string memory image = collection.imageOf(tokenId); 
+        string memory image = collection.imageOf(tokenId);
 
         string memory description = _generateDescription(
             _escapeQuotes(name),
             tokenId
         );
 
-        string memory imageUrl = _generateImageUrl(
-            image
-        );
+        string memory imageUrl = _generateImageUrl(image);
 
         return
             string(
@@ -54,6 +55,22 @@ contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescript
                     )
                 )
             );
+    }
+
+    function agentInformation(
+        IAgenticAIAgentCollection collection,
+        uint256 tokenId
+    ) external view override returns (AgentInformation memory) {
+        return
+            AgentInformation({
+                name: collection.nameOf(tokenId),
+                role: collection.roleOf(tokenId),
+                image: collection.imageOf(tokenId),
+                owner: collection.ownerOf(tokenId),
+                signer: collection.signerOf(tokenId),
+                creator: collection.creatorOf(tokenId),
+                wallets: collection.walletsOf(tokenId)
+            });
     }
 
     function _escapeQuotes(
@@ -104,12 +121,6 @@ contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescript
     function _generateImageUrl(
         string memory image
     ) internal view returns (string memory) {
-        return
-            string(
-                abi.encodePacked(
-                    _ipfsGateway,
-                    image
-                )
-            );
+        return string(abi.encodePacked(_ipfsGateway, image));
     }
 }
