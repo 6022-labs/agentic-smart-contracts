@@ -66,6 +66,7 @@ describe("WhenBuildingTokenUri", function () {
     signer: HardhatEthersSigner,
     to: string,
     agentAddresses: string[],
+    role: string,
     name: string,
     image: string,
     nonce: string
@@ -82,6 +83,7 @@ describe("WhenBuildingTokenUri", function () {
         { name: "to", type: "address" },
         { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
         { name: "signer", type: "address" },
+        { name: "roleHash", type: "bytes32" },
         { name: "nameHash", type: "bytes32" },
         { name: "imageHash", type: "bytes32" },
         { name: "nonce", type: "bytes32" },
@@ -91,6 +93,7 @@ describe("WhenBuildingTokenUri", function () {
     const agentAddressesHash = ethers.keccak256(
       ethers.solidityPacked(["address[]"], [agentAddresses])
     );
+    const roleHash = ethers.keccak256(ethers.toUtf8Bytes(role));
     const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
     const imageHash = ethers.keccak256(ethers.toUtf8Bytes(image));
 
@@ -98,6 +101,7 @@ describe("WhenBuildingTokenUri", function () {
       to,
       agentAddressesHash,
       signer: signer.address,
+      roleHash,
       nameHash,
       imageHash,
       nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
@@ -130,6 +134,7 @@ describe("WhenBuildingTokenUri", function () {
     let _name = "agent";
     let _imageCid: string =
       "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+    const _role = "facilitator";
 
     beforeEach(async function () {
       const nonce = "1";
@@ -141,6 +146,7 @@ describe("WhenBuildingTokenUri", function () {
         _signer,
         _owner.address,
         agentAddresses,
+        _role,
         _name,
         _imageCid,
         nonce
@@ -150,6 +156,7 @@ describe("WhenBuildingTokenUri", function () {
         _owner.address,
         agentAddresses,
         _signer.address,
+        _role,
         _name,
         _imageCid,
         ethers.id(nonce),

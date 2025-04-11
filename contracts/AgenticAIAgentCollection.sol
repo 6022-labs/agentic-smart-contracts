@@ -19,6 +19,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
 
     uint256 private _nextTokenId = 1;
 
+    mapping(uint256 => string) private _roleOf;
     mapping(uint256 => address) private _signerOf;
     mapping(uint256 => address) private _creatorOf;
     mapping(uint256 => address[]) private _walletsOf;
@@ -81,6 +82,12 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         _requireMinted(tokenId);
 
         return _creatorOf[tokenId];
+    }
+
+    function roleOf(uint256 tokenId) external view returns (string memory) {
+        _requireMinted(tokenId);
+
+        return _roleOf[tokenId];
     }
 
     function walletsOf(uint256 tokenId) external view returns (address[] memory) {
@@ -153,6 +160,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         address to,
         address[] memory agentAddresses,
         address signer,
+        string memory role,
         string memory name,
         string memory image,
         bytes32 nonce,
@@ -174,6 +182,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
             to,
             agentAddresses,
             signer,
+            role,
             name,
             image,
             nonce,
@@ -188,6 +197,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         }
 
         _isNonceUsed[nonce] = true;
+        _roleOf[_nextTokenId] = role;
         _nameOf[_nextTokenId] = name;
         _signerOf[_nextTokenId] = signer;
         _creatorOf[_nextTokenId] = _msgSender();
@@ -228,6 +238,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         address to,
         address[] memory agentAddresses,
         address signer,
+        string memory role,
         string memory name,
         string memory image,
         bytes32 nonce,
@@ -237,12 +248,14 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
         bytes32 agentAddressesHash = keccak256(abi.encodePacked(agentAddresses));
         bytes32 nameHash = keccak256(abi.encodePacked(name));
         bytes32 imageHash = keccak256(abi.encodePacked(image));
+        bytes32 roleHash = keccak256(abi.encodePacked(role));
 
         bytes32 typedDataHash = keccak256(abi.encode(
-            keccak256("MintRequest(address to,bytes32 agentAddressesHash,address signer,bytes32 nameHash,bytes32 imageHash,bytes32 nonce)"),
+            keccak256("MintRequest(address to,bytes32 agentAddressesHash,address signer,bytes32 roleHash,bytes32 nameHash,bytes32 imageHash,bytes32 nonce)"),
             to,
             agentAddressesHash,
             signer,
+            roleHash,
             nameHash,
             imageHash,
             nonce

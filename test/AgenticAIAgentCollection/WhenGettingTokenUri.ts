@@ -11,7 +11,6 @@ describe("WhenGettingTokenUri", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _agenticAIAgentCollection: AgenticAIAgentCollection;
-  let _agenticAIAgentCollectionDescriptor: AgenticAIAgentCollectionDescriptor;
 
   let _owner: HardhatEthersSigner;
   let _signer: HardhatEthersSigner;
@@ -40,22 +39,17 @@ describe("WhenGettingTokenUri", function () {
       owner,
       signer,
       agenticAIAgentCollection,
-      agenticAIAgentCollectionDescriptor,
     };
   }
 
   beforeEach(async function () {
-    const {
-      owner,
-      signer,
-      agenticAIAgentCollection,
-      agenticAIAgentCollectionDescriptor,
-    } = await loadFixture(deployAgenticAIAgentCollectionDescription);
+    const { owner, signer, agenticAIAgentCollection } = await loadFixture(
+      deployAgenticAIAgentCollectionDescription
+    );
 
     _owner = owner;
     _signer = signer;
     _agenticAIAgentCollection = agenticAIAgentCollection;
-    _agenticAIAgentCollectionDescriptor = agenticAIAgentCollectionDescriptor;
   });
 
   function generateRandomAddress() {
@@ -66,6 +60,7 @@ describe("WhenGettingTokenUri", function () {
     signer: HardhatEthersSigner,
     to: string,
     agentAddresses: string[],
+    role: string,
     name: string,
     image: string,
     nonce: string
@@ -82,6 +77,7 @@ describe("WhenGettingTokenUri", function () {
         { name: "to", type: "address" },
         { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
         { name: "signer", type: "address" },
+        { name: "roleHash", type: "bytes32" },
         { name: "nameHash", type: "bytes32" },
         { name: "imageHash", type: "bytes32" },
         { name: "nonce", type: "bytes32" },
@@ -91,6 +87,8 @@ describe("WhenGettingTokenUri", function () {
     const agentAddressesHash = ethers.keccak256(
       ethers.solidityPacked(["address[]"], [agentAddresses])
     );
+
+    const roleHash = ethers.keccak256(ethers.toUtf8Bytes(role));
     const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
     const imageHash = ethers.keccak256(ethers.toUtf8Bytes(image));
 
@@ -98,6 +96,7 @@ describe("WhenGettingTokenUri", function () {
       to,
       agentAddressesHash,
       signer: signer.address,
+      roleHash,
       nameHash,
       imageHash,
       nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
@@ -109,6 +108,7 @@ describe("WhenGettingTokenUri", function () {
   describe("Given token id exists", function () {
     let _tokenId: bigint;
     let _name: string = "test-agent";
+    let _role: string = "facilitator";
     let _baseImageCid: string =
       "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
     let _agentAddresses: string[] = [generateRandomAddress()];
@@ -121,6 +121,7 @@ describe("WhenGettingTokenUri", function () {
         _signer,
         _owner.address,
         _agentAddresses,
+        _role,
         _name,
         _baseImageCid,
         nonce
@@ -130,6 +131,7 @@ describe("WhenGettingTokenUri", function () {
         _owner.address,
         _agentAddresses,
         _signer.address,
+        _role,
         _name,
         _baseImageCid,
         ethers.id(nonce),

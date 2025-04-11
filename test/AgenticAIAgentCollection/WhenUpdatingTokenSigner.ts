@@ -74,6 +74,7 @@ describe("WhenUpdatingTokenSigner", function () {
     const name = "test-agent";
     const baseImageCid =
       "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+    const role = "facilitator";
 
     const nonce = generateRandomNonce();
     const agentAddresses = [generateRandomAddress()];
@@ -90,6 +91,7 @@ describe("WhenUpdatingTokenSigner", function () {
         { name: "to", type: "address" },
         { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
         { name: "signer", type: "address" },
+        { name: "roleHash", type: "bytes32" },
         { name: "nameHash", type: "bytes32" },
         { name: "imageHash", type: "bytes32" },
         { name: "nonce", type: "bytes32" },
@@ -99,6 +101,8 @@ describe("WhenUpdatingTokenSigner", function () {
     const agentAddressesHash = ethers.keccak256(
       ethers.solidityPacked(["address[]"], [agentAddresses])
     );
+
+    const roleHash = ethers.keccak256(ethers.toUtf8Bytes(role));
     const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
     const imageHash = ethers.keccak256(ethers.toUtf8Bytes(baseImageCid));
 
@@ -106,6 +110,7 @@ describe("WhenUpdatingTokenSigner", function () {
       to,
       agentAddressesHash,
       signer: signer.address,
+      roleHash,
       nameHash,
       imageHash,
       nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
@@ -119,6 +124,7 @@ describe("WhenUpdatingTokenSigner", function () {
         to,
         agentAddresses,
         signer.address,
+        role,
         name,
         baseImageCid,
         ethers.id(nonce),

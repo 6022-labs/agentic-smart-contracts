@@ -56,6 +56,7 @@ describe("WhenMinting", function () {
     signer: HardhatEthersSigner,
     to: string,
     agentAddresses: string[],
+    role: string,
     name: string,
     image: string,
     nonce: string
@@ -72,6 +73,7 @@ describe("WhenMinting", function () {
         { name: "to", type: "address" },
         { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
         { name: "signer", type: "address" },
+        { name: "roleHash", type: "bytes32" },
         { name: "nameHash", type: "bytes32" },
         { name: "imageHash", type: "bytes32" },
         { name: "nonce", type: "bytes32" },
@@ -81,6 +83,7 @@ describe("WhenMinting", function () {
     const agentAddressesHash = ethers.keccak256(
       ethers.solidityPacked(["address[]"], [agentAddresses])
     );
+    const roleHash = ethers.keccak256(ethers.toUtf8Bytes(role));
     const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
     const imageHash = ethers.keccak256(ethers.toUtf8Bytes(image));
 
@@ -88,6 +91,7 @@ describe("WhenMinting", function () {
       to,
       agentAddressesHash,
       signer: signer.address,
+      roleHash,
       nameHash,
       imageHash,
       nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
@@ -101,6 +105,8 @@ describe("WhenMinting", function () {
       it("Should revert with 'UsedNonce' error on second attempt", async function () {
         const nonce = "1";
         const name = "test-agent";
+        const role = "facilitator";
+
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
@@ -108,6 +114,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -119,6 +126,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            role,
             name,
             baseImageCid,
             ethers.id(nonce),
@@ -132,6 +140,7 @@ describe("WhenMinting", function () {
               _otherAccount.address,
               agentAddresses,
               _signer.address,
+              role,
               name,
               baseImageCid,
               ethers.id(nonce),
@@ -146,6 +155,8 @@ describe("WhenMinting", function () {
         const nonce1 = "1";
         const nonce2 = "2";
         const name = "test-agent";
+        const role = "facilitator";
+
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
@@ -154,6 +165,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce1
@@ -163,6 +175,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce2
@@ -174,6 +187,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            role,
             name,
             baseImageCid,
             ethers.id(nonce1),
@@ -187,6 +201,7 @@ describe("WhenMinting", function () {
               _otherAccount.address,
               agentAddresses,
               _signer.address,
+              role,
               name,
               baseImageCid,
               ethers.id(nonce2),
@@ -200,6 +215,8 @@ describe("WhenMinting", function () {
       it("Should revert with 'NotSigner' error", async function () {
         const nonce = "1";
         const name = "test-agent";
+        const role = "facilitator";
+
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
@@ -207,6 +224,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -219,6 +237,7 @@ describe("WhenMinting", function () {
               _signer.address,
               agentAddresses,
               _signer.address,
+              role,
               name,
               baseImageCid,
               ethers.id(nonce),
@@ -232,6 +251,8 @@ describe("WhenMinting", function () {
       it("Should mint the token", async function () {
         const nonce = "1";
         const name = "test-agent";
+        const role = "facilitator";
+
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
@@ -240,6 +261,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -252,6 +274,7 @@ describe("WhenMinting", function () {
               _otherAccount.address,
               agentAddresses,
               _signer.address,
+              role,
               name,
               baseImageCid,
               ethers.id(nonce),
@@ -265,6 +288,8 @@ describe("WhenMinting", function () {
       it("Should assign the owner of the token", async function () {
         const nonce = "1";
         const name = "test-agent";
+        const role = "facilitator";
+
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
@@ -275,6 +300,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -286,6 +312,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            role,
             name,
             baseImageCid,
             ethers.id(nonce),
@@ -305,6 +332,8 @@ describe("WhenMinting", function () {
 
         const name1 = "test-agent-1";
         const name2 = "test-agent-2";
+
+        const role = "facilitator";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -314,6 +343,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses1,
+          role,
           name1,
           baseImageCid,
           nonce1
@@ -322,6 +352,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses2,
+          role,
           name2,
           baseImageCid,
           nonce2
@@ -333,6 +364,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses1,
             _signer.address,
+            role,
             name1,
             baseImageCid,
             ethers.id(nonce1),
@@ -345,6 +377,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses2,
             _signer.address,
+            role,
             name2,
             baseImageCid,
             ethers.id(nonce2),
@@ -368,6 +401,8 @@ describe("WhenMinting", function () {
 
         const name1 = "test-agent-1";
         const name2 = "test-agent-2";
+
+        const role = "facilitator";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
@@ -377,6 +412,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses1,
+          role,
           name1,
           baseImageCid,
           nonce1
@@ -385,6 +421,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses2,
+          role,
           name2,
           baseImageCid,
           nonce2
@@ -396,6 +433,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses1,
             _signer.address,
+            role,
             name1,
             baseImageCid,
             ethers.id(nonce1),
@@ -412,6 +450,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses2,
             _signer.address,
+            role,
             name2,
             baseImageCid,
             ethers.id(nonce2),
@@ -426,6 +465,7 @@ describe("WhenMinting", function () {
       it("Should mark the nonce as used", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
+        const role = "facilitator";
 
         const name = "test-agent";
         const baseImageCid =
@@ -435,6 +475,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -446,6 +487,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            role,
             name,
             baseImageCid,
             ethers.id(nonce),
@@ -462,6 +504,7 @@ describe("WhenMinting", function () {
       it("Should assign signer of the token", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
+        const role = "facilitator";
 
         const name = "test-agent";
         const baseImageCid =
@@ -473,6 +516,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -484,6 +528,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            role,
             name,
             baseImageCid,
             ethers.id(nonce),
@@ -498,6 +543,7 @@ describe("WhenMinting", function () {
       it("Should assign agent addresses to the token", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
+        const role = "facilitator";
 
         const name = "test-agent";
         const baseImageCid =
@@ -509,6 +555,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -520,6 +567,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            role,
             name,
             baseImageCid,
             ethers.id(nonce),
@@ -540,6 +588,7 @@ describe("WhenMinting", function () {
       it("Should assign name to the token", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
+        const role = "facilitator";
 
         const name = "test-agent";
         const baseImageCid =
@@ -551,6 +600,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -562,6 +612,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            role,
             name,
             baseImageCid,
             ethers.id(nonce),
@@ -576,6 +627,7 @@ describe("WhenMinting", function () {
       it("Should assign base image to the token", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
+        const role = "facilitator";
 
         const name = "test-agent";
         const baseImageCid =
@@ -587,6 +639,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -598,6 +651,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            role,
             name,
             baseImageCid,
             ethers.id(nonce),
@@ -612,6 +666,7 @@ describe("WhenMinting", function () {
       it("Should assign creator to the token", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
+        const role = "facilitator";
 
         const name = "test-agent";
         const baseImageCid =
@@ -623,6 +678,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -634,6 +690,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            role,
             name,
             baseImageCid,
             ethers.id(nonce),
@@ -645,9 +702,49 @@ describe("WhenMinting", function () {
         );
       });
 
+      it("Should assign role to the token", async function () {
+        const nonce = "1";
+        const agentAddresses = [generateRandomAddress()];
+        const role = "facilitator";
+
+        const name = "test-agent";
+        const baseImageCid =
+          "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
+        const signature = await signMintRequest(
+          _signer,
+          _otherAccount.address,
+          agentAddresses,
+          role,
+          name,
+          baseImageCid,
+          nonce
+        );
+
+        await _agenticAIAgentCollection
+          .connect(_otherAccount)
+          .mint(
+            _otherAccount.address,
+            agentAddresses,
+            _signer.address,
+            role,
+            name,
+            baseImageCid,
+            ethers.id(nonce),
+            signature
+          );
+
+        expect(await _agenticAIAgentCollection.roleOf(nextTokenId)).to.equal(
+          role
+        );
+      });
+
       it("Should assign token id to name", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
+        const role = "facilitator";
 
         const name = "test-agent";
         const baseImageCid =
@@ -657,6 +754,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -670,6 +768,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            role,
             name,
             baseImageCid,
             ethers.id(nonce),
@@ -684,6 +783,7 @@ describe("WhenMinting", function () {
       it("Should emit a Minted event", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
+        const role = "facilitator";
 
         const name = "test-agent";
         const baseImageCid =
@@ -695,6 +795,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -707,6 +808,7 @@ describe("WhenMinting", function () {
               _otherAccount.address,
               agentAddresses,
               _signer.address,
+              role,
               name,
               baseImageCid,
               ethers.id(nonce),
@@ -720,6 +822,7 @@ describe("WhenMinting", function () {
       it("Should emit a TokenSignerChanged event", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
+        const role = "facilitator";
 
         const name = "test-agent";
         const baseImageCid =
@@ -731,6 +834,7 @@ describe("WhenMinting", function () {
           _signer,
           _otherAccount.address,
           agentAddresses,
+          role,
           name,
           baseImageCid,
           nonce
@@ -743,6 +847,7 @@ describe("WhenMinting", function () {
               _otherAccount.address,
               agentAddresses,
               _signer.address,
+              role,
               name,
               baseImageCid,
               ethers.id(nonce),
@@ -759,6 +864,7 @@ describe("WhenMinting", function () {
     it("Should revert with 'NotSigner' error", async function () {
       const nonce = "1";
       const agentAddresses = [generateRandomAddress()];
+      const role = "facilitator";
 
       const name = "test-agent";
       const baseImageCid =
@@ -768,6 +874,7 @@ describe("WhenMinting", function () {
         _otherAccount,
         _otherAccount.address,
         agentAddresses,
+        role,
         name,
         baseImageCid,
         nonce
@@ -780,6 +887,7 @@ describe("WhenMinting", function () {
             _otherAccount.address,
             agentAddresses,
             _signer.address,
+            role,
             name,
             baseImageCid,
             ethers.id(nonce),

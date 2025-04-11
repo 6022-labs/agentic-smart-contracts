@@ -66,6 +66,7 @@ interface IAgenticAIAgentCollection is IERC721 {
         address to,
         address[] memory agentAddresses,
         address signer,
+        string memory role,
         string memory name,
         string memory image,
         bytes32 nonce,
@@ -82,6 +83,8 @@ interface IAgenticAIAgentCollection is IERC721 {
     function signerOf(uint256 tokenId) external view returns (address);
 
     function creatorOf(uint256 tokenId) external view returns (address);
+
+    function roleOf(uint256 tokenId) external view returns (string memory);
 
     function nameOf(uint256 tokenId) external view returns (string memory);
 
