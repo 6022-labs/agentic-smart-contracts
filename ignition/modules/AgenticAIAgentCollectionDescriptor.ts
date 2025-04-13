@@ -8,7 +8,7 @@ const AgenticAIAgentCollectionDescriptorModule = buildModule(
   (m) => {
     const agenticAIAgentCollectionDescriptor = m.contract(
       "AgenticAIAgentCollectionDescriptor",
-      ["https://ipfs.io/ipfs/"]
+      ["ipfs://"]
     );
 
     return { agenticAIAgentCollectionDescriptor };
