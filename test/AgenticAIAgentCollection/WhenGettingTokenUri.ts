@@ -173,11 +173,7 @@ describe("WhenGettingTokenUri", function () {
       ).toString("utf-8");
       const parsedTokenURI = JSON.parse(decodedTokenURI);
 
-      expect(parsedTokenURI.description).to.contain(
-        "This NFT represent an Agentic AI Agent"
-      );
-      expect(parsedTokenURI.description).to.contain(_name);
-      expect(parsedTokenURI.description).to.contain(_tokenId);
+      expect(parsedTokenURI.description).to.be.equal("6022 AI Agent");
     });
 
     it("Should contains 'image' field in token URI", async function () {

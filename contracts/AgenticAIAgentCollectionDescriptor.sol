@@ -29,10 +29,7 @@ contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescript
         string memory name = collection.nameOf(tokenId);
         string memory image = collection.imageOf(tokenId);
 
-        string memory description = _generateDescription(
-            _escapeQuotes(name),
-            tokenId
-        );
+        string memory description = _generateDescription();
 
         string memory imageUrl = _generateImageUrl(image);
 
@@ -100,22 +97,8 @@ contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescript
         return name;
     }
 
-    function _generateDescription(
-        string memory name,
-        uint256 tokenId
-    ) internal pure returns (string memory) {
-        return
-            string(
-                abi.encodePacked(
-                    "This NFT represent an Agentic AI Agent: ",
-                    name,
-                    " - ",
-                    "Token ID: ",
-                    tokenId.toString(),
-                    ". ",
-                    "The owner of this NFT can change parameters of the associated agent.\\n"
-                )
-            );
+    function _generateDescription() internal pure returns (string memory) {
+        return "6022 AI Agent";
     }
 
     function _generateImageUrl(
