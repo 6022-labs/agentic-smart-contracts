@@ -36,7 +36,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
     IAgenticAIAgentCollectionDescriptor private _agentDescriptor;
 
     constructor(address agentDescriptor)
-        ERC721("AgenticAIAgentCollection", "AIAgent") 
+        ERC721("6022", "6022") 
         EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION)
     {
         _agentDescriptor = IAgenticAIAgentCollectionDescriptor(agentDescriptor);
