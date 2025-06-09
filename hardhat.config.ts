@@ -11,7 +11,15 @@ const privateKey = process?.env?.PRIVATE_KEY?.trim() ?? "";
 const polygonScanApiKey = process?.env?.POLYGONSCAN_API_KEY?.trim() ?? "";
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.28",
+  solidity: {
+    version: "0.8.28",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+    },
+  },
   networks: {
     polygon: {
       gas: "auto",

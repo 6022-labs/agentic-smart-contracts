@@ -6,10 +6,14 @@ pragma solidity ^0.8.28;
 
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { IAgenticAIAgentCollection } from "./interfaces/IAgenticAIAgentCollection.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
+import { IAgenticAIAgentCollectionStates } from "./interfaces/IAgenticAIAgentCollection/IAgenticAIAgentCollectionStates.sol";
 import { AgentInformation, IAgenticAIAgentCollectionDescriptor } from "./interfaces/IAgenticAIAgentCollectionDescriptor.sol";
 
-contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescriptor {
+contract AgenticAIAgentCollectionDescriptor is
+    IAgenticAIAgentCollectionDescriptor
+{
     using Strings for uint256;
 
     string private _ipfsGateway;
@@ -23,11 +27,11 @@ contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescript
     }
 
     function buildTokenURI(
-        IAgenticAIAgentCollection collection,
+        address collection,
         uint256 tokenId
     ) external view returns (string memory) {
-        string memory name = collection.nameOf(tokenId);
-        string memory image = collection.imageOf(tokenId);
+        string memory name = IAgenticAIAgentCollectionStates(collection).nameOf(tokenId);
+        string memory image = IAgenticAIAgentCollectionStates(collection).imageOf(tokenId);
 
         string memory description = _generateDescription();
 
@@ -55,18 +59,30 @@ contract AgenticAIAgentCollectionDescriptor is IAgenticAIAgentCollectionDescript
     }
 
     function agentInformation(
-        IAgenticAIAgentCollection collection,
+        address collection,
         uint256 tokenId
     ) external view override returns (AgentInformation memory) {
         return
             AgentInformation({
-                name: collection.nameOf(tokenId),
-                role: collection.roleOf(tokenId),
-                image: collection.imageOf(tokenId),
-                owner: collection.ownerOf(tokenId),
-                signer: collection.signerOf(tokenId),
-                creator: collection.creatorOf(tokenId),
-                wallets: collection.walletsOf(tokenId)
+                name: IAgenticAIAgentCollectionStates(collection).nameOf(
+                    tokenId
+                ),
+                role: IAgenticAIAgentCollectionStates(collection).roleOf(
+                    tokenId
+                ),
+                image: IAgenticAIAgentCollectionStates(collection).imageOf(
+                    tokenId
+                ),
+                owner: IERC721(collection).ownerOf(tokenId),
+                signer: IAgenticAIAgentCollectionStates(collection).signerOf(
+                    tokenId
+                ),
+                creator: IAgenticAIAgentCollectionStates(collection).creatorOf(
+                    tokenId
+                ),
+                wallets: IAgenticAIAgentCollectionStates(collection).walletsOf(
+                    tokenId
+                )
             });
     }
 

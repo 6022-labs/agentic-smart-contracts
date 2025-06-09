@@ -9,13 +9,16 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IAgenticAIAgentCollection} from "./interfaces/IAgenticAIAgentCollection.sol";
+import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+
 import {IAgenticAIAgentCollectionDescriptor} from "./interfaces/IAgenticAIAgentCollectionDescriptor.sol";
+import {IAgenticAIAgentCollection} from "./interfaces/IAgenticAIAgentCollection/IAgenticAIAgentCollection.sol";
+import {IAgenticAIAgentCollectionsManagerStates} from "./interfaces/IAgenticAIAgentCollectionsManager/IAgenticAIAgentCollectionsManagerStates.sol";
 
 contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAgentCollection {
     using ECDSA for bytes32;
 
-    bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
+    bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
     uint256 private _nextTokenId = 1;
 
@@ -33,43 +36,41 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
     string private constant SIGNING_DOMAIN = "AgenticAIAgentCollection";
     string private constant SIGNATURE_VERSION = "1";
 
-    IAgenticAIAgentCollectionDescriptor private _agentDescriptor;
+    IAgenticAIAgentCollectionsManagerStates private _collectionManager;
+    IAgenticAIAgentCollectionDescriptor private _collectionDescriptor;
 
-    constructor(address agentDescriptor)
-        ERC721("6022", "6022") 
+    constructor(
+        string memory name,
+        string memory symbol,
+        address moderator,
+        address collectionManager,
+        address collectionDescriptor
+    )
+        ERC721(name, symbol)
         EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION)
     {
-        _agentDescriptor = IAgenticAIAgentCollectionDescriptor(agentDescriptor);
+        _collectionManager = IAgenticAIAgentCollectionsManagerStates(collectionManager);
+        _collectionDescriptor = IAgenticAIAgentCollectionDescriptor(collectionDescriptor);
 
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(MODERATOR_ROLE, moderator);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, IERC165, AccessControl) returns (bool) {
         return ERC721.supportsInterface(interfaceId) || AccessControl.supportsInterface(interfaceId);
     }
 
-    function addSigner(address signer) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _grantRole(SIGNER_ROLE, signer);
-        emit SignerAdded(signer);
-    }
-
-    function removeSigner(address signer) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _revokeRole(SIGNER_ROLE, signer);
-        emit SignerRemoved(signer);
-    }
-
-    function updateAgentDescriptor(address agentDescriptor) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _agentDescriptor = IAgenticAIAgentCollectionDescriptor(agentDescriptor);
+    function updateCollectionDescriptor(address collectionDescriptor) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _collectionDescriptor = IAgenticAIAgentCollectionDescriptor(collectionDescriptor);
     }
 
     function nextTokenId() external view returns (uint256) {
         return _nextTokenId;
     }
 
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+    function tokenURI(uint256 tokenId) public view override(ERC721, IERC721Metadata) returns (string memory) {
         _requireMinted(tokenId);
 
-        return _agentDescriptor.buildTokenURI(this, tokenId);
+        return _collectionDescriptor.buildTokenURI(address(this), tokenId);
     }
 
     function signerOf(uint256 tokenId) external view returns (address) {
@@ -130,7 +131,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
             revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
         }
 
-        if (!hasRole(SIGNER_ROLE, newSigner)) {
+        if (!_collectionManager.isSigner(newSigner)) {
             revert NotSigner(newSigner);
         }
 
@@ -146,7 +147,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
             signature
         );
 
-        if (!hasRole(SIGNER_ROLE, recoveredAddress)) {
+        if (!_collectionManager.isSigner(recoveredAddress)) {
             revert NotSigner(recoveredAddress);
         }
 
@@ -189,7 +190,7 @@ contract AgenticAIAgentCollection is ERC721, EIP712, AccessControl, IAgenticAIAg
             signature
         );
 
-        if (!hasRole(SIGNER_ROLE, recoveredAddress)) {
+        if (!_collectionManager.isSigner(recoveredAddress)) {
             revert NotSigner(recoveredAddress);
         }
         if (recoveredAddress != signer) {
