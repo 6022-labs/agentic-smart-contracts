@@ -8,7 +8,6 @@ describe("WhenMinting", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _agenticAIAgentCollection: AgenticAIAgentCollection;
-
   let _owner: HardhatEthersSigner;
   let _signer: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
@@ -18,30 +17,40 @@ describe("WhenMinting", function () {
 
     const [owner, signer, otherAccount] = await ethers.getSigners();
 
-    const AgenticAIAgentCollectionDescriptor = await ethers.getContractFactory(
-      "AgenticAIAgentCollectionDescriptor"
+    const CollectionsManager = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionsManager"
     );
-    const agenticAIAgentCollectionDescriptor =
-      await AgenticAIAgentCollectionDescriptor.deploy(ipfsGateway);
+    const collectionsManager = await CollectionsManager.deploy();
 
-    const AgenticAIAgentCollection = await ethers.getContractFactory(
+    const CollectionsDescriptor = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionsDescriptor"
+    );
+    const collectionsDescriptor = await CollectionsDescriptor.deploy(
+      ipfsGateway
+    );
+
+    const Collection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
     );
-    const agenticAIAgentCollection = await AgenticAIAgentCollection.deploy(
-      await agenticAIAgentCollectionDescriptor.getAddress()
+    const collection = await Collection.deploy(
+      "AgenticAI",
+      "AIA",
+      owner.address,
+      await collectionsManager.getAddress(),
+      await collectionsDescriptor.getAddress()
     );
 
-    // Assign SIGNER_ROLE to _signer
-    await agenticAIAgentCollection.connect(owner).addSigner(signer.address);
+    await collectionsManager.addSigner(signer.address);
 
-    return { agenticAIAgentCollection, owner, signer, otherAccount };
+    return { collection, owner, signer, otherAccount };
   }
 
   beforeEach(async function () {
-    const { agenticAIAgentCollection, owner, signer, otherAccount } =
-      await loadFixture(deployAgenticAIAgentCollection);
+    const { collection, owner, signer, otherAccount } = await loadFixture(
+      deployAgenticAIAgentCollection
+    );
 
-    _agenticAIAgentCollection = agenticAIAgentCollection;
+    _agenticAIAgentCollection = collection;
     _owner = owner;
     _signer = signer;
     _otherAccount = otherAccount;
@@ -51,14 +60,14 @@ describe("WhenMinting", function () {
     return ethers.Wallet.createRandom().address;
   }
 
-  // Function to generate a valid EIP-712 signature
-  async function signMintRequest(
+  async function signMintProposalRequest(
     signer: HardhatEthersSigner,
     to: string,
     agentAddresses: string[],
     role: string,
     name: string,
     image: string,
+    mission: string,
     nonce: string
   ) {
     const domain = {
@@ -69,13 +78,14 @@ describe("WhenMinting", function () {
     };
 
     const types = {
-      MintRequest: [
+      MintProposalRequest: [
         { name: "to", type: "address" },
-        { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
+        { name: "agentAddressesHash", type: "bytes32" },
         { name: "signer", type: "address" },
         { name: "roleHash", type: "bytes32" },
         { name: "nameHash", type: "bytes32" },
         { name: "imageHash", type: "bytes32" },
+        { name: "missionHash", type: "bytes32" },
         { name: "nonce", type: "bytes32" },
       ],
     };
@@ -86,6 +96,7 @@ describe("WhenMinting", function () {
     const roleHash = ethers.keccak256(ethers.toUtf8Bytes(role));
     const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
     const imageHash = ethers.keccak256(ethers.toUtf8Bytes(image));
+    const missionHash = ethers.keccak256(ethers.toUtf8Bytes(mission));
 
     const message = {
       to,
@@ -94,10 +105,51 @@ describe("WhenMinting", function () {
       roleHash,
       nameHash,
       imageHash,
+      missionHash,
       nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
     };
 
     return await signer.signTypedData(domain, types, message);
+  }
+
+  async function proposeAndMint(
+    to: string,
+    agentAddresses: string[],
+    role: string,
+    name: string,
+    image: string,
+    mission: string,
+    nonce: string
+  ) {
+    const proposalId = await _agenticAIAgentCollection.nextProposalId();
+    const signature = await signMintProposalRequest(
+      _signer,
+      to,
+      agentAddresses,
+      role,
+      name,
+      image,
+      mission,
+      nonce
+    );
+
+    await _agenticAIAgentCollection.mintProposal(
+      to,
+      agentAddresses,
+      _signer.address,
+      role,
+      name,
+      image,
+      mission,
+      ethers.id(nonce),
+      signature
+    );
+
+    const tokenId = await _agenticAIAgentCollection.nextTokenId();
+
+    await _agenticAIAgentCollection.connect(_owner).mint(proposalId);
+
+    return tokenId;
   }
 
   describe("Given a signature from signer", function () {
@@ -106,47 +158,47 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const name = "test-agent";
         const role = "facilitator";
-
+        const mission = "";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signMintRequest(
+
+        await proposeAndMint(
+          _otherAccount.address,
+          agentAddresses,
+          role,
+          name,
+          baseImageCid,
+          mission,
+          nonce
+        );
+
+        const signature = await signMintProposalRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
+        await expect(
+          _agenticAIAgentCollection.mintProposal(
             _otherAccount.address,
             agentAddresses,
             _signer.address,
             role,
             name,
             baseImageCid,
+            mission,
             ethers.id(nonce),
             signature
-          );
-
-        await expect(
-          _agenticAIAgentCollection
-            .connect(_otherAccount)
-            .mint(
-              _otherAccount.address,
-              agentAddresses,
-              _signer.address,
-              role,
-              name,
-              baseImageCid,
-              ethers.id(nonce),
-              signature
-            )
-        ).to.be.revertedWithCustomError(_agenticAIAgentCollection, "UsedNonce");
+          )
+        )
+          .to.be.revertedWithCustomError(_agenticAIAgentCollection, "UsedNonce")
+          .withArgs(ethers.id(nonce));
       });
     });
 
@@ -156,58 +208,47 @@ describe("WhenMinting", function () {
         const nonce2 = "2";
         const name = "test-agent";
         const role = "facilitator";
-
+        const mission = "";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
 
-        const signature1 = await signMintRequest(
-          _signer,
+        await proposeAndMint(
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce1
         );
 
-        const signature2 = await signMintRequest(
+        const signature2 = await signMintProposalRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce2
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
+        await expect(
+          _agenticAIAgentCollection.mintProposal(
             _otherAccount.address,
             agentAddresses,
             _signer.address,
             role,
             name,
             baseImageCid,
-            ethers.id(nonce1),
-            signature1
-          );
-
-        await expect(
-          _agenticAIAgentCollection
-            .connect(_otherAccount)
-            .mint(
-              _otherAccount.address,
-              agentAddresses,
-              _signer.address,
-              role,
-              name,
-              baseImageCid,
-              ethers.id(nonce2),
-              signature2
-            )
-        ).to.be.revertedWithCustomError(_agenticAIAgentCollection, "UsedName");
+            mission,
+            ethers.id(nonce2),
+            signature2
+          )
+        )
+          .to.be.revertedWithCustomError(_agenticAIAgentCollection, "UsedName")
+          .withArgs(name);
       });
     });
 
@@ -216,33 +257,33 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const name = "test-agent";
         const role = "facilitator";
-
+        const mission = "";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signMintRequest(
+        const signature = await signMintProposalRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
         await expect(
-          _agenticAIAgentCollection
-            .connect(_otherAccount)
-            .mint(
-              _signer.address,
-              agentAddresses,
-              _signer.address,
-              role,
-              name,
-              baseImageCid,
-              ethers.id(nonce),
-              signature
-            )
+          _agenticAIAgentCollection.mintProposal(
+            _signer.address,
+            agentAddresses,
+            _signer.address,
+            role,
+            name,
+            baseImageCid,
+            mission,
+            ethers.id(nonce),
+            signature
+          )
         ).to.be.revertedWithCustomError(_agenticAIAgentCollection, "NotSigner");
       });
     });
@@ -252,74 +293,62 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const name = "test-agent";
         const role = "facilitator";
-
+        const mission = "";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
 
-        const signature = await signMintRequest(
+        const proposalId = await _agenticAIAgentCollection.nextProposalId();
+        const tokenId = await _agenticAIAgentCollection.nextTokenId();
+
+        const signature = await signMintProposalRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await expect(
-          _agenticAIAgentCollection
-            .connect(_otherAccount)
-            .mint(
-              _otherAccount.address,
-              agentAddresses,
-              _signer.address,
-              role,
-              name,
-              baseImageCid,
-              ethers.id(nonce),
-              signature
-            )
-        )
+        await _agenticAIAgentCollection.mintProposal(
+          _otherAccount.address,
+          agentAddresses,
+          _signer.address,
+          role,
+          name,
+          baseImageCid,
+          mission,
+          ethers.id(nonce),
+          signature
+        );
+
+        await expect(_agenticAIAgentCollection.connect(_owner).mint(proposalId))
           .to.emit(_agenticAIAgentCollection, "Transfer")
-          .withArgs(ethers.ZeroAddress, _otherAccount.address, 1);
+          .withArgs(ethers.ZeroAddress, _otherAccount.address, tokenId);
       });
 
       it("Should assign the owner of the token", async function () {
         const nonce = "1";
         const name = "test-agent";
         const role = "facilitator";
-
+        const mission = "";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
 
-        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
-
-        const signature = await signMintRequest(
-          _signer,
+        const tokenId = await proposeAndMint(
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses,
-            _signer.address,
-            role,
-            name,
-            baseImageCid,
-            ethers.id(nonce),
-            signature
-          );
-
-        expect(await _agenticAIAgentCollection.ownerOf(nextTokenId)).to.equal(
+        expect(await _agenticAIAgentCollection.ownerOf(tokenId)).to.equal(
           _otherAccount.address
         );
       });
@@ -329,67 +358,40 @@ describe("WhenMinting", function () {
         const nonce2 = "2";
         const agentAddresses1 = [generateRandomAddress()];
         const agentAddresses2 = [generateRandomAddress()];
-
         const name1 = "test-agent-1";
         const name2 = "test-agent-2";
-
         const role = "facilitator";
+        const mission = "";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
-        const baseNextTokenId = await _agenticAIAgentCollection.nextTokenId();
+        const baseTokenId = await _agenticAIAgentCollection.nextTokenId();
 
-        const signature1 = await signMintRequest(
-          _signer,
+        await proposeAndMint(
           _otherAccount.address,
           agentAddresses1,
           role,
           name1,
           baseImageCid,
+          mission,
           nonce1
         );
-        const signature2 = await signMintRequest(
-          _signer,
+
+        await proposeAndMint(
           _otherAccount.address,
           agentAddresses2,
           role,
           name2,
           baseImageCid,
+          mission,
           nonce2
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses1,
-            _signer.address,
-            role,
-            name1,
-            baseImageCid,
-            ethers.id(nonce1),
-            signature1
-          );
-
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses2,
-            _signer.address,
-            role,
-            name2,
-            baseImageCid,
-            ethers.id(nonce2),
-            signature2
-          );
-
+        expect(await _agenticAIAgentCollection.ownerOf(baseTokenId)).to.equal(
+          _otherAccount.address
+        );
         expect(
-          await _agenticAIAgentCollection.ownerOf(baseNextTokenId)
-        ).to.equal(_otherAccount.address);
-
-        expect(
-          await _agenticAIAgentCollection.ownerOf(baseNextTokenId + BigInt(1))
+          await _agenticAIAgentCollection.ownerOf(baseTokenId + BigInt(1))
         ).to.equal(_otherAccount.address);
       });
 
@@ -398,67 +400,41 @@ describe("WhenMinting", function () {
         const nonce2 = "2";
         const agentAddresses1 = [generateRandomAddress()];
         const agentAddresses2 = [generateRandomAddress()];
-
         const name1 = "test-agent-1";
         const name2 = "test-agent-2";
-
         const role = "facilitator";
+        const mission = "";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
-        const baseNextTokenId = await _agenticAIAgentCollection.nextTokenId();
+        const baseTokenId = await _agenticAIAgentCollection.nextTokenId();
 
-        const signature1 = await signMintRequest(
-          _signer,
+        await proposeAndMint(
           _otherAccount.address,
           agentAddresses1,
           role,
           name1,
           baseImageCid,
+          mission,
           nonce1
         );
-        const signature2 = await signMintRequest(
-          _signer,
+
+        expect(await _agenticAIAgentCollection.nextTokenId()).to.equal(
+          baseTokenId + BigInt(1)
+        );
+
+        await proposeAndMint(
           _otherAccount.address,
           agentAddresses2,
           role,
           name2,
           baseImageCid,
+          mission,
           nonce2
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses1,
-            _signer.address,
-            role,
-            name1,
-            baseImageCid,
-            ethers.id(nonce1),
-            signature1
-          );
-
         expect(await _agenticAIAgentCollection.nextTokenId()).to.equal(
-          baseNextTokenId + BigInt(1)
-        );
-
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses2,
-            _signer.address,
-            role,
-            name2,
-            baseImageCid,
-            ethers.id(nonce2),
-            signature2
-          );
-
-        expect(await _agenticAIAgentCollection.nextTokenId()).to.equal(
-          baseNextTokenId + BigInt(2)
+          baseTokenId + BigInt(2)
         );
       });
 
@@ -466,76 +442,45 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
         const role = "facilitator";
-
+        const mission = "";
         const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
-        const signature = await signMintRequest(
-          _signer,
+        await proposeAndMint(
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses,
-            _signer.address,
-            role,
-            name,
-            baseImageCid,
-            ethers.id(nonce),
-            signature
-          );
-
-        expect(
-          await _agenticAIAgentCollection.isNonceUsed(
-            ethers.keccak256(ethers.toUtf8Bytes(nonce.toString()))
-          )
-        ).to.be.true;
+        expect(await _agenticAIAgentCollection.isNonceUsed(ethers.id(nonce))).to
+          .be.true;
       });
 
       it("Should assign signer of the token", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
         const role = "facilitator";
-
+        const mission = "";
         const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
-        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
-
-        const signature = await signMintRequest(
-          _signer,
+        const tokenId = await proposeAndMint(
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses,
-            _signer.address,
-            role,
-            name,
-            baseImageCid,
-            ethers.id(nonce),
-            signature
-          );
-
-        expect(await _agenticAIAgentCollection.signerOf(nextTokenId)).to.equal(
+        expect(await _agenticAIAgentCollection.signerOf(tokenId)).to.equal(
           _signer.address
         );
       });
@@ -544,42 +489,24 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
         const role = "facilitator";
-
+        const mission = "";
         const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
-        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
-
-        const signature = await signMintRequest(
-          _signer,
+        const tokenId = await proposeAndMint(
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses,
-            _signer.address,
-            role,
-            name,
-            baseImageCid,
-            ethers.id(nonce),
-            signature
-          );
-
-        const walletsOf = await _agenticAIAgentCollection.walletsOf(
-          nextTokenId
-        );
+        const walletsOf = await _agenticAIAgentCollection.walletsOf(tokenId);
 
         expect(walletsOf.length).to.equal(agentAddresses.length);
-
         for (let i = 0; i < agentAddresses.length; i++) {
           expect(agentAddresses).to.include(walletsOf[i]);
         }
@@ -589,76 +516,44 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
         const role = "facilitator";
-
+        const mission = "";
         const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
-        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
-
-        const signature = await signMintRequest(
-          _signer,
+        const tokenId = await proposeAndMint(
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses,
-            _signer.address,
-            role,
-            name,
-            baseImageCid,
-            ethers.id(nonce),
-            signature
-          );
-
-        expect(await _agenticAIAgentCollection.nameOf(nextTokenId)).to.equal(
-          name
-        );
+        expect(await _agenticAIAgentCollection.nameOf(tokenId)).to.equal(name);
       });
 
       it("Should assign base image to the token", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
         const role = "facilitator";
-
+        const mission = "";
         const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
-        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
-
-        const signature = await signMintRequest(
-          _signer,
+        const tokenId = await proposeAndMint(
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses,
-            _signer.address,
-            role,
-            name,
-            baseImageCid,
-            ethers.id(nonce),
-            signature
-          );
-
-        expect(await _agenticAIAgentCollection.imageOf(nextTokenId)).to.equal(
+        expect(await _agenticAIAgentCollection.imageOf(tokenId)).to.equal(
           baseImageCid
         );
       });
@@ -667,38 +562,23 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
         const role = "facilitator";
-
+        const mission = "";
         const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
-        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
-
-        const signature = await signMintRequest(
-          _signer,
+        const tokenId = await proposeAndMint(
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses,
-            _signer.address,
-            role,
-            name,
-            baseImageCid,
-            ethers.id(nonce),
-            signature
-          );
-
-        expect(await _agenticAIAgentCollection.creatorOf(nextTokenId)).to.equal(
-          _otherAccount.address
+        expect(await _agenticAIAgentCollection.creatorOf(tokenId)).to.equal(
+          _owner.address
         );
       });
 
@@ -706,156 +586,126 @@ describe("WhenMinting", function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
         const role = "facilitator";
-
+        const mission = "";
         const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
-        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
-
-        const signature = await signMintRequest(
-          _signer,
+        const tokenId = await proposeAndMint(
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses,
-            _signer.address,
-            role,
-            name,
-            baseImageCid,
-            ethers.id(nonce),
-            signature
-          );
-
-        expect(await _agenticAIAgentCollection.roleOf(nextTokenId)).to.equal(
-          role
-        );
+        expect(await _agenticAIAgentCollection.roleOf(tokenId)).to.equal(role);
       });
 
       it("Should assign token id to name", async function () {
         const nonce = "1";
         const agentAddresses = [generateRandomAddress()];
         const role = "facilitator";
-
+        const mission = "";
         const name = "test-agent";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
-        const signature = await signMintRequest(
-          _signer,
+        const tokenId = await proposeAndMint(
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
-
-        await _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses,
-            _signer.address,
-            role,
-            name,
-            baseImageCid,
-            ethers.id(nonce),
-            signature
-          );
-
         expect(await _agenticAIAgentCollection.tokenIdOf(name)).to.be.equal(
-          nextTokenId
+          tokenId
         );
       });
 
       it("Should emit a Minted event", async function () {
         const nonce = "1";
-        const agentAddresses = [generateRandomAddress()];
-        const role = "facilitator";
-
         const name = "test-agent";
+        const role = "facilitator";
+        const mission = "";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+        const agentAddresses = [generateRandomAddress()];
 
-        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+        const proposalId = await _agenticAIAgentCollection.nextProposalId();
+        const tokenId = await _agenticAIAgentCollection.nextTokenId();
 
-        const signature = await signMintRequest(
+        const signature = await signMintProposalRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await expect(
-          _agenticAIAgentCollection
-            .connect(_otherAccount)
-            .mint(
-              _otherAccount.address,
-              agentAddresses,
-              _signer.address,
-              role,
-              name,
-              baseImageCid,
-              ethers.id(nonce),
-              signature
-            )
-        )
+        await _agenticAIAgentCollection.mintProposal(
+          _otherAccount.address,
+          agentAddresses,
+          _signer.address,
+          role,
+          name,
+          baseImageCid,
+          mission,
+          ethers.id(nonce),
+          signature
+        );
+
+        await expect(_agenticAIAgentCollection.connect(_owner).mint(proposalId))
           .to.emit(_agenticAIAgentCollection, "Minted")
-          .withArgs(_otherAccount.address, _signer.address, nextTokenId);
+          .withArgs(_otherAccount.address, _signer.address, tokenId);
       });
 
       it("Should emit a TokenSignerChanged event", async function () {
         const nonce = "1";
-        const agentAddresses = [generateRandomAddress()];
-        const role = "facilitator";
-
         const name = "test-agent";
+        const role = "facilitator";
+        const mission = "";
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+        const agentAddresses = [generateRandomAddress()];
 
-        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+        const proposalId = await _agenticAIAgentCollection.nextProposalId();
+        const tokenId = await _agenticAIAgentCollection.nextTokenId();
 
-        const signature = await signMintRequest(
+        const signature = await signMintProposalRequest(
           _signer,
           _otherAccount.address,
           agentAddresses,
           role,
           name,
           baseImageCid,
+          mission,
           nonce
         );
 
-        await expect(
-          _agenticAIAgentCollection
-            .connect(_otherAccount)
-            .mint(
-              _otherAccount.address,
-              agentAddresses,
-              _signer.address,
-              role,
-              name,
-              baseImageCid,
-              ethers.id(nonce),
-              signature
-            )
-        )
+        await _agenticAIAgentCollection.mintProposal(
+          _otherAccount.address,
+          agentAddresses,
+          _signer.address,
+          role,
+          name,
+          baseImageCid,
+          mission,
+          ethers.id(nonce),
+          signature
+        );
+
+        await expect(_agenticAIAgentCollection.connect(_owner).mint(proposalId))
           .to.emit(_agenticAIAgentCollection, "TokenSignerChanged")
-          .withArgs(nextTokenId, ethers.ZeroAddress, _signer.address);
+          .withArgs(tokenId, ethers.ZeroAddress, _signer.address);
       });
     });
   });
@@ -865,34 +715,34 @@ describe("WhenMinting", function () {
       const nonce = "1";
       const agentAddresses = [generateRandomAddress()];
       const role = "facilitator";
-
       const name = "test-agent";
+      const mission = "";
       const baseImageCid =
         "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
 
-      const signature = await signMintRequest(
+      const signature = await signMintProposalRequest(
         _otherAccount,
         _otherAccount.address,
         agentAddresses,
         role,
         name,
         baseImageCid,
+        mission,
         nonce
       );
 
       await expect(
-        _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .mint(
-            _otherAccount.address,
-            agentAddresses,
-            _signer.address,
-            role,
-            name,
-            baseImageCid,
-            ethers.id(nonce),
-            signature
-          )
+        _agenticAIAgentCollection.mintProposal(
+          _otherAccount.address,
+          agentAddresses,
+          _signer.address,
+          role,
+          name,
+          baseImageCid,
+          mission,
+          ethers.id(nonce),
+          signature
+        )
       ).to.be.revertedWithCustomError(_agenticAIAgentCollection, "NotSigner");
     });
   });
