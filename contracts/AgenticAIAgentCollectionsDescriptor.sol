@@ -9,10 +9,10 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import { IAgenticAIAgentCollectionStates } from "./interfaces/IAgenticAIAgentCollection/IAgenticAIAgentCollectionStates.sol";
-import { AgentInformation, IAgenticAIAgentCollectionDescriptor } from "./interfaces/IAgenticAIAgentCollectionDescriptor.sol";
+import { IAgenticAIAgentCollectionsDescriptor } from "./interfaces/IAgenticAIAgentCollectionsDescriptor.sol";
 
-contract AgenticAIAgentCollectionDescriptor is
-    IAgenticAIAgentCollectionDescriptor
+contract AgenticAIAgentCollectionsDescriptor is
+    IAgenticAIAgentCollectionsDescriptor
 {
     using Strings for uint256;
 
@@ -56,34 +56,6 @@ contract AgenticAIAgentCollectionDescriptor is
                     )
                 )
             );
-    }
-
-    function agentInformation(
-        address collection,
-        uint256 tokenId
-    ) external view override returns (AgentInformation memory) {
-        return
-            AgentInformation({
-                name: IAgenticAIAgentCollectionStates(collection).nameOf(
-                    tokenId
-                ),
-                role: IAgenticAIAgentCollectionStates(collection).roleOf(
-                    tokenId
-                ),
-                image: IAgenticAIAgentCollectionStates(collection).imageOf(
-                    tokenId
-                ),
-                owner: IERC721(collection).ownerOf(tokenId),
-                signer: IAgenticAIAgentCollectionStates(collection).signerOf(
-                    tokenId
-                ),
-                creator: IAgenticAIAgentCollectionStates(collection).creatorOf(
-                    tokenId
-                ),
-                wallets: IAgenticAIAgentCollectionStates(collection).walletsOf(
-                    tokenId
-                )
-            });
     }
 
     function _escapeQuotes(
