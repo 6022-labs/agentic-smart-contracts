@@ -1,17 +1,19 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   AgenticAIAgentCollection,
-  AgenticAIAgentCollectionDescriptor,
+  AgenticAIAgentCollectionsManager,
+  AgenticAIAgentCollectionsDescriptor,
 } from "../../typechain-types";
-import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("WhenBuildingTokenUri", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _agenticAIAgentCollection: AgenticAIAgentCollection;
-  let _agenticAIAgentCollectionDescriptor: AgenticAIAgentCollectionDescriptor;
+  let _agenticAIAgentCollectionDescriptor: AgenticAIAgentCollectionsDescriptor;
+  let _agenticAIAgentCollectionsManager: AgenticAIAgentCollectionsManager;
 
   let _owner: HardhatEthersSigner;
   let _signer: HardhatEthersSigner;
@@ -21,26 +23,37 @@ describe("WhenBuildingTokenUri", function () {
 
     const [owner, signer] = await ethers.getSigners();
 
-    const AgenticAIAgentCollectionDescriptor = await ethers.getContractFactory(
-      "AgenticAIAgentCollectionDescriptor"
+    const CollectionsManager = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionsManager"
     );
-    const agenticAIAgentCollectionDescriptor =
-      await AgenticAIAgentCollectionDescriptor.deploy(ipfsGateway);
+    const collectionsManager = await CollectionsManager.deploy();
 
-    const AgenticAIAgentCollection = await ethers.getContractFactory(
+    const CollectionsDescriptor = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionsDescriptor"
+    );
+    const collectionsDescriptor = await CollectionsDescriptor.deploy(
+      ipfsGateway
+    );
+
+    const Collection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
     );
-    const agenticAIAgentCollection = await AgenticAIAgentCollection.deploy(
-      await agenticAIAgentCollectionDescriptor.getAddress()
+    const collection = await Collection.deploy(
+      "AgenticAI",
+      "AIA",
+      owner.address,
+      await collectionsManager.getAddress(),
+      await collectionsDescriptor.getAddress()
     );
 
-    await agenticAIAgentCollection.addSigner(signer.address);
+    await collectionsManager.addSigner(signer.address);
 
     return {
       owner,
       signer,
-      agenticAIAgentCollection,
-      agenticAIAgentCollectionDescriptor,
+      agenticAIAgentCollection: collection,
+      agenticAIAgentCollectionDescriptor: collectionsDescriptor,
+      agenticAIAgentCollectionsManager: collectionsManager,
     };
   }
 
@@ -50,12 +63,14 @@ describe("WhenBuildingTokenUri", function () {
       signer,
       agenticAIAgentCollection,
       agenticAIAgentCollectionDescriptor,
+      agenticAIAgentCollectionsManager,
     } = await loadFixture(deployAgenticAIAgentCollectionDescription);
 
     _owner = owner;
     _signer = signer;
     _agenticAIAgentCollection = agenticAIAgentCollection;
     _agenticAIAgentCollectionDescriptor = agenticAIAgentCollectionDescriptor;
+    _agenticAIAgentCollectionsManager = agenticAIAgentCollectionsManager;
   });
 
   function generateRandomAddress() {
@@ -69,6 +84,7 @@ describe("WhenBuildingTokenUri", function () {
     role: string,
     name: string,
     image: string,
+    mission: string,
     nonce: string
   ) {
     const domain = {
@@ -79,13 +95,14 @@ describe("WhenBuildingTokenUri", function () {
     };
 
     const types = {
-      MintRequest: [
+      MintProposalRequest: [
         { name: "to", type: "address" },
         { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
         { name: "signer", type: "address" },
         { name: "roleHash", type: "bytes32" },
         { name: "nameHash", type: "bytes32" },
         { name: "imageHash", type: "bytes32" },
+        { name: "missionHash", type: "bytes32" },
         { name: "nonce", type: "bytes32" },
       ],
     };
@@ -96,6 +113,7 @@ describe("WhenBuildingTokenUri", function () {
     const roleHash = ethers.keccak256(ethers.toUtf8Bytes(role));
     const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
     const imageHash = ethers.keccak256(ethers.toUtf8Bytes(image));
+    const missionHash = ethers.keccak256(ethers.toUtf8Bytes(mission));
 
     const message = {
       to,
@@ -104,6 +122,7 @@ describe("WhenBuildingTokenUri", function () {
       roleHash,
       nameHash,
       imageHash,
+      missionHash,
       nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
     };
 
@@ -139,6 +158,7 @@ describe("WhenBuildingTokenUri", function () {
     beforeEach(async function () {
       const nonce = "1";
       const agentAddresses = [generateRandomAddress()];
+      const mission = "";
 
       _tokenId = await _agenticAIAgentCollection.nextTokenId();
 
@@ -149,19 +169,23 @@ describe("WhenBuildingTokenUri", function () {
         _role,
         _name,
         _imageCid,
+        mission,
         nonce
       );
 
-      await _agenticAIAgentCollection.mint(
+      await _agenticAIAgentCollection.mintProposal(
         _owner.address,
         agentAddresses,
         _signer.address,
         _role,
         _name,
         _imageCid,
+        mission,
         ethers.id(nonce),
         signature
       );
+
+      await _agenticAIAgentCollection.connect(_owner).mint(1);
     });
 
     it("Should return token URI as base 64 encoded JSON", async function () {
