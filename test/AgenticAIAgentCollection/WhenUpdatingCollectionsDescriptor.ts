@@ -4,14 +4,14 @@ import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   AgenticAIAgentCollection,
-  AgenticAIAgentCollectionDescriptor,
+  AgenticAIAgentCollectionsDescriptor,
 } from "../../typechain-types";
 
-describe("WhenUpdatingAgentDescriptor", function () {
+describe("WhenUpdatingCollectionsDescriptor", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _agenticAIAgentCollection: AgenticAIAgentCollection;
-  let _agenticAIAgentCollectionDescriptor: AgenticAIAgentCollectionDescriptor;
+  let _agenticAIAgentCollectionsDescriptor: AgenticAIAgentCollectionsDescriptor;
 
   let _owner: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
@@ -22,22 +22,31 @@ describe("WhenUpdatingAgentDescriptor", function () {
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await ethers.getSigners();
 
-    const AgenticAIAgentCollectionDescriptor = await ethers.getContractFactory(
-      "AgenticAIAgentCollectionDescriptor"
+    const CollectionsManager = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionsManager"
     );
-    const agenticAIAgentCollectionDescriptor =
-      await AgenticAIAgentCollectionDescriptor.deploy(ipfsGateway);
+    const collectionsManager = await CollectionsManager.deploy();
+
+    const AgenticAIAgentCollectionsDescriptor = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionsDescriptor"
+    );
+    const agenticAIAgentCollectionsDescriptor =
+      await AgenticAIAgentCollectionsDescriptor.deploy(ipfsGateway);
 
     const AgenticAIAgentCollection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
     );
     const agenticAIAgentCollection = await AgenticAIAgentCollection.deploy(
-      ethers.ZeroAddress
+      "AgenticAI",
+      "AIA",
+      owner.address,
+      await collectionsManager.getAddress(),
+      await agenticAIAgentCollectionsDescriptor.getAddress()
     );
 
     return {
       agenticAIAgentCollection,
-      agenticAIAgentCollectionDescriptor,
+      agenticAIAgentCollectionsDescriptor,
       owner,
       otherAccount,
     };
@@ -48,23 +57,23 @@ describe("WhenUpdatingAgentDescriptor", function () {
       owner,
       otherAccount,
       agenticAIAgentCollection,
-      agenticAIAgentCollectionDescriptor,
+      agenticAIAgentCollectionsDescriptor,
     } = await loadFixture(deployAgenticAIAgentCollection);
 
     _agenticAIAgentCollection = agenticAIAgentCollection;
-    _agenticAIAgentCollectionDescriptor = agenticAIAgentCollectionDescriptor;
+    _agenticAIAgentCollectionsDescriptor = agenticAIAgentCollectionsDescriptor;
 
     _owner = owner;
     _otherAccount = otherAccount;
   });
 
   describe("Given signer is admin", function () {
-    it("Should update the agent descriptor", async function () {
+    it("Should update the collections descriptor", async function () {
       await expect(
         _agenticAIAgentCollection
           .connect(_owner)
-          .updateAgentDescriptor(
-            await _agenticAIAgentCollectionDescriptor.getAddress()
+          .updateCollectionsDescriptor(
+            await _agenticAIAgentCollectionsDescriptor.getAddress()
           )
       ).to.not.be.reverted;
     });
@@ -75,8 +84,8 @@ describe("WhenUpdatingAgentDescriptor", function () {
       await expect(
         _agenticAIAgentCollection
           .connect(_otherAccount)
-          .updateAgentDescriptor(
-            await _agenticAIAgentCollectionDescriptor.getAddress()
+          .updateCollectionsDescriptor(
+            await _agenticAIAgentCollectionsDescriptor.getAddress()
           )
       ).to.be.revertedWithCustomError(
         _agenticAIAgentCollection,
