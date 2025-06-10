@@ -84,6 +84,10 @@ contract AgenticAIAgentCollection is
         return _nextTokenId;
     }
 
+    function nextProposalId() external view returns (uint256) {
+        return _nextProposalId;
+    }
+
     function tokenURI(
         uint256 tokenId
     ) public view override(ERC721, IERC721Metadata) returns (string memory) {
@@ -245,6 +249,8 @@ contract AgenticAIAgentCollection is
             creator: _msgSender(),
             wallets: agentAddresses
         });
+
+        emit MintProposal(to, signer, _nextProposalId);
 
         _nextProposalId++;
     }
