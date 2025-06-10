@@ -21,24 +21,32 @@ describe("WhenUpdatingTokenSigner", function () {
     const [owner, otherAccount, signer, otherSigner] =
       await ethers.getSigners();
 
-    const AgenticAIAgentCollectionDescriptor = await ethers.getContractFactory(
-      "AgenticAIAgentCollectionDescriptor"
+    const CollectionsManager = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionsManager"
     );
-    const agenticAIAgentCollectionDescriptor =
-      await AgenticAIAgentCollectionDescriptor.deploy(ipfsGateway);
+    const collectionsManager = await CollectionsManager.deploy();
 
-    const AgenticAIAgentCollection = await ethers.getContractFactory(
+    const CollectionsDescriptor = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionsDescriptor"
+    );
+    const collectionsDescriptor = await CollectionsDescriptor.deploy(ipfsGateway);
+
+    const Collection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
     );
-    const agenticAIAgentCollection = await AgenticAIAgentCollection.deploy(
-      await agenticAIAgentCollectionDescriptor.getAddress()
+    const collection = await Collection.deploy(
+      "AgenticAI",
+      "AIA",
+      owner.address,
+      await collectionsManager.getAddress(),
+      await collectionsDescriptor.getAddress()
     );
 
-    await agenticAIAgentCollection.addSigner(signer.address);
-    await agenticAIAgentCollection.addSigner(otherSigner.address);
+    await collectionsManager.addSigner(signer.address);
+    await collectionsManager.addSigner(otherSigner.address);
 
     return {
-      agenticAIAgentCollection,
+      agenticAIAgentCollection: collection,
       owner,
       otherAccount,
       signer,
@@ -75,6 +83,7 @@ describe("WhenUpdatingTokenSigner", function () {
     const baseImageCid =
       "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
     const role = "facilitator";
+    const mission = "";
 
     const nonce = generateRandomNonce();
     const agentAddresses = [generateRandomAddress()];
@@ -87,13 +96,14 @@ describe("WhenUpdatingTokenSigner", function () {
     };
 
     const types = {
-      MintRequest: [
+      MintProposalRequest: [
         { name: "to", type: "address" },
         { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
         { name: "signer", type: "address" },
         { name: "roleHash", type: "bytes32" },
         { name: "nameHash", type: "bytes32" },
         { name: "imageHash", type: "bytes32" },
+        { name: "missionHash", type: "bytes32" },
         { name: "nonce", type: "bytes32" },
       ],
     };
@@ -101,10 +111,10 @@ describe("WhenUpdatingTokenSigner", function () {
     const agentAddressesHash = ethers.keccak256(
       ethers.solidityPacked(["address[]"], [agentAddresses])
     );
-
     const roleHash = ethers.keccak256(ethers.toUtf8Bytes(role));
     const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
     const imageHash = ethers.keccak256(ethers.toUtf8Bytes(baseImageCid));
+    const missionHash = ethers.keccak256(ethers.toUtf8Bytes(mission));
 
     const message = {
       to,
@@ -113,23 +123,25 @@ describe("WhenUpdatingTokenSigner", function () {
       roleHash,
       nameHash,
       imageHash,
+      missionHash,
       nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
     };
 
     const signature = await signer.signTypedData(domain, types, message);
 
-    await _agenticAIAgentCollection
-      .connect(_owner)
-      .mint(
-        to,
-        agentAddresses,
-        signer.address,
-        role,
-        name,
-        baseImageCid,
-        ethers.id(nonce),
-        signature
-      );
+    await _agenticAIAgentCollection.mintProposal(
+      to,
+      agentAddresses,
+      signer.address,
+      role,
+      name,
+      baseImageCid,
+      mission,
+      ethers.id(nonce),
+      signature
+    );
+
+    await _agenticAIAgentCollection.connect(_owner).mint(1);
   }
 
   // Function to generate a valid EIP-712 signature
