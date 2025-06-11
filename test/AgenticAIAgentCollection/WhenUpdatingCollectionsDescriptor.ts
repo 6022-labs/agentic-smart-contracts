@@ -80,17 +80,20 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
   });
 
   describe("Given signer is not admin", function () {
-    it("Should revert with 'AccessControlUnauthorizedAccount' error", async function () {
-      await expect(
-        _agenticAIAgentCollection
-          .connect(_otherAccount)
-          .updateCollectionsDescriptor(
-            await _agenticAIAgentCollectionsDescriptor.getAddress()
-          )
-      ).to.be.revertedWithCustomError(
-        _agenticAIAgentCollection,
-        "AccessControlUnauthorizedAccount"
-      );
-    });
+    it(
+      "Should revert with 'AccessControlUnauthorizedAccount' error when called by a non-admin",
+      async function () {
+        await expect(
+          _agenticAIAgentCollection
+            .connect(_otherAccount)
+            .updateCollectionsDescriptor(
+              await _agenticAIAgentCollectionsDescriptor.getAddress()
+            )
+        ).to.be.revertedWithCustomError(
+          _agenticAIAgentCollection,
+          "AccessControlUnauthorizedAccount"
+        );
+      }
+    );
   });
 });

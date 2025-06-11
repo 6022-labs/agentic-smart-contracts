@@ -167,7 +167,7 @@ describe("WhenGettingTokenUri", function () {
       expect(parsedTokenURI).to.have.property("image");
     });
 
-    it("Should contains 'name' field in token URI", async function () {
+    it("Should contain 'name' field in token URI", async function () {
       const tokenURI = await _agenticAIAgentCollection.tokenURI(_tokenId);
 
       const decodedTokenURI = Buffer.from(
@@ -178,7 +178,7 @@ describe("WhenGettingTokenUri", function () {
       expect(parsedTokenURI.name).to.equal(_name);
     });
 
-    it("Should contains 'description' field in token URI", async function () {
+    it("Should contain 'description' field in token URI", async function () {
       const tokenURI = await _agenticAIAgentCollection.tokenURI(_tokenId);
 
       const decodedTokenURI = Buffer.from(
@@ -190,7 +190,7 @@ describe("WhenGettingTokenUri", function () {
       expect(parsedTokenURI.description).to.be.equal("6022 AI Agent");
     });
 
-    it("Should contains 'image' field in token URI", async function () {
+    it("Should contain 'image' field in token URI", async function () {
       const tokenURI = await _agenticAIAgentCollection.tokenURI(_tokenId);
 
       const decodedTokenURI = Buffer.from(
