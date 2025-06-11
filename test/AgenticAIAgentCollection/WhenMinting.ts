@@ -196,6 +196,16 @@ describe("WhenMinting", function () {
     });
   });
 
+  describe("Given proposal does not exist", function () {
+    it("Should revert", async function () {
+      const proposalId = await _agenticAIAgentCollection.nextProposalId();
+
+      await expect(
+        _agenticAIAgentCollection.connect(_owner).mint(proposalId)
+      ).to.be.reverted;
+    });
+  });
+
   describe("Given a valid minting proposal", function () {
     it("Should mint the token", async function () {
       const nonce = "1";
