@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { AgenticAIAgentCollection } from "../../typechain-types";
+import { generateRandomAddress, signMintProposalRequest } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -59,66 +60,6 @@ describe("WhenCreateMintingProposal", function () {
     _agenticAIAgentCollection = collection;
   });
 
-  function generateRandomAddress() {
-    return ethers.Wallet.createRandom().address;
-  }
-
-  async function signMintProposalRequest(
-    signer: HardhatEthersSigner,
-    params: {
-      to: string;
-      agentAddresses: string[];
-      signer: string;
-      role: string;
-      name: string;
-      image: string;
-      mission: string;
-      nonce: string;
-    }
-  ) {
-    const domain = {
-      name: "AgenticAIAgentCollection",
-      version: "1",
-      chainId: (await ethers.provider.getNetwork()).chainId,
-      verifyingContract: await _agenticAIAgentCollection.getAddress(),
-    };
-
-    const types = {
-      MintProposalRequest: [
-        { name: "to", type: "address" },
-        { name: "agentAddressesHash", type: "bytes32" },
-        { name: "signer", type: "address" },
-        { name: "roleHash", type: "bytes32" },
-        { name: "nameHash", type: "bytes32" },
-        { name: "imageHash", type: "bytes32" },
-        { name: "missionHash", type: "bytes32" },
-        { name: "nonce", type: "bytes32" },
-      ],
-    };
-
-    const agentAddressesHash = ethers.keccak256(
-      ethers.solidityPacked(["address[]"], [params.agentAddresses])
-    );
-
-    const roleHash = ethers.keccak256(ethers.toUtf8Bytes(params.role));
-    const nameHash = ethers.keccak256(ethers.toUtf8Bytes(params.name));
-    const imageHash = ethers.keccak256(ethers.toUtf8Bytes(params.image));
-    const missionHash = ethers.keccak256(ethers.toUtf8Bytes(params.mission));
-
-    const message = {
-      to: params.to,
-      agentAddressesHash,
-      signer: params.signer,
-      roleHash,
-      nameHash,
-      imageHash,
-      missionHash,
-      nonce: ethers.keccak256(ethers.toUtf8Bytes(params.nonce)),
-    };
-
-    return await signer.signTypedData(domain, types, message);
-  }
-
   describe("Given a signature from signer", function () {
     describe("Given an invalid name", function () {
       it("Should revert with 'InvalidName' error", async function () {
@@ -129,16 +70,20 @@ describe("WhenCreateMintingProposal", function () {
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signMintProposalRequest(_signer1, {
-          to: _owner.address,
-          agentAddresses,
-          signer: _signer1.address,
-          role,
-          name: invalidName,
-          image: baseImageCid,
-          mission,
-          nonce,
-        });
+        const signature = await signMintProposalRequest(
+          _signer1,
+          _agenticAIAgentCollection,
+          {
+            to: _owner.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role,
+            name: invalidName,
+            image: baseImageCid,
+            mission,
+            nonce,
+          }
+        );
 
         await expect(
           _agenticAIAgentCollection.mintProposal(
@@ -170,16 +115,20 @@ describe("WhenCreateMintingProposal", function () {
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signMintProposalRequest(_signer1, {
-          to: _owner.address,
-          agentAddresses,
-          signer: _signer1.address,
-          role,
-          name,
-          image: baseImageCid,
-          mission,
-          nonce,
-        });
+        const signature = await signMintProposalRequest(
+          _signer1,
+          _agenticAIAgentCollection,
+          {
+            to: _owner.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role,
+            name,
+            image: baseImageCid,
+            mission,
+            nonce,
+          }
+        );
 
         await _agenticAIAgentCollection.mintProposal(
           _owner.address,
@@ -221,16 +170,20 @@ describe("WhenCreateMintingProposal", function () {
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
-        const sig1 = await signMintProposalRequest(_signer1, {
-          to: _owner.address,
-          agentAddresses,
-          signer: _signer1.address,
-          role,
-          name,
-          image: baseImageCid,
-          mission,
-          nonce: nonce1,
-        });
+        const sig1 = await signMintProposalRequest(
+          _signer1,
+          _agenticAIAgentCollection,
+          {
+            to: _owner.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role,
+            name,
+            image: baseImageCid,
+            mission,
+            nonce: nonce1,
+          }
+        );
 
         await _agenticAIAgentCollection.mintProposal(
           _owner.address,
@@ -246,16 +199,20 @@ describe("WhenCreateMintingProposal", function () {
 
         await _agenticAIAgentCollection.connect(_owner).mint(1);
 
-        const sig2 = await signMintProposalRequest(_signer1, {
-          to: _owner.address,
-          agentAddresses,
-          signer: _signer1.address,
-          role,
-          name,
-          image: baseImageCid,
-          mission,
-          nonce: nonce2,
-        });
+        const sig2 = await signMintProposalRequest(
+          _signer1,
+          _agenticAIAgentCollection,
+          {
+            to: _owner.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role,
+            name,
+            image: baseImageCid,
+            mission,
+            nonce: nonce2,
+          }
+        );
 
         await expect(
           _agenticAIAgentCollection.mintProposal(
@@ -284,16 +241,20 @@ describe("WhenCreateMintingProposal", function () {
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signMintProposalRequest(_signer1, {
-          to: _owner.address,
-          agentAddresses,
-          signer: _signer2.address,
-          role,
-          name,
-          image: baseImageCid,
-          mission,
-          nonce,
-        });
+        const signature = await signMintProposalRequest(
+          _signer1,
+          _agenticAIAgentCollection,
+          {
+            to: _owner.address,
+            agentAddresses,
+            signer: _signer2.address,
+            role,
+            name,
+            image: baseImageCid,
+            mission,
+            nonce,
+          }
+        );
 
         await expect(
           _agenticAIAgentCollection.mintProposal(
@@ -325,16 +286,20 @@ describe("WhenCreateMintingProposal", function () {
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signMintProposalRequest(_signer1, {
-          to: _owner.address,
-          agentAddresses,
-          signer: _signer1.address,
-          role,
-          name,
-          image: baseImageCid,
-          mission,
-          nonce,
-        });
+        const signature = await signMintProposalRequest(
+          _signer1,
+          _agenticAIAgentCollection,
+          {
+            to: _owner.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role,
+            name,
+            image: baseImageCid,
+            mission,
+            nonce,
+          }
+        );
 
         await _agenticAIAgentCollection.mintProposal(
           _owner.address,
@@ -367,16 +332,20 @@ describe("WhenCreateMintingProposal", function () {
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signMintProposalRequest(_signer1, {
-          to: _owner.address,
-          agentAddresses,
-          signer: _signer1.address,
-          role,
-          name,
-          image: baseImageCid,
-          mission,
-          nonce,
-        });
+        const signature = await signMintProposalRequest(
+          _signer1,
+          _agenticAIAgentCollection,
+          {
+            to: _owner.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role,
+            name,
+            image: baseImageCid,
+            mission,
+            nonce,
+          }
+        );
 
         const nextProposalId = await _agenticAIAgentCollection.nextProposalId();
 
@@ -405,16 +374,20 @@ describe("WhenCreateMintingProposal", function () {
         const baseImageCid =
           "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signMintProposalRequest(_signer1, {
-          to: _owner.address,
-          agentAddresses,
-          signer: _signer1.address,
-          role,
-          name,
-          image: baseImageCid,
-          mission,
-          nonce,
-        });
+        const signature = await signMintProposalRequest(
+          _signer1,
+          _agenticAIAgentCollection,
+          {
+            to: _owner.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role,
+            name,
+            image: baseImageCid,
+            mission,
+            nonce,
+          }
+        );
 
         const initialProposalId =
           await _agenticAIAgentCollection.nextProposalId();
@@ -448,16 +421,20 @@ describe("WhenCreateMintingProposal", function () {
         "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
       const agentAddresses = [generateRandomAddress()];
 
-      const signature = await signMintProposalRequest(_otherAccount, {
-        to: _owner.address,
-        agentAddresses,
-        signer: _otherAccount.address,
-        role,
-        name,
-        image: baseImageCid,
-        mission,
-        nonce,
-      });
+      const signature = await signMintProposalRequest(
+        _otherAccount,
+        _agenticAIAgentCollection,
+        {
+          to: _owner.address,
+          agentAddresses,
+          signer: _otherAccount.address,
+          role,
+          name,
+          image: baseImageCid,
+          mission,
+          nonce,
+        }
+      );
 
       await expect(
         _agenticAIAgentCollection.mintProposal(

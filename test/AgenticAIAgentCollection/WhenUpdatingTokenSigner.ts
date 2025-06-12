@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { generateRandomAddress } from "../common";
 import { AgenticAIAgentCollection } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
@@ -29,7 +30,9 @@ describe("WhenUpdatingTokenSigner", function () {
     const CollectionsDescriptor = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsDescriptor"
     );
-    const collectionsDescriptor = await CollectionsDescriptor.deploy(ipfsGateway);
+    const collectionsDescriptor = await CollectionsDescriptor.deploy(
+      ipfsGateway
+    );
 
     const Collection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
@@ -69,10 +72,6 @@ describe("WhenUpdatingTokenSigner", function () {
     _otherAccount = otherAccount;
     _agenticAIAgentCollection = agenticAIAgentCollection;
   });
-
-  function generateRandomAddress() {
-    return ethers.Wallet.createRandom().address;
-  }
 
   function generateRandomNonce() {
     return ethers.hexlify(ethers.randomBytes(32));

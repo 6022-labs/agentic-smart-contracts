@@ -1,8 +1,9 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { AgenticAIAgentCollection } from "../../typechain-types";
+import { generateRandomAddress, signMintProposalRequest } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { AgenticAIAgentCollection } from "../../typechain-types";
 
 describe("WhenGettingTokenUri", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -25,7 +26,9 @@ describe("WhenGettingTokenUri", function () {
     const CollectionsDescriptor = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsDescriptor"
     );
-    const collectionsDescriptor = await CollectionsDescriptor.deploy(ipfsGateway);
+    const collectionsDescriptor = await CollectionsDescriptor.deploy(
+      ipfsGateway
+    );
 
     const Collection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
@@ -57,63 +60,6 @@ describe("WhenGettingTokenUri", function () {
     _agenticAIAgentCollection = agenticAIAgentCollection;
   });
 
-  function generateRandomAddress() {
-    return ethers.Wallet.createRandom().address;
-  }
-
-  async function signMintRequest(
-    signer: HardhatEthersSigner,
-    to: string,
-    agentAddresses: string[],
-    role: string,
-    name: string,
-    image: string,
-    mission: string,
-    nonce: string
-  ) {
-    const domain = {
-      name: "AgenticAIAgentCollection",
-      version: "1",
-      chainId: (await ethers.provider.getNetwork()).chainId,
-      verifyingContract: await _agenticAIAgentCollection.getAddress(),
-    };
-
-    const types = {
-      MintProposalRequest: [
-        { name: "to", type: "address" },
-        { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
-        { name: "signer", type: "address" },
-        { name: "roleHash", type: "bytes32" },
-        { name: "nameHash", type: "bytes32" },
-        { name: "imageHash", type: "bytes32" },
-        { name: "missionHash", type: "bytes32" },
-        { name: "nonce", type: "bytes32" },
-      ],
-    };
-
-    const agentAddressesHash = ethers.keccak256(
-      ethers.solidityPacked(["address[]"], [agentAddresses])
-    );
-
-    const roleHash = ethers.keccak256(ethers.toUtf8Bytes(role));
-    const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
-    const imageHash = ethers.keccak256(ethers.toUtf8Bytes(image));
-    const missionHash = ethers.keccak256(ethers.toUtf8Bytes(mission));
-
-    const message = {
-      to,
-      agentAddressesHash,
-      signer: signer.address,
-      roleHash,
-      nameHash,
-      imageHash,
-      missionHash,
-      nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
-    };
-
-    return await signer.signTypedData(domain, types, message);
-  }
-
   describe("Given token id exists", function () {
     let _tokenId: bigint;
     let _name: string = "test-agent";
@@ -127,15 +73,19 @@ describe("WhenGettingTokenUri", function () {
       _tokenId = await _agenticAIAgentCollection.nextTokenId();
       const mission = "";
 
-      const signature = await signMintRequest(
+      const signature = await signMintProposalRequest(
         _signer,
-        _owner.address,
-        _agentAddresses,
-        _role,
-        _name,
-        _baseImageCid,
-        mission,
-        nonce
+        _agenticAIAgentCollection,
+        {
+          to: _owner.address,
+          agentAddresses: _agentAddresses,
+          signer: _signer.address,
+          role: _role,
+          name: _name,
+          image: _baseImageCid,
+          mission,
+          nonce,
+        }
       );
 
       await _agenticAIAgentCollection.mintProposal(
