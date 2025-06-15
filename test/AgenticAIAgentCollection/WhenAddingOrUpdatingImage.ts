@@ -200,5 +200,77 @@ describe("WhenAddingOrUpdatingImage", function () {
         expect(images[1][1]).to.equal("cid2");
       });
     });
+
+    describe("And proposal is executed", function () {
+      it("Should not be executable twice", async function () {
+        const tokenId = await proposeAndMint(await _owner.getAddress());
+
+        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+          tokenId,
+          {
+            key: "profile",
+            value: "cid1",
+          }
+        );
+
+        const proposalIndex =
+          (await _agenticAIAgentCollection.addOrUpdateProposalsLength()) -
+          BigInt(1);
+
+        await _agenticAIAgentCollection
+          .connect(_moderator)
+          .addOrUpdateImage(proposalIndex);
+
+        expect(
+          await _agenticAIAgentCollection.addOrUpdateProposalsLength()
+        ).to.eq(0n);
+
+        await expect(
+          _agenticAIAgentCollection
+            .connect(_moderator)
+            .addOrUpdateImage(proposalIndex)
+        ).to.be.reverted;
+      });
+
+      it("Should reorder remaining proposals", async function () {
+        const tokenId = await proposeAndMint(await _owner.getAddress());
+
+        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+          tokenId,
+          {
+            key: "profile1",
+            value: "cid1",
+          }
+        );
+
+        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+          tokenId,
+          {
+            key: "profile2",
+            value: "cid2",
+          }
+        );
+
+        expect(
+          await _agenticAIAgentCollection.addOrUpdateProposalsLength()
+        ).to.eq(2n);
+
+        await _agenticAIAgentCollection
+          .connect(_moderator)
+          .addOrUpdateImage(0);
+
+        expect(
+          await _agenticAIAgentCollection.addOrUpdateProposalsLength()
+        ).to.eq(1n);
+
+        const proposal = await _agenticAIAgentCollection.addOrUpdateProposal(0);
+        expect(proposal.image.key).to.equal("profile2");
+        expect(proposal.image.value).to.equal("cid2");
+
+        const images = await _agenticAIAgentCollection.imagesOf(tokenId);
+        expect(images.length).to.equal(2);
+        expect(images[1][0]).to.equal("profile1");
+      });
+    });
   });
 });

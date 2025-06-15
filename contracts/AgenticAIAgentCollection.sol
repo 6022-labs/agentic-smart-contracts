@@ -302,6 +302,13 @@ contract AgenticAIAgentCollection is
                 value: proposalInfo.image.value
             }));
         }
+
+        uint256 lastIndex = _addOrUpdateImageProposals.length - 1;
+        if (proposalIndex != lastIndex) {
+            _addOrUpdateImageProposals[proposalIndex] =
+                _addOrUpdateImageProposals[lastIndex];
+        }
+        _addOrUpdateImageProposals.pop();
     }
 
     function removeImage(
