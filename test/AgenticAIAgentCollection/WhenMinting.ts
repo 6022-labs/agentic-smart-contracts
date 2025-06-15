@@ -242,7 +242,7 @@ describe("WhenMinting", function () {
 
       await _agenticAIAAgentCollection.connect(_owner).mint(0);
 
-      await expect(_agenticAIAAgentCollection.connect(_owner).mint(1))
+      await expect(_agenticAIAAgentCollection.connect(_owner).mint(0))
         .to.be.revertedWithCustomError(_agenticAIAAgentCollection, "UsedName")
         .withArgs(DEFAULT_NAME);
     });
@@ -621,6 +621,115 @@ describe("WhenMinting", function () {
       )
         .to.emit(_agenticAIAAgentCollection, "AgentSignerUpdated")
         .withArgs(tokenId, ethers.ZeroAddress, _signer.address);
+    });
+
+    it("Should decrease proposals length", async function () {
+      const agentAddresses = [generateRandomAddress()];
+
+      const signature = await signCreateMintProposalRequest(
+        _signer,
+        _agenticAIAAgentCollection,
+        {
+          to: _otherAccount.address,
+          agentAddresses,
+          signer: _signer.address,
+          role: DEFAULT_ROLE,
+          name: DEFAULT_NAME,
+          images: DEFAULT_IMAGES,
+          mission: DEFAULT_MISSION,
+          nonce: NONCE_1,
+        }
+      );
+
+      await _agenticAIAAgentCollection.createMintProposal(
+        _otherAccount.address,
+        agentAddresses,
+        _signer.address,
+        DEFAULT_ROLE,
+        DEFAULT_NAME,
+        DEFAULT_MISSION,
+        DEFAULT_IMAGES,
+        ethers.id(NONCE_1),
+        signature
+      );
+
+      const lengthBefore =
+        await _agenticAIAAgentCollection.mintProposalsLength();
+
+      await _agenticAIAAgentCollection
+        .connect(_owner)
+        .mint(lengthBefore - BigInt(1));
+
+      expect(await _agenticAIAAgentCollection.mintProposalsLength()).to.eq(
+        lengthBefore - BigInt(1)
+      );
+    });
+
+    it("Should reorder remaining proposals", async function () {
+      const agentAddresses = [generateRandomAddress()];
+
+      const sig1 = await signCreateMintProposalRequest(
+        _signer,
+        _agenticAIAAgentCollection,
+        {
+          to: _otherAccount.address,
+          agentAddresses,
+          signer: _signer.address,
+          role: DEFAULT_ROLE,
+          name: DEFAULT_NAME_1,
+          images: DEFAULT_IMAGES,
+          mission: DEFAULT_MISSION,
+          nonce: NONCE_1,
+        }
+      );
+
+      await _agenticAIAAgentCollection.createMintProposal(
+        _otherAccount.address,
+        agentAddresses,
+        _signer.address,
+        DEFAULT_ROLE,
+        DEFAULT_NAME_1,
+        DEFAULT_MISSION,
+        DEFAULT_IMAGES,
+        ethers.id(NONCE_1),
+        sig1
+      );
+
+      const sig2 = await signCreateMintProposalRequest(
+        _signer,
+        _agenticAIAAgentCollection,
+        {
+          to: _otherAccount.address,
+          agentAddresses,
+          signer: _signer.address,
+          role: DEFAULT_ROLE,
+          name: DEFAULT_NAME_2,
+          images: DEFAULT_IMAGES,
+          mission: DEFAULT_MISSION,
+          nonce: NONCE_2,
+        }
+      );
+
+      await _agenticAIAAgentCollection.createMintProposal(
+        _otherAccount.address,
+        agentAddresses,
+        _signer.address,
+        DEFAULT_ROLE,
+        DEFAULT_NAME_2,
+        DEFAULT_MISSION,
+        DEFAULT_IMAGES,
+        ethers.id(NONCE_2),
+        sig2
+      );
+
+      expect(await _agenticAIAAgentCollection.mintProposalsLength()).to.eq(2n);
+
+      await _agenticAIAAgentCollection.connect(_owner).mint(0);
+
+      expect(await _agenticAIAAgentCollection.mintProposalsLength()).to.eq(1n);
+
+      const proposal = await _agenticAIAAgentCollection.mintProposal(0);
+      expect(proposal.name).to.equal(DEFAULT_NAME_2);
     });
   });
 });

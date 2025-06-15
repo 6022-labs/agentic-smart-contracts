@@ -420,7 +420,11 @@ contract AgenticAIAgentCollection is
         emit Minted(proposalInfo.owner, proposalInfo.signer, _nextTokenId);
         emit AgentSignerUpdated(_nextTokenId, address(0), proposalInfo.signer);
 
-        delete _mintProposals[proposalIndex];
+        uint256 lastIndex = _mintProposals.length - 1;
+        if (proposalIndex != lastIndex) {
+            _mintProposals[proposalIndex] = _mintProposals[lastIndex];
+        }
+        _mintProposals.pop();
         _nextTokenId++;
     }
 
