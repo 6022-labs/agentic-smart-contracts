@@ -1,11 +1,14 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { generateRandomAddress } from "../common";
 import { AgenticAIAgentCollection } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import {
+  generateRandomAddress,
+  signCreateMintProposalRequest,
+} from "../common";
 
-describe("WhenUpdatingTokenSigner", function () {
+describe("WhenUpdatingAgentSigner", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _agenticAIAgentCollection: AgenticAIAgentCollection;
@@ -79,72 +82,55 @@ describe("WhenUpdatingTokenSigner", function () {
 
   async function mintWithSignature(signer: HardhatEthersSigner, to: string) {
     const name = "test-agent";
-    const baseImageCid =
-      "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+    const images = [
+      {
+        key: "default",
+        value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
+      },
+    ];
     const role = "facilitator";
     const mission = "";
 
     const nonce = generateRandomNonce();
     const agentAddresses = [generateRandomAddress()];
 
-    const domain = {
-      name: "AgenticAIAgentCollection",
-      version: "1",
-      chainId: (await ethers.provider.getNetwork()).chainId,
-      verifyingContract: await _agenticAIAgentCollection.getAddress(),
-    };
-
-    const types = {
-      MintProposalRequest: [
-        { name: "to", type: "address" },
-        { name: "agentAddressesHash", type: "bytes32" }, // Change this from address[] to bytes32
-        { name: "signer", type: "address" },
-        { name: "roleHash", type: "bytes32" },
-        { name: "nameHash", type: "bytes32" },
-        { name: "imageHash", type: "bytes32" },
-        { name: "missionHash", type: "bytes32" },
-        { name: "nonce", type: "bytes32" },
-      ],
-    };
-
-    const agentAddressesHash = ethers.keccak256(
-      ethers.solidityPacked(["address[]"], [agentAddresses])
+    const signature = await signCreateMintProposalRequest(
+      signer,
+      _agenticAIAgentCollection,
+      {
+        to,
+        agentAddresses,
+        signer: signer.address,
+        role,
+        name,
+        images,
+        mission,
+        nonce,
+      }
     );
-    const roleHash = ethers.keccak256(ethers.toUtf8Bytes(role));
-    const nameHash = ethers.keccak256(ethers.toUtf8Bytes(name));
-    const imageHash = ethers.keccak256(ethers.toUtf8Bytes(baseImageCid));
-    const missionHash = ethers.keccak256(ethers.toUtf8Bytes(mission));
 
-    const message = {
-      to,
-      agentAddressesHash,
-      signer: signer.address,
-      roleHash,
-      nameHash,
-      imageHash,
-      missionHash,
-      nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
-    };
-
-    const signature = await signer.signTypedData(domain, types, message);
-
-    await _agenticAIAgentCollection.mintProposal(
+    await _agenticAIAgentCollection.createMintProposal(
       to,
       agentAddresses,
       signer.address,
       role,
       name,
-      baseImageCid,
       mission,
+      images,
       ethers.id(nonce),
       signature
     );
 
-    await _agenticAIAgentCollection.connect(_owner).mint(1);
+    const mintProposalsLength =
+      await _agenticAIAgentCollection.mintProposalsLength();
+
+    await _agenticAIAgentCollection
+      .connect(_owner)
+      .mint(mintProposalsLength - BigInt(1));
   }
 
   // Function to generate a valid EIP-712 signature
-  async function signUpdateTokenSignerRequest(
+  async function signUpdateAgentSignerRequest(
     signer: HardhatEthersSigner,
     tokenId: string,
     newSigner: string,
@@ -158,7 +144,7 @@ describe("WhenUpdatingTokenSigner", function () {
     };
 
     const types = {
-      UpdateTokenSignerRequest: [
+      UpdateAgentSignerRequest: [
         { name: "tokenId", type: "uint256" },
         { name: "newSigner", type: "address" },
         { name: "nonce", type: "bytes32" },
@@ -181,7 +167,7 @@ describe("WhenUpdatingTokenSigner", function () {
       await mintWithSignature(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
-      const signature = await signUpdateTokenSignerRequest(
+      const signature = await signUpdateAgentSignerRequest(
         _signer,
         nextTokenId.toString(),
         await _otherSigner.getAddress(),
@@ -190,7 +176,7 @@ describe("WhenUpdatingTokenSigner", function () {
 
       await _agenticAIAgentCollection
         .connect(_owner)
-        .updateTokenSigner(
+        .updateAgentSigner(
           nextTokenId,
           await _otherSigner.getAddress(),
           ethers.id(nonce),
@@ -200,7 +186,7 @@ describe("WhenUpdatingTokenSigner", function () {
       await expect(
         _agenticAIAgentCollection
           .connect(_owner)
-          .updateTokenSigner(
+          .updateAgentSigner(
             nextTokenId,
             await _otherAccount.getAddress(),
             ethers.id(nonce),
@@ -219,7 +205,7 @@ describe("WhenUpdatingTokenSigner", function () {
       await mintWithSignature(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
-      const signature = await signUpdateTokenSignerRequest(
+      const signature = await signUpdateAgentSignerRequest(
         _signer,
         nextTokenId.toString(),
         await _otherAccount.getAddress(),
@@ -229,7 +215,7 @@ describe("WhenUpdatingTokenSigner", function () {
       await expect(
         _agenticAIAgentCollection
           .connect(_otherAccount)
-          .updateTokenSigner(
+          .updateAgentSigner(
             nextTokenId,
             await _otherAccount.getAddress(),
             ethers.id(nonce),
@@ -251,7 +237,7 @@ describe("WhenUpdatingTokenSigner", function () {
       await mintWithSignature(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
-      const signature = await signUpdateTokenSignerRequest(
+      const signature = await signUpdateAgentSignerRequest(
         _signer,
         nextTokenId.toString(),
         await _otherAccount.getAddress(),
@@ -261,7 +247,7 @@ describe("WhenUpdatingTokenSigner", function () {
       await expect(
         _agenticAIAgentCollection
           .connect(_owner)
-          .updateTokenSigner(
+          .updateAgentSigner(
             nextTokenId,
             await _otherAccount.getAddress(),
             ethers.id(nonce),
@@ -280,7 +266,7 @@ describe("WhenUpdatingTokenSigner", function () {
       await mintWithSignature(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
-      const signature = await signUpdateTokenSignerRequest(
+      const signature = await signUpdateAgentSignerRequest(
         _signer,
         nextTokenId.toString(),
         await _signer.getAddress(),
@@ -290,7 +276,7 @@ describe("WhenUpdatingTokenSigner", function () {
       await expect(
         _agenticAIAgentCollection
           .connect(_owner)
-          .updateTokenSigner(
+          .updateAgentSigner(
             nextTokenId,
             await _signer.getAddress(),
             ethers.id(nonce),
@@ -313,7 +299,7 @@ describe("WhenUpdatingTokenSigner", function () {
 
       const firstNonce = generateRandomNonce();
       const secondNonce = generateRandomNonce();
-      const invalidSignature = await signUpdateTokenSignerRequest(
+      const invalidSignature = await signUpdateAgentSignerRequest(
         _signer,
         nextTokenId.toString(),
         await _otherSigner.getAddress(),
@@ -323,7 +309,7 @@ describe("WhenUpdatingTokenSigner", function () {
       await expect(
         _agenticAIAgentCollection
           .connect(_owner)
-          .updateTokenSigner(
+          .updateAgentSigner(
             nextTokenId,
             await _otherSigner.getAddress(),
             ethers.id(secondNonce),
@@ -340,7 +326,7 @@ describe("WhenUpdatingTokenSigner", function () {
       await mintWithSignature(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
-      const signature = await signUpdateTokenSignerRequest(
+      const signature = await signUpdateAgentSignerRequest(
         _signer,
         nextTokenId.toString(),
         await _otherSigner.getAddress(),
@@ -349,7 +335,7 @@ describe("WhenUpdatingTokenSigner", function () {
 
       await _agenticAIAgentCollection
         .connect(_owner)
-        .updateTokenSigner(
+        .updateAgentSigner(
           nextTokenId,
           await _otherSigner.getAddress(),
           ethers.id(nonce),
@@ -361,13 +347,13 @@ describe("WhenUpdatingTokenSigner", function () {
       );
     });
 
-    it("Should emit 'TokenSignerChanged' event", async function () {
+    it("Should emit 'AgentSignerUpdated' event", async function () {
       const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
 
       await mintWithSignature(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
-      const signature = await signUpdateTokenSignerRequest(
+      const signature = await signUpdateAgentSignerRequest(
         _signer,
         nextTokenId.toString(),
         await _otherSigner.getAddress(),
@@ -377,14 +363,14 @@ describe("WhenUpdatingTokenSigner", function () {
       await expect(
         _agenticAIAgentCollection
           .connect(_owner)
-          .updateTokenSigner(
+          .updateAgentSigner(
             nextTokenId,
             await _otherSigner.getAddress(),
             ethers.id(nonce),
             signature
           )
       )
-        .to.emit(_agenticAIAgentCollection, "TokenSignerChanged")
+        .to.emit(_agenticAIAgentCollection, "AgentSignerUpdated")
         .withArgs(
           nextTokenId,
           await _signer.getAddress(),

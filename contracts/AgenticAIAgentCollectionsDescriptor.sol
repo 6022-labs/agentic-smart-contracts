@@ -4,12 +4,13 @@ pragma solidity ^0.8.28;
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 
-import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import { IAgenticAIAgentCollectionStates } from "./interfaces/IAgenticAIAgentCollection/IAgenticAIAgentCollectionStates.sol";
-import { IAgenticAIAgentCollectionsDescriptor } from "./interfaces/IAgenticAIAgentCollectionsDescriptor.sol";
+import {KeyValue} from "./types/KeyValue.sol";
+import {IAgenticAIAgentCollectionStates} from "./interfaces/IAgenticAIAgentCollection/IAgenticAIAgentCollectionStates.sol";
+import {IAgenticAIAgentCollectionsDescriptor} from "./interfaces/IAgenticAIAgentCollectionsDescriptor/IAgenticAIAgentCollectionsDescriptor.sol";
 
 contract AgenticAIAgentCollectionsDescriptor is
     IAgenticAIAgentCollectionsDescriptor
@@ -31,11 +32,12 @@ contract AgenticAIAgentCollectionsDescriptor is
         uint256 tokenId
     ) external view returns (string memory) {
         string memory name = IAgenticAIAgentCollectionStates(collection).nameOf(tokenId);
-        string memory image = IAgenticAIAgentCollectionStates(collection).imageOf(tokenId);
+        KeyValue[] memory images = IAgenticAIAgentCollectionStates(collection).imagesOf(tokenId);
 
         string memory description = _generateDescription();
 
-        string memory imageUrl = _generateImageUrl(image);
+        string memory defaultImage = _getDefaultImage(images);
+        string memory defaultImageUrl = _generateImageUrl(defaultImage);
 
         return
             string(
@@ -49,7 +51,7 @@ contract AgenticAIAgentCollectionsDescriptor is
                                 '", "description":"',
                                 description,
                                 '", "image": "',
-                                imageUrl,
+                                defaultImageUrl,
                                 '"}'
                             )
                         )
@@ -87,6 +89,25 @@ contract AgenticAIAgentCollectionsDescriptor is
 
     function _generateDescription() internal pure returns (string memory) {
         return "6022 AI Agent";
+    }
+
+    function _getDefaultImage(KeyValue[] memory images) internal pure returns (string memory) {
+        string memory defaultImage = "";
+
+        for (uint256 i = 0; i < images.length; i++) {
+            if (
+                keccak256(abi.encodePacked(images[i].key)) == keccak256(abi.encodePacked("default"))
+            ) {
+                defaultImage = images[i].value;
+                break;
+            }
+        }
+
+        if (keccak256(abi.encodePacked(defaultImage)) == keccak256(abi.encodePacked(""))) {
+            revert MissingDefaultImage();
+        }
+
+        return defaultImage;
     }
 
     function _generateImageUrl(

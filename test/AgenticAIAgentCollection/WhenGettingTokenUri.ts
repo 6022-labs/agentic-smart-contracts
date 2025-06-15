@@ -1,9 +1,12 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { AgenticAIAgentCollection } from "../../typechain-types";
-import { generateRandomAddress, signMintProposalRequest } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import {
+  generateRandomAddress,
+  signCreateMintProposalRequest,
+} from "../common";
 
 describe("WhenGettingTokenUri", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -64,8 +67,12 @@ describe("WhenGettingTokenUri", function () {
     let _tokenId: bigint;
     let _name: string = "test-agent";
     let _role: string = "facilitator";
-    let _baseImageCid: string =
-      "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+    let _images = [
+      {
+        key: "default",
+        value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
+      },
+    ];
     let _agentAddresses: string[] = [generateRandomAddress()];
 
     beforeEach(async function () {
@@ -73,7 +80,7 @@ describe("WhenGettingTokenUri", function () {
       _tokenId = await _agenticAIAgentCollection.nextTokenId();
       const mission = "";
 
-      const signature = await signMintProposalRequest(
+      const signature = await signCreateMintProposalRequest(
         _signer,
         _agenticAIAgentCollection,
         {
@@ -82,25 +89,30 @@ describe("WhenGettingTokenUri", function () {
           signer: _signer.address,
           role: _role,
           name: _name,
-          image: _baseImageCid,
+          images: _images,
           mission,
           nonce,
         }
       );
 
-      await _agenticAIAgentCollection.mintProposal(
+      await _agenticAIAgentCollection.createMintProposal(
         _owner.address,
         _agentAddresses,
         _signer.address,
         _role,
         _name,
-        _baseImageCid,
         mission,
+        _images,
         ethers.id(nonce),
         signature
       );
 
-      await _agenticAIAgentCollection.connect(_owner).mint(1);
+      const mintProposalsLength =
+        await _agenticAIAgentCollection.mintProposalsLength();
+
+      await _agenticAIAgentCollection
+        .connect(_owner)
+        .mint(mintProposalsLength - BigInt(1));
     });
 
     it("Should return token URI as base 64 encoded JSON", async function () {
@@ -150,7 +162,7 @@ describe("WhenGettingTokenUri", function () {
       const parsedTokenURI = JSON.parse(decodedTokenURI);
 
       // Image is a SVG
-      expect(parsedTokenURI.image).to.be.equal(ipfsGateway + _baseImageCid);
+      expect(parsedTokenURI.image).to.be.equal(ipfsGateway + _images[0].value);
     });
   });
 });

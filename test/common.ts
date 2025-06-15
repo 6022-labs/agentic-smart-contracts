@@ -6,7 +6,7 @@ export function generateRandomAddress(): string {
   return ethers.Wallet.createRandom().address;
 }
 
-export async function signMintProposalRequest(
+export async function signCreateMintProposalRequest(
   signer: HardhatEthersSigner,
   agenticAIAgentCollection: AgenticAIAgentCollection,
   params: {
@@ -15,7 +15,7 @@ export async function signMintProposalRequest(
     signer: string;
     role: string;
     name: string;
-    image: string;
+    images: { key: string; value: string }[];
     mission: string;
     nonce: string;
   }
@@ -32,13 +32,13 @@ export async function signMintProposalRequest(
   };
 
   const types = {
-    MintProposalRequest: [
+    CreateMintProposalRequest: [
       { name: "to", type: "address" },
       { name: "agentAddressesHash", type: "bytes32" },
       { name: "signer", type: "address" },
       { name: "roleHash", type: "bytes32" },
       { name: "nameHash", type: "bytes32" },
-      { name: "imageHash", type: "bytes32" },
+      { name: "imagesHash", type: "bytes32" },
       { name: "missionHash", type: "bytes32" },
       { name: "nonce", type: "bytes32" },
     ],
@@ -49,7 +49,14 @@ export async function signMintProposalRequest(
   );
   const roleHash = ethers.keccak256(ethers.toUtf8Bytes(params.role));
   const nameHash = ethers.keccak256(ethers.toUtf8Bytes(params.name));
-  const imageHash = ethers.keccak256(ethers.toUtf8Bytes(params.image));
+  // Hash the images array as in Solidity: keccak256(abi.encodePacked(keccak256(abi.encodePacked(key, value)), ...))
+  const imageHashes = params.images.map((img) =>
+    ethers.keccak256(
+      ethers.solidityPacked(["string", "string"], [img.key, img.value])
+    )
+  );
+  const imagesPacked = ethers.solidityPacked(["bytes32[]"], [imageHashes]);
+  const imagesHash = ethers.keccak256(imagesPacked);
   const missionHash = ethers.keccak256(ethers.toUtf8Bytes(params.mission));
 
   const message = {
@@ -58,7 +65,7 @@ export async function signMintProposalRequest(
     signer: params.signer,
     roleHash,
     nameHash,
-    imageHash,
+    imagesHash,
     missionHash,
     nonce: ethers.keccak256(ethers.toUtf8Bytes(params.nonce)),
   };

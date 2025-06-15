@@ -2,10 +2,9 @@
 pragma solidity ^0.8.28;
 
 interface IAgenticAIAgentCollectionEvents {
-    event MintProposal(
+    event MintProposalCreated(
         address indexed from,
-        address indexed signer,
-        uint256 proposalId
+        address indexed signer
     );
 
     /**
@@ -18,11 +17,20 @@ interface IAgenticAIAgentCollectionEvents {
     );
 
     /**
-     * @dev Emitted when a token signer has changed.
+     * @dev Emitted when a token signer is updated.
      */
-    event TokenSignerChanged(
+    event AgentSignerUpdated(
         uint256 indexed tokenId,
         address oldSigner,
         address newSigner
+    );
+
+    /**
+     * @dev Emitted when an agent's mission is updated.
+     */
+    event AgentMissionUpdated(
+        uint256 indexed tokenId,
+        string oldMission,
+        string newMission
     );
 }

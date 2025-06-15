@@ -1,8 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { generateRandomAddress, signMintProposalRequest } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import {
+  generateRandomAddress,
+  signCreateMintProposalRequest,
+} from "../common";
 import {
   AgenticAIAgentCollection,
   AgenticAIAgentCollectionsManager,
@@ -96,8 +99,13 @@ describe("WhenBuildingTokenUri", function () {
   describe("Given token id exists", function () {
     let _tokenId: bigint;
     let _name = "agent";
-    let _imageCid: string =
-      "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+    let _images = [
+      {
+        key: "default",
+        value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
+      },
+    ];
+
     const _role = "facilitator";
 
     beforeEach(async function () {
@@ -107,7 +115,7 @@ describe("WhenBuildingTokenUri", function () {
 
       _tokenId = await _agenticAIAgentCollection.nextTokenId();
 
-      const signature = await signMintProposalRequest(
+      const signature = await signCreateMintProposalRequest(
         _signer,
         _agenticAIAgentCollection,
         {
@@ -116,25 +124,30 @@ describe("WhenBuildingTokenUri", function () {
           signer: _signer.address,
           role: _role,
           name: _name,
-          image: _imageCid,
+          images: _images,
           mission,
           nonce,
         }
       );
 
-      await _agenticAIAgentCollection.mintProposal(
+      await _agenticAIAgentCollection.createMintProposal(
         _owner.address,
         agentAddresses,
         _signer.address,
         _role,
         _name,
-        _imageCid,
         mission,
+        _images,
         ethers.id(nonce),
         signature
       );
 
-      await _agenticAIAgentCollection.connect(_owner).mint(1);
+      const mintProposalsLength =
+        await _agenticAIAgentCollection.mintProposalsLength();
+
+      await _agenticAIAgentCollection
+        .connect(_owner)
+        .mint(mintProposalsLength - BigInt(1));
     });
 
     it("Should return token URI as base 64 encoded JSON", async function () {
@@ -196,7 +209,7 @@ describe("WhenBuildingTokenUri", function () {
       const parsedTokenURI = JSON.parse(decodedTokenURI);
 
       expect(parsedTokenURI.image).to.contain(ipfsGateway);
-      expect(parsedTokenURI.image).to.contain(_imageCid);
+      expect(parsedTokenURI.image).to.contain(_images[0].value);
     });
   });
 });

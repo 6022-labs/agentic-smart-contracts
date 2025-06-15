@@ -67,7 +67,7 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
     _otherAccount = otherAccount;
   });
 
-  describe("Given signer is admin", function () {
+  describe("Given signer is moderator", function () {
     it("Should update the collections descriptor", async function () {
       await expect(
         _agenticAIAgentCollection
@@ -80,20 +80,17 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
   });
 
   describe("Given signer is not admin", function () {
-    it(
-      "Should revert with 'AccessControlUnauthorizedAccount' error when called by a non-admin",
-      async function () {
-        await expect(
-          _agenticAIAgentCollection
-            .connect(_otherAccount)
-            .updateCollectionsDescriptor(
-              await _agenticAIAgentCollectionsDescriptor.getAddress()
-            )
-        ).to.be.revertedWithCustomError(
-          _agenticAIAgentCollection,
-          "AccessControlUnauthorizedAccount"
-        );
-      }
-    );
+    it("Should revert with 'AccessControlUnauthorizedAccount' error when called by a non-admin", async function () {
+      await expect(
+        _agenticAIAgentCollection
+          .connect(_otherAccount)
+          .updateCollectionsDescriptor(
+            await _agenticAIAgentCollectionsDescriptor.getAddress()
+          )
+      ).to.be.revertedWithCustomError(
+        _agenticAIAgentCollection,
+        "AccessControlUnauthorizedAccount"
+      );
+    });
   });
 });

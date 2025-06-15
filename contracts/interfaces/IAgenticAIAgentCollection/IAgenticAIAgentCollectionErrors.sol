@@ -33,6 +33,11 @@ interface IAgenticAIAgentCollectionErrors {
     error SignerUnchanged(address signer);
 
     /**
+     * @dev Error when no default image
+     */
+    error MissingDefaultImage();
+
+    /**
      * @dev Error when the sender is not the owner of the token.
      */
     error OwnableUnauthorizedAccount(address sender, uint256 tokenId);
