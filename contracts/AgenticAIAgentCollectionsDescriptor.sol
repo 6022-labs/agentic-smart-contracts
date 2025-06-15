@@ -63,33 +63,6 @@ contract AgenticAIAgentCollectionsDescriptor is
             );
     }
 
-    function _escapeQuotes(
-        string memory name
-    ) internal pure returns (string memory) {
-        bytes memory nameBytes = bytes(name);
-        uint8 quotesCount = 0;
-        for (uint8 i = 0; i < nameBytes.length; i++) {
-            if (nameBytes[i] == '"') {
-                quotesCount++;
-            }
-        }
-        if (quotesCount > 0) {
-            bytes memory escapedBytes = new bytes(
-                nameBytes.length + (quotesCount)
-            );
-            uint256 index;
-            for (uint8 i = 0; i < nameBytes.length; i++) {
-                if (nameBytes[i] == '"') {
-                    escapedBytes[index++] = "\\";
-                }
-                escapedBytes[index++] = nameBytes[i];
-            }
-            return string(escapedBytes);
-        }
-
-        return name;
-    }
-
     function _generateDescription() internal pure returns (string memory) {
         return "6022 AI Agent";
     }
