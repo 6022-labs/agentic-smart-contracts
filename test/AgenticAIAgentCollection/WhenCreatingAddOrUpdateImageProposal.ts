@@ -119,7 +119,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
   describe("Given token does not exist", function () {
     it("Should revert with 'ERC721NonexistentToken' error", async function () {
       await expect(
-        _agenticAIAgentCollection.createdAddOrUpdateImageProposal(1n, {
+        _agenticAIAgentCollection.createAddOrUpdateImageProposal(1n, {
           key: "profile",
           value: "cid1",
         })
@@ -139,7 +139,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
       await expect(
         _agenticAIAgentCollection
           .connect(_otherAccount)
-          .createdAddOrUpdateImageProposal(tokenId, {
+          .createAddOrUpdateImageProposal(tokenId, {
             key: "profile",
             value: "cid1",
           })
@@ -161,7 +161,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           await _agenticAIAgentCollection.addOrUpdateProposalsLength()
         ).to.eq(0n);
 
-        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
           {
             key: "profile",
@@ -184,7 +184,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
       it("Should update existing proposal for same key", async function () {
         const tokenId = await proposeAndMint(await _owner.getAddress());
 
-        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
           {
             key: "profile",
@@ -196,7 +196,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           await _agenticAIAgentCollection.addOrUpdateProposalsLength()
         ).to.eq(1n);
 
-        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
           {
             key: "profile",
@@ -226,7 +226,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
 
         await _agenticAIAgentCollection
           .connect(_moderator)
-          .createdAddOrUpdateImageProposal(tokenId, {
+          .createAddOrUpdateImageProposal(tokenId, {
             key: "profile",
             value: "cid1",
           });
@@ -252,7 +252,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
 
         await _agenticAIAgentCollection
           .connect(_moderator)
-          .createdAddOrUpdateImageProposal(tokenId, {
+          .createAddOrUpdateImageProposal(tokenId, {
             key: "profile",
             value: "cid1",
           });

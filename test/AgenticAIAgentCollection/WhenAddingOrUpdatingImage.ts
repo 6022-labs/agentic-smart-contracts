@@ -120,7 +120,7 @@ describe("WhenAddingOrUpdatingImage", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' error", async function () {
       const tokenId = await proposeAndMint(await _owner.getAddress());
 
-      await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(tokenId, {
+      await _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
         key: "profile",
         value: "cid1",
       });
@@ -149,7 +149,7 @@ describe("WhenAddingOrUpdatingImage", function () {
       it("Should add the image", async function () {
         const tokenId = await proposeAndMint(await _owner.getAddress());
 
-        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
           {
             key: "profile",
@@ -170,7 +170,7 @@ describe("WhenAddingOrUpdatingImage", function () {
       it("Should update the image value", async function () {
         const tokenId = await proposeAndMint(await _owner.getAddress());
 
-        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
           {
             key: "profile",
@@ -179,7 +179,7 @@ describe("WhenAddingOrUpdatingImage", function () {
         );
         await _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0);
 
-        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
           {
             key: "profile",
@@ -206,7 +206,7 @@ describe("WhenAddingOrUpdatingImage", function () {
       it("Should not be executable twice", async function () {
         const tokenId = await proposeAndMint(await _owner.getAddress());
 
-        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
           {
             key: "profile",
@@ -236,7 +236,7 @@ describe("WhenAddingOrUpdatingImage", function () {
       it("Should reorder remaining proposals", async function () {
         const tokenId = await proposeAndMint(await _owner.getAddress());
 
-        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
           {
             key: "profile1",
@@ -244,7 +244,7 @@ describe("WhenAddingOrUpdatingImage", function () {
           }
         );
 
-        await _agenticAIAgentCollection.createdAddOrUpdateImageProposal(
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
           {
             key: "profile2",
@@ -256,9 +256,7 @@ describe("WhenAddingOrUpdatingImage", function () {
           await _agenticAIAgentCollection.addOrUpdateProposalsLength()
         ).to.eq(2n);
 
-        await _agenticAIAgentCollection
-          .connect(_moderator)
-          .addOrUpdateImage(0);
+        await _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0);
 
         expect(
           await _agenticAIAgentCollection.addOrUpdateProposalsLength()

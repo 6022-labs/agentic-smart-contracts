@@ -11,7 +11,7 @@ interface IAgenticAIAgentCollectionActions {
         bytes memory signature
     ) external;
 
-    function createdAddOrUpdateImageProposal(
+    function createAddOrUpdateImageProposal(
         uint256 tokenId,
         KeyValue memory image
     ) external;

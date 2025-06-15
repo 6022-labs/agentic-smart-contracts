@@ -250,7 +250,7 @@ contract AgenticAIAgentCollection is
         emit AgentMissionUpdated(tokenId, oldMission, newMission);
     }
 
-    function createdAddOrUpdateImageProposal(
+    function createAddOrUpdateImageProposal(
         uint256 tokenId,
         KeyValue memory image
     ) external {
