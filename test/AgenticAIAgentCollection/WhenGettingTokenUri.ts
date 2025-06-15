@@ -6,6 +6,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   generateRandomAddress,
   signCreateMintProposalRequest,
+  decodeTokenURI,
 } from "../common";
 
 describe("WhenGettingTokenUri", function () {
@@ -118,11 +119,7 @@ describe("WhenGettingTokenUri", function () {
     it("Should return token URI as base 64 encoded JSON", async function () {
       const tokenURI = await _agenticAIAgentCollection.tokenURI(_tokenId);
 
-      const decodedTokenURI = Buffer.from(
-        tokenURI.replace("data:application/json;base64,", ""),
-        "base64"
-      ).toString("utf-8");
-      const parsedTokenURI = JSON.parse(decodedTokenURI);
+      const parsedTokenURI = decodeTokenURI(tokenURI);
       expect(parsedTokenURI).to.be.an("object");
       expect(parsedTokenURI).to.have.property("name");
       expect(parsedTokenURI).to.have.property("description");
@@ -132,22 +129,14 @@ describe("WhenGettingTokenUri", function () {
     it("Should contain 'name' field in token URI", async function () {
       const tokenURI = await _agenticAIAgentCollection.tokenURI(_tokenId);
 
-      const decodedTokenURI = Buffer.from(
-        tokenURI.replace("data:application/json;base64,", ""),
-        "base64"
-      ).toString("utf-8");
-      const parsedTokenURI = JSON.parse(decodedTokenURI);
+      const parsedTokenURI = decodeTokenURI(tokenURI);
       expect(parsedTokenURI.name).to.equal(_name);
     });
 
     it("Should contain 'description' field in token URI", async function () {
       const tokenURI = await _agenticAIAgentCollection.tokenURI(_tokenId);
 
-      const decodedTokenURI = Buffer.from(
-        tokenURI.replace("data:application/json;base64,", ""),
-        "base64"
-      ).toString("utf-8");
-      const parsedTokenURI = JSON.parse(decodedTokenURI);
+      const parsedTokenURI = decodeTokenURI(tokenURI);
 
       expect(parsedTokenURI.description).to.be.equal("6022 AI Agent");
     });
@@ -155,11 +144,7 @@ describe("WhenGettingTokenUri", function () {
     it("Should contain 'image' field in token URI", async function () {
       const tokenURI = await _agenticAIAgentCollection.tokenURI(_tokenId);
 
-      const decodedTokenURI = Buffer.from(
-        tokenURI.replace("data:application/json;base64,", ""),
-        "base64"
-      ).toString("utf-8");
-      const parsedTokenURI = JSON.parse(decodedTokenURI);
+      const parsedTokenURI = decodeTokenURI(tokenURI);
 
       // Image is a SVG
       expect(parsedTokenURI.image).to.be.equal(ipfsGateway + _images[0].value);

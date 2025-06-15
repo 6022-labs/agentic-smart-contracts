@@ -5,6 +5,7 @@ import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   generateRandomAddress,
+  generateRandomNonce,
   signCreateMintProposalRequest,
 } from "../common";
 
@@ -60,10 +61,6 @@ describe("WhenUpdatingAgentMission", function () {
     _signer = signer;
     _otherAccount = otherAccount;
   });
-
-  function generateRandomNonce() {
-    return ethers.hexlify(ethers.randomBytes(32));
-  }
 
   async function mintWithSignature(mission: string, to: string) {
     const name = "test-agent";

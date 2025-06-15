@@ -5,7 +5,9 @@ import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   generateRandomAddress,
+  generateRandomNonce,
   signCreateMintProposalRequest,
+  signUpdateAgentSignerRequest,
 } from "../common";
 
 describe("WhenUpdatingAgentSigner", function () {
@@ -76,10 +78,6 @@ describe("WhenUpdatingAgentSigner", function () {
     _agenticAIAgentCollection = agenticAIAgentCollection;
   });
 
-  function generateRandomNonce() {
-    return ethers.hexlify(ethers.randomBytes(32));
-  }
-
   async function mintWithSignature(signer: HardhatEthersSigner, to: string) {
     const name = "test-agent";
     const images = [
@@ -129,37 +127,6 @@ describe("WhenUpdatingAgentSigner", function () {
       .mint(mintProposalsLength - BigInt(1));
   }
 
-  // Function to generate a valid EIP-712 signature
-  async function signUpdateAgentSignerRequest(
-    signer: HardhatEthersSigner,
-    tokenId: string,
-    newSigner: string,
-    nonce: string
-  ) {
-    const domain = {
-      name: "AgenticAIAgentCollection",
-      version: "1",
-      chainId: (await ethers.provider.getNetwork()).chainId,
-      verifyingContract: await _agenticAIAgentCollection.getAddress(),
-    };
-
-    const types = {
-      UpdateAgentSignerRequest: [
-        { name: "tokenId", type: "uint256" },
-        { name: "newSigner", type: "address" },
-        { name: "nonce", type: "bytes32" },
-      ],
-    };
-
-    const message = {
-      tokenId,
-      newSigner,
-      nonce: ethers.keccak256(ethers.toUtf8Bytes(nonce)),
-    };
-
-    return await signer.signTypedData(domain, types, message);
-  }
-
   describe("Given nonce has already been used", function () {
     it("Should revert with 'UsedNonce' error", async function () {
       const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
@@ -169,9 +136,12 @@ describe("WhenUpdatingAgentSigner", function () {
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(
         _signer,
-        nextTokenId.toString(),
-        await _otherSigner.getAddress(),
-        nonce
+        _agenticAIAgentCollection,
+        {
+          tokenId: nextTokenId.toString(),
+          newSigner: await _otherSigner.getAddress(),
+          nonce,
+        }
       );
 
       await _agenticAIAgentCollection
@@ -207,9 +177,12 @@ describe("WhenUpdatingAgentSigner", function () {
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(
         _signer,
-        nextTokenId.toString(),
-        await _otherAccount.getAddress(),
-        nonce
+        _agenticAIAgentCollection,
+        {
+          tokenId: nextTokenId.toString(),
+          newSigner: await _otherAccount.getAddress(),
+          nonce,
+        }
       );
 
       await expect(
@@ -239,9 +212,12 @@ describe("WhenUpdatingAgentSigner", function () {
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(
         _signer,
-        nextTokenId.toString(),
-        await _otherAccount.getAddress(),
-        nonce
+        _agenticAIAgentCollection,
+        {
+          tokenId: nextTokenId.toString(),
+          newSigner: await _otherAccount.getAddress(),
+          nonce,
+        }
       );
 
       await expect(
@@ -268,9 +244,12 @@ describe("WhenUpdatingAgentSigner", function () {
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(
         _signer,
-        nextTokenId.toString(),
-        await _signer.getAddress(),
-        nonce
+        _agenticAIAgentCollection,
+        {
+          tokenId: nextTokenId.toString(),
+          newSigner: await _signer.getAddress(),
+          nonce,
+        }
       );
 
       await expect(
@@ -301,9 +280,12 @@ describe("WhenUpdatingAgentSigner", function () {
       const secondNonce = generateRandomNonce();
       const invalidSignature = await signUpdateAgentSignerRequest(
         _signer,
-        nextTokenId.toString(),
-        await _otherSigner.getAddress(),
-        firstNonce
+        _agenticAIAgentCollection,
+        {
+          tokenId: nextTokenId.toString(),
+          newSigner: await _otherSigner.getAddress(),
+          nonce: firstNonce,
+        }
       );
 
       await expect(
@@ -328,9 +310,12 @@ describe("WhenUpdatingAgentSigner", function () {
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(
         _signer,
-        nextTokenId.toString(),
-        await _otherSigner.getAddress(),
-        nonce
+        _agenticAIAgentCollection,
+        {
+          tokenId: nextTokenId.toString(),
+          newSigner: await _otherSigner.getAddress(),
+          nonce,
+        }
       );
 
       await _agenticAIAgentCollection
@@ -355,9 +340,12 @@ describe("WhenUpdatingAgentSigner", function () {
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(
         _signer,
-        nextTokenId.toString(),
-        await _otherSigner.getAddress(),
-        nonce
+        _agenticAIAgentCollection,
+        {
+          tokenId: nextTokenId.toString(),
+          newSigner: await _otherSigner.getAddress(),
+          nonce,
+        }
       );
 
       await expect(

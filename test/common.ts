@@ -72,3 +72,45 @@ export async function signCreateMintProposalRequest(
 
   return await signer.signTypedData(domain, types, message);
 }
+
+export function generateRandomNonce(): string {
+  return ethers.hexlify(ethers.randomBytes(32));
+}
+
+export async function signUpdateAgentSignerRequest(
+  signer: HardhatEthersSigner,
+  agenticAIAgentCollection: AgenticAIAgentCollection,
+  params: { tokenId: string; newSigner: string; nonce: string }
+) {
+  const domain = {
+    name: "AgenticAIAgentCollection",
+    version: "1",
+    chainId: (await ethers.provider.getNetwork()).chainId,
+    verifyingContract: await agenticAIAgentCollection.getAddress(),
+  };
+
+  const types = {
+    UpdateAgentSignerRequest: [
+      { name: "tokenId", type: "uint256" },
+      { name: "newSigner", type: "address" },
+      { name: "nonce", type: "bytes32" },
+    ],
+  };
+
+  const message = {
+    tokenId: params.tokenId,
+    newSigner: params.newSigner,
+    nonce: ethers.keccak256(ethers.toUtf8Bytes(params.nonce)),
+  };
+
+  return await signer.signTypedData(domain, types, message);
+}
+
+export function decodeTokenURI(tokenURI: string) {
+  const decoded = Buffer.from(
+    tokenURI.replace("data:application/json;base64,", ""),
+    "base64"
+  ).toString("utf-8");
+
+  return JSON.parse(decoded);
+}
