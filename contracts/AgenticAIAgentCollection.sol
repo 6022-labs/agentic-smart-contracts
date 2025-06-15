@@ -62,6 +62,7 @@ contract AgenticAIAgentCollection is
     constructor(
         string memory name,
         string memory symbol,
+        address admin,
         address moderator,
         address collectionsManager,
         address collectionsDescriptor
@@ -73,6 +74,7 @@ contract AgenticAIAgentCollection is
             collectionsDescriptor
         );
 
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MODERATOR_ROLE, moderator);
     }
 

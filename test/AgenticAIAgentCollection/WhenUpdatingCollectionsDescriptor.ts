@@ -40,6 +40,7 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
       "AgenticAI",
       "AIA",
       owner.address,
+      owner.address,
       await collectionsManager.getAddress(),
       await agenticAIAgentCollectionsDescriptor.getAddress()
     );

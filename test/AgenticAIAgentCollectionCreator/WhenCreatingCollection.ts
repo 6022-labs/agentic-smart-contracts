@@ -61,14 +61,14 @@ describe("WhenCreatingCollection", function () {
 
     it("Should emit CollectionCreated event", async function () {
       await expect(
-        _creator.createCollection(name, symbol, _owner.address)
+        _creator.createCollection(name, symbol, _owner.address, _owner.address)
       )
         .to.emit(_collectionsManager, "CollectionCreated")
         .withArgs(1n, anyValue, name, symbol);
     });
 
     it("Should deploy a collection and register it", async function () {
-      await _creator.createCollection(name, symbol, _owner.address);
+      await _creator.createCollection(name, symbol, _owner.address, _owner.address);
 
       const newCollectionAddress = await _collectionsManager.collection(1);
       expect(newCollectionAddress).to.not.equal(ethers.ZeroAddress);

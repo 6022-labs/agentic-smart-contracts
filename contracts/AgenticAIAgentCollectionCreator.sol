@@ -40,11 +40,13 @@ contract AgenticAIAgentCollectionCreator is
     function createCollection(
         string memory name,
         string memory symbol,
+        address admin,
         address moderator
     ) external override returns (address collectionAddress) {
         AgenticAIAgentCollection newCollection = new AgenticAIAgentCollection(
             name,
             symbol,
+            admin,
             moderator,
             _collectionsManager,
             _collectionsDescriptor

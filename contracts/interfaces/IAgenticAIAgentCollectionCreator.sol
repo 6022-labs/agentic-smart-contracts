@@ -16,6 +16,7 @@ interface IAgenticAIAgentCollectionCreator {
     function createCollection(
         string memory name,
         string memory symbol,
-        address owner
+        address admin,
+        address moderator
     ) external returns (address collectionAddress);
 }
