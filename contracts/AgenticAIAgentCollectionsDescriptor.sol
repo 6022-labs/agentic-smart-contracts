@@ -7,12 +7,14 @@ pragma solidity ^0.8.28;
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 import {KeyValue} from "./types/KeyValue.sol";
 import {IAgenticAIAgentCollectionStates} from "./interfaces/IAgenticAIAgentCollection/IAgenticAIAgentCollectionStates.sol";
 import {IAgenticAIAgentCollectionsDescriptor} from "./interfaces/IAgenticAIAgentCollectionsDescriptor/IAgenticAIAgentCollectionsDescriptor.sol";
 
 contract AgenticAIAgentCollectionsDescriptor is
+    AccessControl,
     IAgenticAIAgentCollectionsDescriptor
 {
     using Strings for uint256;
@@ -21,9 +23,10 @@ contract AgenticAIAgentCollectionsDescriptor is
 
     constructor(string memory ipfsGateway) {
         _ipfsGateway = ipfsGateway;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function updateIpfsGateway(string memory ipfsGateway) external {
+    function updateIpfsGateway(string memory ipfsGateway) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _ipfsGateway = ipfsGateway;
     }
 
