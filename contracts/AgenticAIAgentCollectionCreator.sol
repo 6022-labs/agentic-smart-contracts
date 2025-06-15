@@ -20,6 +20,11 @@ contract AgenticAIAgentCollectionCreator is
     ) {
         _collectionsManager = initialCollectionsManager;
         _collectionsDescriptor = initialCollectionsDescriptor;
+
+        _grantRole(
+            DEFAULT_ADMIN_ROLE,
+            msg.sender
+        );
     }
 
     function collectionsDescriptor() external view returns (address) {
