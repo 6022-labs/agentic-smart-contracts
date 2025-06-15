@@ -390,6 +390,10 @@ contract AgenticAIAgentCollection is
     ) external onlyRole(MODERATOR_ROLE) {
         MintProposal memory proposalInfo = _mintProposals[proposalIndex];
 
+        if (_tokenIdOf[proposalInfo.name] != 0) {
+            revert UsedName(proposalInfo.name);
+        }
+
         _agentInformationOf[_nextTokenId] = AgentInformation({
             name: proposalInfo.name,
             role: proposalInfo.role,
