@@ -292,6 +292,22 @@ contract AgenticAIAgentCollection is
         }
     }
 
+    function _popAddOrUpdateImageProposalAt(uint256 index) private {
+        uint256 lastIndex = _addOrUpdateImageProposals.length - 1;
+        if (index != lastIndex) {
+            _addOrUpdateImageProposals[index] = _addOrUpdateImageProposals[lastIndex];
+        }
+        _addOrUpdateImageProposals.pop();
+    }
+
+    function _popMintProposalAt(uint256 index) private {
+        uint256 lastIndex = _mintProposals.length - 1;
+        if (index != lastIndex) {
+            _mintProposals[index] = _mintProposals[lastIndex];
+        }
+        _mintProposals.pop();
+    }
+
     function addOrUpdateImage(
         uint256 proposalIndex
     ) external onlyRole(MODERATOR_ROLE) {
@@ -317,12 +333,13 @@ contract AgenticAIAgentCollection is
             }));
         }
 
-        uint256 lastIndex = _addOrUpdateImageProposals.length - 1;
-        if (proposalIndex != lastIndex) {
-            _addOrUpdateImageProposals[proposalIndex] =
-                _addOrUpdateImageProposals[lastIndex];
-        }
-        _addOrUpdateImageProposals.pop();
+        _popAddOrUpdateImageProposalAt(proposalIndex);
+    }
+
+    function refuseAddOrUpdateImageProposal(
+        uint256 proposalIndex
+    ) external onlyRole(MODERATOR_ROLE) {
+        _popAddOrUpdateImageProposalAt(proposalIndex);
     }
 
     function removeImage(
@@ -432,12 +449,14 @@ contract AgenticAIAgentCollection is
         emit Minted(proposalInfo.owner, proposalInfo.signer, _nextTokenId);
         emit AgentSignerUpdated(_nextTokenId, address(0), proposalInfo.signer);
 
-        uint256 lastIndex = _mintProposals.length - 1;
-        if (proposalIndex != lastIndex) {
-            _mintProposals[proposalIndex] = _mintProposals[lastIndex];
-        }
-        _mintProposals.pop();
+        _popMintProposalAt(proposalIndex);
         _nextTokenId++;
+    }
+
+    function refuseMintProposal(
+        uint256 proposalIndex
+    ) external onlyRole(MODERATOR_ROLE) {
+        _popMintProposalAt(proposalIndex);
     }
 
     function _recoverUpdateAgentSignerSigner(

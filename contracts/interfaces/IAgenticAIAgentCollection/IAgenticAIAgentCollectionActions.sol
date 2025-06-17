@@ -20,6 +20,10 @@ interface IAgenticAIAgentCollectionActions {
         uint256 proposalIndex
     ) external;
 
+    function refuseAddOrUpdateImageProposal(
+        uint256 proposalIndex
+    ) external;
+
     function removeImage(
         uint256 tokenId,
         string memory key
@@ -39,6 +43,10 @@ interface IAgenticAIAgentCollectionActions {
 
     function mint(
         uint256 proposalId
+    ) external;
+
+    function refuseMintProposal(
+        uint256 proposalIndex
     ) external;
 
     function updateAgentMission(
