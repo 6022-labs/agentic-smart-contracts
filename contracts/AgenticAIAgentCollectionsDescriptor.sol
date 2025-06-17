@@ -27,7 +27,9 @@ contract AgenticAIAgentCollectionsDescriptor is
     }
 
     function updateIpfsGateway(string memory ipfsGateway) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        string memory oldGateway = _ipfsGateway;
         _ipfsGateway = ipfsGateway;
+        emit IpfsGatewayUpdated(oldGateway, ipfsGateway);
     }
 
     function buildTokenURI(

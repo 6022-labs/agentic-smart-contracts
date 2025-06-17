@@ -5,6 +5,10 @@ import {KeyValue} from "../../types/KeyValue.sol";
 import {AgentInformation} from "../../types/AgentInformation.sol";
 
 interface IAgenticAIAgentCollectionStates {
+    function collectionsManager() external view returns (address);
+
+    function collectionsDescriptor() external view returns (address);
+
     function informationOf(uint256 tokenId) external view returns (AgentInformation memory);
 
     function signerOf(uint256 tokenId) external view returns (address);

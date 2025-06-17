@@ -4,7 +4,7 @@ pragma solidity ^0.8.28;
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 import {AgenticAIAgentCollection} from "./AgenticAIAgentCollection.sol";
-import {IAgenticAIAgentCollectionCreator} from "./interfaces/IAgenticAIAgentCollectionCreator.sol";
+import {IAgenticAIAgentCollectionCreator} from "./interfaces/IAgenticAIAgentCollectionCreator/IAgenticAIAgentCollectionCreator.sol";
 import {IAgenticAIAgentCollectionsManagerCollectionCreatorActions} from "./interfaces/IAgenticAIAgentCollectionsManager/IAgenticAIAgentCollectionsManagerCollectionCreatorActions.sol";
 
 contract AgenticAIAgentCollectionCreator is
@@ -12,14 +12,15 @@ contract AgenticAIAgentCollectionCreator is
     IAgenticAIAgentCollectionCreator
 {
     address private _collectionsManager;
-    address private _collectionsDescriptor;
+    address private _defaultCollectionsDescriptor;
+
 
     constructor(
         address initialCollectionsManager,
-        address initialCollectionsDescriptor
+        address initialDefaultCollectionsDescriptor
     ) {
         _collectionsManager = initialCollectionsManager;
-        _collectionsDescriptor = initialCollectionsDescriptor;
+        _defaultCollectionsDescriptor = initialDefaultCollectionsDescriptor;
 
         _grantRole(
             DEFAULT_ADMIN_ROLE,
@@ -27,14 +28,17 @@ contract AgenticAIAgentCollectionCreator is
         );
     }
 
-    function collectionsDescriptor() external view returns (address) {
-        return _collectionsDescriptor;
+    function defaultCollectionsDescriptor() external view returns (address) {
+        return _defaultCollectionsDescriptor;
     }
 
-    function updateCollectionsDescriptor(
+    function updateDefaultCollectionsDescriptor(
         address newDescriptor
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _collectionsDescriptor = newDescriptor;
+        address oldDescriptor = _defaultCollectionsDescriptor;
+        _defaultCollectionsDescriptor = newDescriptor;
+
+        emit DefaultCollectionsDescriptorUpdated(oldDescriptor, newDescriptor);
     }
 
     function createCollection(
@@ -49,7 +53,7 @@ contract AgenticAIAgentCollectionCreator is
             admin,
             moderator,
             _collectionsManager,
-            _collectionsDescriptor
+            _defaultCollectionsDescriptor
         );
 
         address newCollectionAddress = address(newCollection);

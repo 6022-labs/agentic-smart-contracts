@@ -8,7 +8,7 @@ import {
   AgenticAIAgentCollectionsDescriptor,
 } from "../../typechain-types";
 
-describe("WhenUpdatingCollectionsDescriptor", function () {
+describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _creator: AgenticAIAgentCollectionCreator;
@@ -24,12 +24,15 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
     const CollectionsManager = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsManager"
     );
-    const collectionsManager = (await CollectionsManager.deploy()) as AgenticAIAgentCollectionsManager;
+    const collectionsManager =
+      (await CollectionsManager.deploy()) as AgenticAIAgentCollectionsManager;
 
     const Descriptor = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsDescriptor"
     );
-    const descriptor = (await Descriptor.deploy(ipfsGateway)) as AgenticAIAgentCollectionsDescriptor;
+    const descriptor = (await Descriptor.deploy(
+      ipfsGateway
+    )) as AgenticAIAgentCollectionsDescriptor;
 
     const Creator = await ethers.getContractFactory(
       "AgenticAIAgentCollectionCreator"
@@ -62,13 +65,37 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
       const Descriptor = await ethers.getContractFactory(
         "AgenticAIAgentCollectionsDescriptor"
       );
-      const newDescriptor = (await Descriptor.deploy(ipfsGateway)) as AgenticAIAgentCollectionsDescriptor;
+      const newDescriptor = (await Descriptor.deploy(
+        ipfsGateway
+      )) as AgenticAIAgentCollectionsDescriptor;
+
+      await _creator
+        .connect(_owner)
+        .updateDefaultCollectionsDescriptor(await newDescriptor.getAddress());
+
+      expect(await _creator.defaultCollectionsDescriptor()).to.equal(
+        await newDescriptor.getAddress()
+      );
+    });
+
+    it("Should emit 'DefaultCollectionsDescriptorUpdated' event", async function () {
+      const Descriptor = await ethers.getContractFactory(
+        "AgenticAIAgentCollectionsDescriptor"
+      );
+      const newDescriptor = (await Descriptor.deploy(
+        ipfsGateway
+      )) as AgenticAIAgentCollectionsDescriptor;
+
+      const oldDescriptorAddress =
+        await _creator.defaultCollectionsDescriptor();
 
       await expect(
         _creator
           .connect(_owner)
-          .updateCollectionsDescriptor(await newDescriptor.getAddress())
-      ).to.not.be.reverted;
+          .updateDefaultCollectionsDescriptor(await newDescriptor.getAddress())
+      )
+        .to.emit(_creator, "DefaultCollectionsDescriptorUpdated")
+        .withArgs(oldDescriptorAddress, await newDescriptor.getAddress());
     });
   });
 
@@ -77,12 +104,14 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
       const Descriptor = await ethers.getContractFactory(
         "AgenticAIAgentCollectionsDescriptor"
       );
-      const newDescriptor = (await Descriptor.deploy(ipfsGateway)) as AgenticAIAgentCollectionsDescriptor;
+      const newDescriptor = (await Descriptor.deploy(
+        ipfsGateway
+      )) as AgenticAIAgentCollectionsDescriptor;
 
       await expect(
         _creator
           .connect(_otherAccount)
-          .updateCollectionsDescriptor(await newDescriptor.getAddress())
+          .updateDefaultCollectionsDescriptor(await newDescriptor.getAddress())
       ).to.be.revertedWithCustomError(
         _creator,
         "AccessControlUnauthorizedAccount"

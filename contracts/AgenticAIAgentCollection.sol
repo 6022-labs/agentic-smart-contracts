@@ -64,14 +64,14 @@ contract AgenticAIAgentCollection is
         string memory symbol,
         address admin,
         address moderator,
-        address collectionsManager,
-        address collectionsDescriptor
+        address initialCollectionsManager,
+        address initialCollectionsDescriptor
     ) ERC721(name, symbol) EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {
         _collectionsManager = IAgenticAIAgentCollectionsManagerStates(
-            collectionsManager
+            initialCollectionsManager
         );
         _collectionsDescriptor = IAgenticAIAgentCollectionsDescriptorActions(
-            collectionsDescriptor
+            initialCollectionsDescriptor
         );
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
@@ -92,12 +92,24 @@ contract AgenticAIAgentCollection is
             AccessControl.supportsInterface(interfaceId);
     }
 
+    function collectionsManager() external view returns (address) {
+        return address(_collectionsManager);
+    }
+
+    function collectionsDescriptor() external view returns (address) {
+        return address(_collectionsDescriptor);
+    }
+
     function updateCollectionsDescriptor(
-        address collectionsDescriptor
+        address newCollectionsDescriptor
     ) external onlyRole(MODERATOR_ROLE) {
+        address oldDescriptor = address(_collectionsDescriptor);
+
         _collectionsDescriptor = IAgenticAIAgentCollectionsDescriptorActions(
-            collectionsDescriptor
+            newCollectionsDescriptor
         );
+
+        emit CollectionsDescriptorUpdated(oldDescriptor, newCollectionsDescriptor);
     }
 
     function nextTokenId() external view returns (uint256) {

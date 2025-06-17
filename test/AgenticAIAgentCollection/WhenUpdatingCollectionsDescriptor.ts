@@ -70,13 +70,33 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
 
   describe("Given signer is moderator", function () {
     it("Should update the collections descriptor", async function () {
+      await _agenticAIAgentCollection
+        .connect(_owner)
+        .updateCollectionsDescriptor(
+          await _agenticAIAgentCollectionsDescriptor.getAddress()
+        );
+
+      expect(await _agenticAIAgentCollection.collectionsDescriptor()).to.equal(
+        await _agenticAIAgentCollectionsDescriptor.getAddress()
+      );
+    });
+
+    it("Should update the collections descriptor", async function () {
+      const Descriptor = await ethers.getContractFactory(
+        "AgenticAIAgentCollectionsDescriptor"
+      );
+      const newDescriptor = await Descriptor.deploy(ipfsGateway);
+
       await expect(
         _agenticAIAgentCollection
           .connect(_owner)
-          .updateCollectionsDescriptor(
-            await _agenticAIAgentCollectionsDescriptor.getAddress()
-          )
-      ).to.not.be.reverted;
+          .updateCollectionsDescriptor(await newDescriptor.getAddress())
+      )
+        .to.emit(_agenticAIAgentCollection, "CollectionsDescriptorUpdated")
+        .withArgs(
+          await _agenticAIAgentCollectionsDescriptor.getAddress(),
+          await newDescriptor.getAddress()
+        );
     });
   });
 

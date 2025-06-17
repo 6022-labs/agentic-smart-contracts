@@ -26,7 +26,9 @@ describe("WhenUpdatingIpfsGateway", function () {
   }
 
   beforeEach(async function () {
-    const { descriptor, owner, otherAccount } = await loadFixture(deployDescriptor);
+    const { descriptor, owner, otherAccount } = await loadFixture(
+      deployDescriptor
+    );
 
     _descriptor = descriptor;
     _owner = owner;
@@ -34,10 +36,10 @@ describe("WhenUpdatingIpfsGateway", function () {
   });
 
   describe("Given caller is admin", function () {
-    it("Should update the IPFS gateway", async function () {
-      await expect(
-        _descriptor.connect(_owner).updateIpfsGateway(newGateway)
-      ).to.not.be.reverted;
+    it("Should emit 'IpfsGatewayUpdated' event", async function () {
+      await expect(_descriptor.connect(_owner).updateIpfsGateway(newGateway))
+        .to.emit(_descriptor, "IpfsGatewayUpdated")
+        .withArgs(ipfsGateway, newGateway);
     });
   });
 

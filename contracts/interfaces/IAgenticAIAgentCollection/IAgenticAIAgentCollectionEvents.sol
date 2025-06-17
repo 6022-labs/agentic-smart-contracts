@@ -33,4 +33,14 @@ interface IAgenticAIAgentCollectionEvents {
         string oldMission,
         string newMission
     );
+
+    /**
+     * @dev Emitted when the collections descriptor is updated.
+     * @param oldCollectionsDescriptor The previous collections descriptor address.
+     * @param newCollectionsDescriptor The new collections descriptor address.
+     */
+    event CollectionsDescriptorUpdated(
+        address oldCollectionsDescriptor,
+        address newCollectionsDescriptor
+    );
 }

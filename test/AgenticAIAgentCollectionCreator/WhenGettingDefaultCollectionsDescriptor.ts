@@ -9,7 +9,7 @@ import {
 
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
-describe("WhenGettingCollectionsDescriptor", function () {
+describe("WhenGettingDefaultCollectionsDescriptor", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _creator: AgenticAIAgentCollectionCreator;
@@ -24,12 +24,15 @@ describe("WhenGettingCollectionsDescriptor", function () {
     const CollectionsManager = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsManager"
     );
-    const collectionsManager = (await CollectionsManager.deploy()) as AgenticAIAgentCollectionsManager;
+    const collectionsManager =
+      (await CollectionsManager.deploy()) as AgenticAIAgentCollectionsManager;
 
     const Descriptor = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsDescriptor"
     );
-    const descriptor = (await Descriptor.deploy(ipfsGateway)) as AgenticAIAgentCollectionsDescriptor;
+    const descriptor = (await Descriptor.deploy(
+      ipfsGateway
+    )) as AgenticAIAgentCollectionsDescriptor;
 
     const Creator = await ethers.getContractFactory(
       "AgenticAIAgentCollectionCreator"
@@ -39,7 +42,9 @@ describe("WhenGettingCollectionsDescriptor", function () {
       await descriptor.getAddress()
     )) as AgenticAIAgentCollectionCreator;
 
-    await collectionsManager.updateCollectionCreatorAddress(await creator.getAddress());
+    await collectionsManager.updateCollectionCreatorAddress(
+      await creator.getAddress()
+    );
 
     return { owner, creator, descriptor };
   }
@@ -54,7 +59,7 @@ describe("WhenGettingCollectionsDescriptor", function () {
 
   describe("Given contract is deployed", function () {
     it("Should return the collections descriptor address", async function () {
-      expect(await _creator.collectionsDescriptor()).to.equal(
+      expect(await _creator.defaultCollectionsDescriptor()).to.equal(
         await _descriptor.getAddress()
       );
     });
