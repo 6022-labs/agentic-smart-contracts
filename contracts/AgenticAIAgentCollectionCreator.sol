@@ -12,13 +12,21 @@ contract AgenticAIAgentCollectionCreator is
     AccessControl,
     IAgenticAIAgentCollectionCreator
 {
+    address private _requiredToken;
+    uint256 private _minimumTokenBalance;
+
     address private _collectionsManager;
     address private _defaultCollectionsDescriptor;
 
     constructor(
         address initialCollectionsManager,
-        address initialDefaultCollectionsDescriptor
+        address initialDefaultCollectionsDescriptor,
+        address initialRequiredToken,
+        uint256 initialMinimumTokenBalance
     ) {
+        _requiredToken = initialRequiredToken;
+        _minimumTokenBalance = initialMinimumTokenBalance;
+
         _collectionsManager = initialCollectionsManager;
         _defaultCollectionsDescriptor = initialDefaultCollectionsDescriptor;
 
@@ -32,6 +40,14 @@ contract AgenticAIAgentCollectionCreator is
         return _defaultCollectionsDescriptor;
     }
 
+    function requiredToken() external view returns (address) {
+        return _requiredToken;
+    }
+
+    function minimumTokenBalance() external view returns (uint256) {
+        return _minimumTokenBalance;
+    }
+
     function updateDefaultCollectionsDescriptor(
         address newDescriptor
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -41,12 +57,26 @@ contract AgenticAIAgentCollectionCreator is
         emit DefaultCollectionsDescriptorUpdated(oldDescriptor, newDescriptor);
     }
 
+    function updateMinimumTokenBalance(
+        uint256 newMinimum
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 oldMinimum = _minimumTokenBalance;
+        _minimumTokenBalance = newMinimum;
+
+        emit MinimumTokenBalanceUpdated(oldMinimum, newMinimum);
+    }
+
     function createCollection(
         string memory name,
         string memory symbol,
         address admin,
         address moderator
     ) external override returns (address collectionAddress) {
+        uint256 balance = IERC20(_requiredToken).balanceOf(msg.sender);
+        if (balance < _minimumTokenBalance) {
+            revert InsufficientTokenBalance(balance, _minimumTokenBalance);
+        }
+
         AgenticAIAgentCollection newCollection = new AgenticAIAgentCollection(
             name,
             symbol,

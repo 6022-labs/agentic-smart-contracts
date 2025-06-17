@@ -5,10 +5,12 @@ import {IAgenticAIAgentCollectionCreatorEvents} from "./IAgenticAIAgentCollectio
 import {IAgenticAIAgentCollectionCreatorOwnerActions} from "./IAgenticAIAgentCollectionCreatorOwnerActions.sol";
 import {IAgenticAIAgentCollectionCreatorActions} from "./IAgenticAIAgentCollectionCreatorActions.sol";
 import {IAgenticAIAgentCollectionCreatorStates} from "./IAgenticAIAgentCollectionCreatorStates.sol";
+import {IAgenticAIAgentCollectionCreatorErrors} from "./IAgenticAIAgentCollectionCreatorErrors.sol";
 
 interface IAgenticAIAgentCollectionCreator is
     IAgenticAIAgentCollectionCreatorEvents,
     IAgenticAIAgentCollectionCreatorStates,
+    IAgenticAIAgentCollectionCreatorErrors,
     IAgenticAIAgentCollectionCreatorActions,
     IAgenticAIAgentCollectionCreatorOwnerActions {
 

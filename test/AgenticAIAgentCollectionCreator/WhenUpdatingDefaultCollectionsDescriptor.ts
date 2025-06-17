@@ -34,12 +34,18 @@ describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
       ipfsGateway
     )) as AgenticAIAgentCollectionsDescriptor;
 
+    const TestERC20 = await ethers.getContractFactory("TestERC20");
+    const token = await TestERC20.deploy();
+    const minimum = 0n;
+
     const Creator = await ethers.getContractFactory(
       "AgenticAIAgentCollectionCreator"
     );
     const creator = (await Creator.deploy(
       await collectionsManager.getAddress(),
-      await descriptor.getAddress()
+      await descriptor.getAddress(),
+      await token.getAddress(),
+      minimum
     )) as AgenticAIAgentCollectionCreator;
 
     const creatorRole = await collectionsManager.CREATOR_ROLE();
