@@ -51,8 +51,9 @@ describe("WhenUpdatingAgentSigner", function () {
       await collectionsDescriptor.getAddress()
     );
 
-    await collectionsManager.addSigner(signer.address);
-    await collectionsManager.addSigner(otherSigner.address);
+    const signerRole = await collectionsManager.SIGNER_ROLE();
+    await collectionsManager.grantRole(signerRole, signer.address);
+    await collectionsManager.grantRole(signerRole, otherSigner.address);
 
     return {
       agenticAIAgentCollection: collection,

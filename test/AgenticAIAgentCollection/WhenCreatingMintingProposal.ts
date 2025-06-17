@@ -61,8 +61,9 @@ describe("WhenCreatingMintingProposal", function () {
       await collectionsDescriptor.getAddress()
     );
 
-    await collectionsManager.addSigner(signer1.address);
-    await collectionsManager.addSigner(signer2.address);
+    const signerRole = await collectionsManager.SIGNER_ROLE();
+    await collectionsManager.grantRole(signerRole, signer1.address);
+    await collectionsManager.grantRole(signerRole, signer2.address);
 
     return { collection, owner, signer1, signer2, otherAccount };
   }

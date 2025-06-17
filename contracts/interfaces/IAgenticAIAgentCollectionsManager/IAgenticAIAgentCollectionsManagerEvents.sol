@@ -11,14 +11,4 @@ interface IAgenticAIAgentCollectionsManagerEvents {
         string name,
         string symbol
     );
-
-    /**
-     * @dev Emitted when a signer is added.
-     */
-    event SignerAdded(address signer);
-
-    /**
-     * @dev Emitted when a signer is removed.
-     */
-    event SignerRemoved(address signer);
 }

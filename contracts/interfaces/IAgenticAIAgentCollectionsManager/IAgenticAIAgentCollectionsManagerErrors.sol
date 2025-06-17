@@ -11,9 +11,4 @@ interface IAgenticAIAgentCollectionsManagerErrors {
      * @dev Error when the collection symbol already exists.
      */
     error CollectionSymbolAlreadyExists(string symbol);
-
-    /**
-     * @dev Error when the caller is not the collection creator.
-     */
-    error OnlyCollectionCreator();
 }

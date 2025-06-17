@@ -26,12 +26,15 @@ describe("WhenCreatingCollection", function () {
     const CollectionsManager = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsManager"
     );
-    const collectionsManager = (await CollectionsManager.deploy()) as AgenticAIAgentCollectionsManager;
+    const collectionsManager =
+      (await CollectionsManager.deploy()) as AgenticAIAgentCollectionsManager;
 
     const Descriptor = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsDescriptor"
     );
-    const descriptor = (await Descriptor.deploy(ipfsGateway)) as AgenticAIAgentCollectionsDescriptor;
+    const descriptor = (await Descriptor.deploy(
+      ipfsGateway
+    )) as AgenticAIAgentCollectionsDescriptor;
 
     const Creator = await ethers.getContractFactory(
       "AgenticAIAgentCollectionCreator"
@@ -41,13 +44,15 @@ describe("WhenCreatingCollection", function () {
       await descriptor.getAddress()
     )) as AgenticAIAgentCollectionCreator;
 
-    await collectionsManager.updateCollectionCreatorAddress(await creator.getAddress());
+    const creatorRole = await collectionsManager.CREATOR_ROLE();
+    await collectionsManager.grantRole(creatorRole, await creator.getAddress());
 
     return { owner, creator, collectionsManager, descriptor };
   }
 
   beforeEach(async function () {
-    const { owner, creator, collectionsManager, descriptor } = await loadFixture(deployCreator);
+    const { owner, creator, collectionsManager, descriptor } =
+      await loadFixture(deployCreator);
 
     _owner = owner;
     _creator = creator;
@@ -68,7 +73,12 @@ describe("WhenCreatingCollection", function () {
     });
 
     it("Should deploy a collection and register it", async function () {
-      await _creator.createCollection(name, symbol, _owner.address, _owner.address);
+      await _creator.createCollection(
+        name,
+        symbol,
+        _owner.address,
+        _owner.address
+      );
 
       const newCollectionAddress = await _collectionsManager.collection(1);
       expect(newCollectionAddress).to.not.equal(ethers.ZeroAddress);
@@ -82,7 +92,8 @@ describe("WhenCreatingCollection", function () {
       expect(await collection.symbol()).to.equal(symbol);
 
       const MODERATOR_ROLE = await collection.MODERATOR_ROLE();
-      expect(await collection.hasRole(MODERATOR_ROLE, _owner.address)).to.be.true;
+      expect(await collection.hasRole(MODERATOR_ROLE, _owner.address)).to.be
+        .true;
     });
   });
 });

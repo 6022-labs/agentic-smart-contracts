@@ -6,7 +6,6 @@ import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol"
 import {IAgenticAIAgentCollectionsManagerStates} from "./IAgenticAIAgentCollectionsManagerStates.sol";
 import {IAgenticAIAgentCollectionsManagerEvents} from "./IAgenticAIAgentCollectionsManagerEvents.sol";
 import {IAgenticAIAgentCollectionsManagerErrors} from "./IAgenticAIAgentCollectionsManagerErrors.sol";
-import {IAgenticAIAgentCollectionsManagerOwnerActions} from "./IAgenticAIAgentCollectionsManagerOwnerActions.sol";
 import {IAgenticAIAgentCollectionsManagerCollectionCreatorActions} from "./IAgenticAIAgentCollectionsManagerCollectionCreatorActions.sol";
 
 interface IAgenticAIAgentCollectionsManager is
@@ -14,7 +13,6 @@ interface IAgenticAIAgentCollectionsManager is
     IAgenticAIAgentCollectionsManagerStates,
     IAgenticAIAgentCollectionsManagerEvents,
     IAgenticAIAgentCollectionsManagerErrors,
-    IAgenticAIAgentCollectionsManagerOwnerActions,
     IAgenticAIAgentCollectionsManagerCollectionCreatorActions
 {
 

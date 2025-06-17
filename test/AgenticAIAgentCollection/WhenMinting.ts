@@ -60,7 +60,8 @@ describe("WhenMinting", function () {
       await collectionsDescriptor.getAddress()
     );
 
-    await collectionsManager.addSigner(signer.address);
+    const signerRole = await collectionsManager.SIGNER_ROLE();
+    await collectionsManager.grantRole(signerRole, signer.address);
 
     return { collection, owner, signer, otherAccount };
   }

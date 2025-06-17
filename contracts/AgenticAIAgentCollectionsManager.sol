@@ -11,6 +11,7 @@ contract AgenticAIAgentCollectionsManager is
     IAgenticAIAgentCollectionsManager
 {
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
+    bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
 
     address private _collectionCreatorAddress;
 
@@ -20,50 +21,21 @@ contract AgenticAIAgentCollectionsManager is
     mapping(string => uint256) private _collectionIdByName;
     mapping(string => uint256) private _collectionIdBySymbol;
 
-    modifier onlyCollectionCreator() {
-        if (msg.sender != _collectionCreatorAddress) {
-            revert OnlyCollectionCreator();
-        }
-        _;
-    }
-
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
-
-    function addSigner(address signer) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _grantRole(SIGNER_ROLE, signer);
-        emit SignerAdded(signer);
-    }
-
-    function removeSigner(
-        address signer
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _revokeRole(SIGNER_ROLE, signer);
-        emit SignerRemoved(signer);
-    }
-
-    function collectionCreatorAddress() external view returns (address) {
-        return _collectionCreatorAddress;
-    }
-
-    function updateCollectionCreatorAddress(
-        address newCollectionCreatorAddress
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _collectionCreatorAddress = newCollectionCreatorAddress;
     }
 
     function collection(uint256 collectionId) external view returns (address) {
         return _collections[collectionId];
     }
 
-    function isSigner(address signer) external view override returns (bool) {
+    function isSigner(address signer) external view returns (bool) {
         return hasRole(SIGNER_ROLE, signer);
     }
 
     function addCollection(
         address newCollection
-    ) external onlyCollectionCreator {
+    ) external onlyRole(CREATOR_ROLE) {
         string memory name = IERC721Metadata(newCollection).name();
         string memory symbol = IERC721Metadata(newCollection).symbol();
 

@@ -42,9 +42,8 @@ describe("WhenGettingDefaultCollectionsDescriptor", function () {
       await descriptor.getAddress()
     )) as AgenticAIAgentCollectionCreator;
 
-    await collectionsManager.updateCollectionCreatorAddress(
-      await creator.getAddress()
-    );
+    const creatorRole = await collectionsManager.CREATOR_ROLE();
+    await collectionsManager.grantRole(creatorRole, await creator.getAddress());
 
     return { owner, creator, descriptor };
   }

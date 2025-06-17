@@ -3,11 +3,6 @@ pragma solidity ^0.8.28;
 
 interface IAgenticAIAgentCollectionsManagerStates {
     /**
-     * @dev function to get the address of the collection creator.
-     */
-    function collectionCreatorAddress() external view returns (address);
-
-    /**
      * @dev function to check if an address is a signer.
      * @param signer The address of the signer to check.
      */
