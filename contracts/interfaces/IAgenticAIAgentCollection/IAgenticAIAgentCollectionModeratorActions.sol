@@ -6,6 +6,12 @@ interface IAgenticAIAgentCollectionModeratorActions {
     /// @param collectionsDescriptor The address of the new descriptor contract.
     function updateCollectionsDescriptor(address collectionsDescriptor) external;
 
+    /// @dev Update the collection description.
+    /// @param description The new description of the collection.
+    function updateDescription(
+        string memory description
+    ) external;
+
     /// @dev Apply an image proposal.
     /// @param proposalIndex The index of the proposal to apply.
     function addOrUpdateImage(

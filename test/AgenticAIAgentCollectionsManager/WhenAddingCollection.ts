@@ -59,6 +59,7 @@ describe("WhenAddingCollection", function () {
     const collection = (await Collection.deploy(
       name,
       symbol,
+      "description",
       _owner.address,
       _owner.address,
       await _collectionsManager.getAddress(),

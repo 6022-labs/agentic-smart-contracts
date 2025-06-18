@@ -47,4 +47,12 @@ interface IAgenticAIAgentCollectionEvents {
         address oldCollectionsDescriptor,
         address newCollectionsDescriptor
     );
+
+    /// @dev Emitted when the collection description is updated.
+    /// @param oldDescription The previous description of the collection.
+    /// @param newDescription The new description of the collection.
+    event DescriptionUpdated(
+        string oldDescription,
+        string newDescription
+    );
 }

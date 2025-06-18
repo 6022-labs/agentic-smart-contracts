@@ -40,6 +40,7 @@ describe("WhenGettingTokenUri", function () {
     const collection = await Collection.deploy(
       "AgenticAI",
       "AIA",
+      "description",
       owner.address,
       owner.address,
       await collectionsManager.getAddress(),
@@ -139,8 +140,9 @@ describe("WhenGettingTokenUri", function () {
       const tokenURI = await _agenticAIAgentCollection.tokenURI(_tokenId);
 
       const parsedTokenURI = decodeTokenURI(tokenURI);
+      const expectedDescription = await _agenticAIAgentCollection.description();
 
-      expect(parsedTokenURI.description).to.be.equal("6022 AI Agent");
+      expect(parsedTokenURI.description).to.be.equal(expectedDescription);
     });
 
     it("Should contain 'image' field in token URI", async function () {

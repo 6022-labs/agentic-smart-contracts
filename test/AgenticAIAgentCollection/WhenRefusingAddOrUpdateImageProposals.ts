@@ -50,6 +50,7 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
     const collection = await Collection.deploy(
       "AgenticAI",
       "AIA",
+      "description",
       owner.address,
       moderator.address,
       await collectionsManager.getAddress(),
@@ -78,16 +79,20 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
     const nonce = generateRandomNonce();
     const agentAddresses = [generateRandomAddress()];
 
-    const signature = await signCreateMintProposalRequest(_signer, _collection, {
-      to,
-      agentAddresses,
-      signer: _signer.address,
-      role: DEFAULT_ROLE,
-      name,
-      images: DEFAULT_IMAGES,
-      mission: DEFAULT_MISSION,
-      nonce,
-    });
+    const signature = await signCreateMintProposalRequest(
+      _signer,
+      _collection,
+      {
+        to,
+        agentAddresses,
+        signer: _signer.address,
+        role: DEFAULT_ROLE,
+        name,
+        images: DEFAULT_IMAGES,
+        mission: DEFAULT_MISSION,
+        nonce,
+      }
+    );
 
     await _collection.createMintProposal(
       to,
@@ -101,8 +106,7 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
       signature
     );
 
-    const proposalIndex =
-      (await _collection.mintProposalsLength()) - BigInt(1);
+    const proposalIndex = (await _collection.mintProposalsLength()) - BigInt(1);
     const tokenId = await _collection.nextTokenId();
 
     await _collection.connect(_moderator).mint(proposalIndex);

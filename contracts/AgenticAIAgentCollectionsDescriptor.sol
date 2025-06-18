@@ -46,12 +46,14 @@ contract AgenticAIAgentCollectionsDescriptor is
         address collection,
         uint256 tokenId
     ) external view returns (string memory) {
-        string memory name = IAgenticAIAgentCollectionStates(collection).nameOf(tokenId);
-        KeyValue[] memory images = IAgenticAIAgentCollectionStates(collection).imagesOf(tokenId);
+        IAgenticAIAgentCollectionStates collectionStates = IAgenticAIAgentCollectionStates(collection);
 
-        string memory description = _generateDescription();
+        string memory description = collectionStates.description();
 
-        string memory defaultImage = _getDefaultImage(images);
+        string memory agentName = collectionStates.nameOf(tokenId);
+        KeyValue[] memory agentImages = collectionStates.imagesOf(tokenId);
+
+        string memory defaultImage = _getDefaultImage(agentImages);
         string memory defaultImageUrl = _generateImageUrl(defaultImage);
 
         return
@@ -62,7 +64,7 @@ contract AgenticAIAgentCollectionsDescriptor is
                         bytes(
                             abi.encodePacked(
                                 '{"name":"',
-                                name,
+                                agentName,
                                 '", "description":"',
                                 description,
                                 '", "image": "',
@@ -73,11 +75,6 @@ contract AgenticAIAgentCollectionsDescriptor is
                     )
                 )
             );
-    }
-
-    /// @dev Generates a static description for all tokens.
-    function _generateDescription() internal pure returns (string memory) {
-        return "6022 AI Agent";
     }
 
     /// @dev Retrieve the default image from the image list.

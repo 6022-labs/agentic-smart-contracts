@@ -12,6 +12,9 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("WhenCreatingCollection", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
+  const name = "AgenticAI";
+  const symbol = "AIA";
+  const description = "description";
 
   let _creator: AgenticAIAgentCollectionCreator;
   let _collectionsManager: AgenticAIAgentCollectionsManager;
@@ -113,12 +116,15 @@ describe("WhenCreatingCollection", function () {
   });
 
   describe("Given valid parameters", function () {
-    const name = "AgenticAI";
-    const symbol = "AIA";
-
     it("Should emit CollectionCreated event", async function () {
       await expect(
-        _creator.createCollection(name, symbol, _owner.address, _owner.address)
+        _creator.createCollection(
+          name,
+          symbol,
+          description,
+          _owner.address,
+          _owner.address
+        )
       )
         .to.emit(_collectionsManager, "CollectionCreated")
         .withArgs(1n, anyValue, name, symbol);
@@ -128,6 +134,7 @@ describe("WhenCreatingCollection", function () {
       await _creator.createCollection(
         name,
         symbol,
+        description,
         _owner.address,
         _owner.address
       );
@@ -150,9 +157,6 @@ describe("WhenCreatingCollection", function () {
   });
 
   describe("Given a minimum token balance is required", function () {
-    const name = "AgenticAI";
-    const symbol = "AIA";
-
     let otherAccount: HardhatEthersSigner;
     let creatorWithRequirement: AgenticAIAgentCollectionCreator;
     let collectionsManager: AgenticAIAgentCollectionsManager;
@@ -178,6 +182,7 @@ describe("WhenCreatingCollection", function () {
           .createCollection(
             name,
             symbol,
+            description,
             otherAccount.address,
             otherAccount.address
           )
@@ -192,6 +197,7 @@ describe("WhenCreatingCollection", function () {
         creatorWithRequirement.createCollection(
           name,
           symbol,
+          description,
           _owner.address,
           _owner.address
         )

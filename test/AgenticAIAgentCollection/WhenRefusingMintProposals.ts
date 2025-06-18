@@ -49,6 +49,7 @@ describe("WhenRefusingMintProposals", function () {
     const collection = await Collection.deploy(
       "AgenticAI",
       "AIA",
+      "description",
       owner.address,
       moderator.address,
       await collectionsManager.getAddress(),
@@ -74,16 +75,20 @@ describe("WhenRefusingMintProposals", function () {
 
   async function createMintProposal(name: string, nonce: string) {
     const agentAddresses = [generateRandomAddress()];
-    const signature = await signCreateMintProposalRequest(_signer, _collection, {
-      to: _otherAccount.address,
-      agentAddresses,
-      signer: _signer.address,
-      role: DEFAULT_ROLE,
-      name,
-      images: DEFAULT_IMAGES,
-      mission: DEFAULT_MISSION,
-      nonce,
-    });
+    const signature = await signCreateMintProposalRequest(
+      _signer,
+      _collection,
+      {
+        to: _otherAccount.address,
+        agentAddresses,
+        signer: _signer.address,
+        role: DEFAULT_ROLE,
+        name,
+        images: DEFAULT_IMAGES,
+        mission: DEFAULT_MISSION,
+        nonce,
+      }
+    );
 
     await _collection.createMintProposal(
       _otherAccount.address,
@@ -111,9 +116,8 @@ describe("WhenRefusingMintProposals", function () {
     });
 
     it("Should revert when proposal does not exist", async function () {
-      await expect(
-        _collection.connect(_moderator).refuseMintProposal(0)
-      ).to.be.reverted;
+      await expect(_collection.connect(_moderator).refuseMintProposal(0)).to.be
+        .reverted;
     });
 
     it("Should remove and reorder proposals", async function () {

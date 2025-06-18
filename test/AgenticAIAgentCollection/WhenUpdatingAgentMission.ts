@@ -41,6 +41,7 @@ describe("WhenUpdatingAgentMission", function () {
     const collection = await Collection.deploy(
       "AgenticAI",
       "AIA",
+      "description",
       owner.address,
       owner.address,
       await collectionsManager.getAddress(),

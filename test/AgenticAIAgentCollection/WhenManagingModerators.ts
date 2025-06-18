@@ -25,12 +25,17 @@ describe("WhenManagingModerators", function () {
     const CollectionsDescriptor = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsDescriptor"
     );
-    const collectionsDescriptor = await CollectionsDescriptor.deploy(ipfsGateway);
+    const collectionsDescriptor = await CollectionsDescriptor.deploy(
+      ipfsGateway
+    );
 
-    const Collection = await ethers.getContractFactory("AgenticAIAgentCollection");
+    const Collection = await ethers.getContractFactory(
+      "AgenticAIAgentCollection"
+    );
     const collection = await Collection.deploy(
       "AgenticAI",
       "AIA",
+      "description",
       owner.address,
       moderator.address,
       await collectionsManager.getAddress(),
@@ -41,7 +46,9 @@ describe("WhenManagingModerators", function () {
   }
 
   beforeEach(async function () {
-    const { collection, owner, moderator, otherAccount } = await loadFixture(deployCollection);
+    const { collection, owner, moderator, otherAccount } = await loadFixture(
+      deployCollection
+    );
 
     _collection = collection;
     _owner = owner;
@@ -57,8 +64,8 @@ describe("WhenManagingModerators", function () {
         .connect(_owner)
         .grantRole(MODERATOR_ROLE, _otherAccount.address);
 
-      expect(await _collection.hasRole(MODERATOR_ROLE, _otherAccount.address)).to.be
-        .true;
+      expect(await _collection.hasRole(MODERATOR_ROLE, _otherAccount.address))
+        .to.be.true;
     });
 
     it("Should remove a moderator", async function () {
@@ -72,8 +79,8 @@ describe("WhenManagingModerators", function () {
         .connect(_owner)
         .revokeRole(MODERATOR_ROLE, _otherAccount.address);
 
-      expect(await _collection.hasRole(MODERATOR_ROLE, _otherAccount.address)).to.be
-        .false;
+      expect(await _collection.hasRole(MODERATOR_ROLE, _otherAccount.address))
+        .to.be.false;
     });
   });
 
@@ -85,7 +92,10 @@ describe("WhenManagingModerators", function () {
         _collection
           .connect(_moderator)
           .grantRole(MODERATOR_ROLE, _otherAccount.address)
-      ).to.be.revertedWithCustomError(_collection, "AccessControlUnauthorizedAccount");
+      ).to.be.revertedWithCustomError(
+        _collection,
+        "AccessControlUnauthorizedAccount"
+      );
     });
   });
 });

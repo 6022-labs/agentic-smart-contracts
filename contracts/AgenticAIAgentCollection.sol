@@ -43,20 +43,19 @@ contract AgenticAIAgentCollection is
 {
     using ECDSA for bytes32;
 
+    string private constant SIGNING_DOMAIN = "AgenticAIAgentCollection";
+    string private constant SIGNATURE_VERSION = "1";
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
+    string private _description;
     uint256 private _nextTokenId = 1;
 
     mapping(bytes32 => bool) private _isNonceUsed;
     mapping(string => uint256) private _tokenIdOf;
+    mapping(uint256 => AgentInformation) private _agentInformationOf;
 
     MintProposal[] private _mintProposals;
     AddOrUpdateImageProposal[] private _addOrUpdateImageProposals;
-
-    mapping(uint256 => AgentInformation) private _agentInformationOf;
-
-    string private constant SIGNING_DOMAIN = "AgenticAIAgentCollection";
-    string private constant SIGNATURE_VERSION = "1";
 
     IAgenticAIAgentCollectionsManagerStates private _collectionsManager;
     IAgenticAIAgentCollectionsDescriptorActions private _collectionsDescriptor;
@@ -71,6 +70,7 @@ contract AgenticAIAgentCollection is
     constructor(
         string memory name,
         string memory symbol,
+        string memory initialDescription,
         address admin,
         address moderator,
         address initialCollectionsManager,
@@ -82,6 +82,8 @@ contract AgenticAIAgentCollection is
         _collectionsDescriptor = IAgenticAIAgentCollectionsDescriptorActions(
             initialCollectionsDescriptor
         );
+
+        _description = initialDescription;
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MODERATOR_ROLE, moderator);
@@ -112,6 +114,11 @@ contract AgenticAIAgentCollection is
         return address(_collectionsDescriptor);
     }
 
+    /// @dev Description of the collection.
+    function description() external view returns (string memory) {
+        return _description;
+    }
+
     /// @dev Update the descriptor contract used for metadata.
     /// @param newCollectionsDescriptor Address of the new descriptor contract.
     function updateCollectionsDescriptor(
@@ -124,6 +131,17 @@ contract AgenticAIAgentCollection is
         );
 
         emit CollectionsDescriptorUpdated(oldDescriptor, newCollectionsDescriptor);
+    }
+
+    /// @dev Update the collection description.
+    /// @param newDescription The new description of the collection.
+    function updateDescription(
+        string memory newDescription
+    ) external onlyRole(MODERATOR_ROLE) {
+        string memory oldDescription = _description;
+        _description = newDescription;
+
+        emit DescriptionUpdated(oldDescription, newDescription);
     }
 
     /// @dev Get the identifier that will be assigned to the next minted token.

@@ -41,6 +41,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
     const collection = await Collection.deploy(
       "AgenticAI",
       "AIA",
+      "description",
       owner.address,
       moderator.address,
       await collectionsManager.getAddress(),

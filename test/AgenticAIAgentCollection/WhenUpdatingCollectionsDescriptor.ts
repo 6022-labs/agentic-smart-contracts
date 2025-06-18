@@ -39,6 +39,7 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
     const agenticAIAgentCollection = await AgenticAIAgentCollection.deploy(
       "AgenticAI",
       "AIA",
+      "description",
       owner.address,
       owner.address,
       await collectionsManager.getAddress(),
@@ -81,7 +82,7 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
       );
     });
 
-    it("Should update the collections descriptor", async function () {
+    it("Should emit 'CollectionsDescriptorUpdated' event", async function () {
       const Descriptor = await ethers.getContractFactory(
         "AgenticAIAgentCollectionsDescriptor"
       );

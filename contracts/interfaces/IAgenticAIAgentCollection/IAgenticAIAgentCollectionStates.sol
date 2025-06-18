@@ -11,6 +11,9 @@ interface IAgenticAIAgentCollectionStates {
     /// @dev Address of the collections descriptor contract.
     function collectionsDescriptor() external view returns (address);
 
+    /// @dev Description of the collection.
+    function description() external view returns (string memory);
+
     /// @dev Get all stored information for an agent.
     /// @param tokenId The token identifier.
     /// @return The agent information structure.
