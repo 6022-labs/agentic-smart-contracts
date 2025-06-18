@@ -33,6 +33,8 @@ struct AddOrUpdateImageProposal {
     KeyValue image;
 }
 
+/// @title Agentic AI agent NFT collection
+/// @dev ERC721 collection that supports off-chain minting proposals and image management.
 contract AgenticAIAgentCollection is
     ERC721,
     EIP712,
@@ -59,6 +61,13 @@ contract AgenticAIAgentCollection is
     IAgenticAIAgentCollectionsManagerStates private _collectionsManager;
     IAgenticAIAgentCollectionsDescriptorActions private _collectionsDescriptor;
 
+    /// @dev Deploy a new agent collection.
+    /// @param name ERC721 name of the collection.
+    /// @param symbol ERC721 symbol of the collection.
+    /// @param admin Address granted the default admin role.
+    /// @param moderator Address granted the moderator role.
+    /// @param initialCollectionsManager Address of the collections manager contract.
+    /// @param initialCollectionsDescriptor Address of the descriptor contract.
     constructor(
         string memory name,
         string memory symbol,
@@ -78,6 +87,7 @@ contract AgenticAIAgentCollection is
         _grantRole(MODERATOR_ROLE, moderator);
     }
 
+    /// @dev See {IERC165-supportsInterface}.
     function supportsInterface(
         bytes4 interfaceId
     )
@@ -92,14 +102,18 @@ contract AgenticAIAgentCollection is
             AccessControl.supportsInterface(interfaceId);
     }
 
+    /// @dev Address of the collections manager contract.
     function collectionsManager() external view returns (address) {
         return address(_collectionsManager);
     }
 
+    /// @dev Address of the collections descriptor contract.
     function collectionsDescriptor() external view returns (address) {
         return address(_collectionsDescriptor);
     }
 
+    /// @dev Update the descriptor contract used for metadata.
+    /// @param newCollectionsDescriptor Address of the new descriptor contract.
     function updateCollectionsDescriptor(
         address newCollectionsDescriptor
     ) external onlyRole(MODERATOR_ROLE) {
@@ -112,10 +126,13 @@ contract AgenticAIAgentCollection is
         emit CollectionsDescriptorUpdated(oldDescriptor, newCollectionsDescriptor);
     }
 
+    /// @dev Get the identifier that will be assigned to the next minted token.
     function nextTokenId() external view returns (uint256) {
         return _nextTokenId;
     }
 
+    /// @dev Return the token URI as defined by the descriptor contract.
+    /// @param tokenId The token identifier.
     function tokenURI(
         uint256 tokenId
     ) public view override(ERC721, IERC721Metadata) returns (string memory) {
@@ -124,50 +141,9 @@ contract AgenticAIAgentCollection is
         return _collectionsDescriptor.buildTokenURI(address(this), tokenId);
     }
 
-    function signerOf(uint256 tokenId) external view returns (address) {
-        _requireMinted(tokenId);
-
-        return _agentInformationOf[tokenId].signer;
-    }
-
-    function creatorOf(uint256 tokenId) external view returns (address) {
-        _requireMinted(tokenId);
-
-        return _agentInformationOf[tokenId].creator;
-    }
-
-    function roleOf(uint256 tokenId) external view returns (string memory) {
-        _requireMinted(tokenId);
-
-        return _agentInformationOf[tokenId].role;
-    }
-
-    function walletsOf(
-        uint256 tokenId
-    ) external view returns (address[] memory) {
-        _requireMinted(tokenId);
-
-        return _agentInformationOf[tokenId].wallets;
-    }
-
-    function nameOf(uint256 tokenId) external view returns (string memory) {
-        _requireMinted(tokenId);
-
-        return _agentInformationOf[tokenId].name;
-    }
-
-    function imagesOf(uint256 tokenId) external view returns (KeyValue[] memory) {
-        _requireMinted(tokenId);
-
-        return _agentInformationOf[tokenId].images;
-    }
-
-    function missionOf(uint256 tokenId) external view returns (string memory) {
-        _requireMinted(tokenId);
-
-        return _agentInformationOf[tokenId].mission;
-    }
-
+    /// @dev Get all stored information for an agent.
+    /// @param tokenId The token identifier.
+    /// @return The agent information structure.
     function informationOf(
         uint256 tokenId
     ) external view returns (AgentInformation memory) {
@@ -176,38 +152,113 @@ contract AgenticAIAgentCollection is
         return _agentInformationOf[tokenId];
     }
 
+    /// @dev Get the signer address of an agent.
+    /// @param tokenId The token identifier.
+    function signerOf(uint256 tokenId) external view returns (address) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].signer;
+    }
+
+    /// @dev Get the creator address of an agent.
+    /// @param tokenId The token identifier.
+    function creatorOf(uint256 tokenId) external view returns (address) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].creator;
+    }
+
+    /// @dev Get the role of an agent
+    /// @param tokenId The token identifier.
+    function roleOf(uint256 tokenId) external view returns (string memory) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].role;
+    }
+
+    /// @dev Get the name of an agent
+    /// @param tokenId The token identifier.
+    function nameOf(uint256 tokenId) external view returns (string memory) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].name;
+    }
+
+    /// @dev Get all stored images of an agent.
+    /// @param tokenId The token identifier.
+    function imagesOf(uint256 tokenId) external view returns (KeyValue[] memory) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].images;
+    }
+
+    /// @dev Get the mission of an agent.
+    /// @param tokenId The token identifier.
+    function missionOf(uint256 tokenId) external view returns (string memory) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].mission;
+    }
+
+    /// @dev Get the list of agent wallets of an agent.
+    /// @param tokenId The token identifier.
+    function walletsOf(
+        uint256 tokenId
+    ) external view returns (address[] memory) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].wallets;
+    }
+
+    /// @dev Get the token ID associated to the agent name.
+    /// @param name The name of the agent.
     function tokenIdOf(string memory name) external view returns (uint256) {
         return _tokenIdOf[name];
     }
 
+    /// @dev Check whether a nonce has already been used.
+    /// @param nonce The nonce to query.
     function isNonceUsed(bytes32 nonce) external view returns (bool) {
         return _isNonceUsed[nonce];
     }
 
+    /// @dev Number of pending mint proposals.
     function mintProposalsLength() external view returns (uint256) {
         return _mintProposals.length;
     }
 
+    /// @dev Get a mint proposal by index.
+    /// @param proposalIndex Index of the proposal.
     function mintProposal(uint256 proposalIndex) external view returns (MintProposal memory) {
         return _mintProposals[proposalIndex];
     }
 
+    /// @dev Get all pending mint proposals.
     function mintProposals() external view returns (MintProposal[] memory) {
         return _mintProposals;
     }
 
+    /// @dev Number of pending image proposals.
     function addOrUpdateProposalsLength() external view returns (uint256) {
         return _addOrUpdateImageProposals.length;
     }
 
+    /// @dev Get an image proposal by index.
+    /// @param proposalIndex Index of the proposal.
     function addOrUpdateProposal(uint256 proposalIndex) external view returns (AddOrUpdateImageProposal memory) {
         return _addOrUpdateImageProposals[proposalIndex];
     }
 
+    /// @dev Get all pending image proposals.
     function addOrUpdateProposals() external view returns (AddOrUpdateImageProposal[] memory) {
         return _addOrUpdateImageProposals;
     }
 
+    /// @dev Update the signer address of an agent.
+    /// @param tokenId The token to update.
+    /// @param newSigner The new signer address.
+    /// @param nonce Unique nonce used for signature.
+    /// @param signature Off-chain signature authorizing the change.
     function updateAgentSigner(
         uint256 tokenId,
         address newSigner,
@@ -248,6 +299,9 @@ contract AgenticAIAgentCollection is
         emit AgentSignerUpdated(tokenId, oldSigner, newSigner);
     }
 
+    /// @dev Update the mission of an agent.
+    /// @param tokenId The token whose mission is updated.
+    /// @param newMission The new mission text.
     function updateAgentMission(uint256 tokenId, string memory newMission) external {
         _requireMinted(tokenId);
 
@@ -262,6 +316,9 @@ contract AgenticAIAgentCollection is
         emit AgentMissionUpdated(tokenId, oldMission, newMission);
     }
 
+    /// @dev Propose to add or update an image for a token.
+    /// @param tokenId The token affected by the proposal.
+    /// @param image The key/value pair representing the image.
     function createAddOrUpdateImageProposal(
         uint256 tokenId,
         KeyValue memory image
@@ -308,6 +365,8 @@ contract AgenticAIAgentCollection is
         _mintProposals.pop();
     }
 
+    /// @dev Apply an image proposal.
+    /// @param proposalIndex The index of the proposal to apply.
     function addOrUpdateImage(
         uint256 proposalIndex
     ) external onlyRole(MODERATOR_ROLE) {
@@ -336,12 +395,17 @@ contract AgenticAIAgentCollection is
         _popAddOrUpdateImageProposalAt(proposalIndex);
     }
 
+    /// @dev Refuse an image proposal.
+    /// @param proposalIndex The index of the proposal to refuse.
     function refuseAddOrUpdateImageProposal(
         uint256 proposalIndex
     ) external onlyRole(MODERATOR_ROLE) {
         _popAddOrUpdateImageProposalAt(proposalIndex);
     }
 
+    /// @dev Remove an image from a token.
+    /// @param tokenId The token whose image is removed.
+    /// @param key The key of the image to remove.
     function removeImage(
         uint256 tokenId,
         string memory key
@@ -365,6 +429,16 @@ contract AgenticAIAgentCollection is
         }
     }
 
+    /// @dev Propose minting of a new agent token.
+    /// @param to The future owner of the token.
+    /// @param agentAddresses Wallet addresses controlled by the agent.
+    /// @param signer The signer address linked to the agent.
+    /// @param role The agent role.
+    /// @param name The Name of the agent.
+    /// @param mission The initial mission for the agent.
+    /// @param images A set of images describing the agent.
+    /// @param nonce Unique nonce used for signature replay protection.
+    /// @param signature Off-chain signature authorizing the mint.
     function createMintProposal(
         address to,
         address[] memory agentAddresses,
@@ -423,6 +497,8 @@ contract AgenticAIAgentCollection is
         emit MintProposalCreated(to, signer);
     }
 
+    /// @dev Mint an agent from an approved proposal.
+    /// @param proposalIndex The index of the mint proposal to execute.
     function mint(
         uint256 proposalIndex
     ) external onlyRole(MODERATOR_ROLE) {
@@ -453,12 +529,15 @@ contract AgenticAIAgentCollection is
         _nextTokenId++;
     }
 
+    /// @dev Refuse a mint proposal.
+    /// @param proposalIndex The index of the proposal to refuse.
     function refuseMintProposal(
         uint256 proposalIndex
     ) external onlyRole(MODERATOR_ROLE) {
         _popMintProposalAt(proposalIndex);
     }
 
+    /// @dev Recover the signer used for an update agent signer request.
     function _recoverUpdateAgentSignerSigner(
         RecoverUpdateAgentSignerParams memory params
     ) internal view returns (address) {
@@ -480,6 +559,7 @@ contract AgenticAIAgentCollection is
         return ECDSA.recover(digest, params.signature);
     }
 
+    /// @dev Recover the signer used for a create mint proposal request.
     function _recoverCreateMintProposalSigner(
         RecoverCreateMintProposalSignerParams memory params
     ) internal view returns (address) {
@@ -520,6 +600,7 @@ contract AgenticAIAgentCollection is
         return ECDSA.recover(digest, params.signature);
     }
 
+    /// @dev Check that the list of images contains one with key `default`.
     function _imagesContainDefault(KeyValue[] memory images) internal pure returns (bool) {
         for (uint256 i = 0; i < images.length; i++) {
             if (keccak256(abi.encodePacked(images[i].key)) == keccak256(abi.encodePacked("default"))) {
@@ -529,6 +610,7 @@ contract AgenticAIAgentCollection is
         return false;
     }
 
+    /// @dev Validate that a string is a valid ENS label.
     function _isValidENSName(string memory name) internal pure returns (bool) {
         bytes memory nameBytes = bytes(name);
         if (nameBytes.length == 0) {
@@ -550,7 +632,8 @@ contract AgenticAIAgentCollection is
     }
 
     /**
-     * @dev Reverts if the `tokenId` doesn't have a current owner (it hasn't been minted, or it has been burned).
+     * @dev Reverts if the `tokenId` doesn't have a current owner
+     * (it hasn't been minted or it has been burned).
      */
     function _requireMinted(uint256 tokenId) internal view returns (address) {
         if (tokenId == 0 || tokenId >= _nextTokenId) {

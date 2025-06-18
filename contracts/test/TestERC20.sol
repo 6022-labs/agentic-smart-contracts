@@ -12,6 +12,9 @@ contract TestERC20 is
 {
     constructor() ERC20("Test Token", "TTK") { }
 
+    /// @dev Mint test tokens for testing purposes.
+    /// @param to Receiver of the minted tokens.
+    /// @param amount Amount of tokens to mint.
     function mint(address to, uint256 amount) external {
         _mint(to, amount);
     }

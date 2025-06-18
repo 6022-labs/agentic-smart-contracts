@@ -4,14 +4,12 @@ pragma solidity ^0.8.28;
 import {IAgenticAIAgentCollectionCreatorEvents} from "./IAgenticAIAgentCollectionCreatorEvents.sol";
 
 interface IAgenticAIAgentCollectionCreatorActions {
-    /**
-     * @dev function to create a new collection.
-     * @param name The name of the collection.
-     * @param symbol The symbol of the collection.
-     * @param admin The address of the admin for the collection.
-     * @param moderator The address of the moderator for the collection.
-     * @return collectionAddress The address of the newly created collection.
-     */
+    /// @dev Create a new agent collection contract.
+    /// @param name Name of the collection.
+    /// @param symbol Symbol of the collection.
+    /// @param admin Admin address for the collection.
+    /// @param moderator Moderator address for the collection.
+    /// @return collectionAddress Address of the newly created collection.
     function createCollection(
         string memory name,
         string memory symbol,

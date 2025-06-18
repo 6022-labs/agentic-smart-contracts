@@ -13,6 +13,8 @@ import {KeyValue} from "./types/KeyValue.sol";
 import {IAgenticAIAgentCollectionStates} from "./interfaces/IAgenticAIAgentCollection/IAgenticAIAgentCollectionStates.sol";
 import {IAgenticAIAgentCollectionsDescriptor} from "./interfaces/IAgenticAIAgentCollectionsDescriptor/IAgenticAIAgentCollectionsDescriptor.sol";
 
+/// @title Descriptor for Agentic AI collections
+/// @dev Provides token metadata generation and stores IPFS gateway information.
 contract AgenticAIAgentCollectionsDescriptor is
     AccessControl,
     IAgenticAIAgentCollectionsDescriptor
@@ -21,17 +23,25 @@ contract AgenticAIAgentCollectionsDescriptor is
 
     string private _ipfsGateway;
 
+    /// @dev Create a new descriptor instance.
+    /// @param ipfsGateway Initial IPFS gateway URL used for images.
     constructor(string memory ipfsGateway) {
         _ipfsGateway = ipfsGateway;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    /// @dev Update the IPFS gateway used to resolve images.
+    /// @param ipfsGateway The new IPFS gateway URL.
     function updateIpfsGateway(string memory ipfsGateway) external onlyRole(DEFAULT_ADMIN_ROLE) {
         string memory oldGateway = _ipfsGateway;
         _ipfsGateway = ipfsGateway;
         emit IpfsGatewayUpdated(oldGateway, ipfsGateway);
     }
 
+    /// @dev Build the ERC721 token URI for a specific token.
+    /// @param collection The collection address.
+    /// @param tokenId The token identifier.
+    /// @return The metadata URI.
     function buildTokenURI(
         address collection,
         uint256 tokenId
@@ -65,10 +75,13 @@ contract AgenticAIAgentCollectionsDescriptor is
             );
     }
 
+    /// @dev Generates a static description for all tokens.
     function _generateDescription() internal pure returns (string memory) {
         return "6022 AI Agent";
     }
 
+    /// @dev Retrieve the default image from the image list.
+    ///      Reverts if no image with key `default` is found.
     function _getDefaultImage(KeyValue[] memory images) internal pure returns (string memory) {
         string memory defaultImage = "";
 
@@ -88,6 +101,7 @@ contract AgenticAIAgentCollectionsDescriptor is
         return defaultImage;
     }
 
+    /// @dev Concatenate the gateway with the image hash to form an URL.
     function _generateImageUrl(
         string memory image
     ) internal view returns (string memory) {

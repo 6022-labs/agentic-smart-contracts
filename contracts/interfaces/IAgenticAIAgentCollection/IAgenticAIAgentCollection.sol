@@ -7,7 +7,7 @@ import {IAgenticAIAgentCollectionStates} from "./IAgenticAIAgentCollectionStates
 import {IAgenticAIAgentCollectionEvents} from "./IAgenticAIAgentCollectionEvents.sol";
 import {IAgenticAIAgentCollectionErrors} from "./IAgenticAIAgentCollectionErrors.sol";
 import {IAgenticAIAgentCollectionActions} from "./IAgenticAIAgentCollectionActions.sol";
-import {IAgenticAIAgentCollectionOwnerActions} from "./IAgenticAIAgentCollectionOwnerActions.sol";
+import {IAgenticAIAgentCollectionModeratorActions} from "./IAgenticAIAgentCollectionModeratorActions.sol";
 
 interface IAgenticAIAgentCollection is
     IERC721Metadata,
@@ -15,7 +15,7 @@ interface IAgenticAIAgentCollection is
     IAgenticAIAgentCollectionEvents,
     IAgenticAIAgentCollectionErrors,
     IAgenticAIAgentCollectionActions,
-    IAgenticAIAgentCollectionOwnerActions
+    IAgenticAIAgentCollectionModeratorActions
 {
 
 }

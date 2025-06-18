@@ -6,6 +6,8 @@ import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/I
 
 import {IAgenticAIAgentCollectionsManager} from "./interfaces/IAgenticAIAgentCollectionsManager/IAgenticAIAgentCollectionsManager.sol";
 
+/// @title Agentic AI collections manager
+/// @dev Manages collections and authorizes signers and creators.
 contract AgenticAIAgentCollectionsManager is
     AccessControl,
     IAgenticAIAgentCollectionsManager
@@ -21,18 +23,25 @@ contract AgenticAIAgentCollectionsManager is
     mapping(string => uint256) private _collectionIdByName;
     mapping(string => uint256) private _collectionIdBySymbol;
 
+    /// @dev Deploy the manager and set the deployer as admin.
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
+    /// @dev Get a collection address by its identifier.
+    /// @param collectionId The id of the collection.
     function collection(uint256 collectionId) external view returns (address) {
         return _collections[collectionId];
     }
 
+    /// @dev Check if an address has the signer role.
+    /// @param signer The address to check.
     function isSigner(address signer) external view returns (bool) {
         return hasRole(SIGNER_ROLE, signer);
     }
 
+    /// @dev Add a new collection.
+    /// @param newCollection The new collection to add.
     function addCollection(
         address newCollection
     ) external onlyRole(CREATOR_ROLE) {
