@@ -52,6 +52,14 @@ interface IAgenticAIAgentCollectionEvents {
         string newValue
     );
 
+    /// @dev Emitted when an image proposal is created.
+    /// @param tokenId The ID of the token whose image is proposed.
+    /// @param key The key of the image proposal.
+    event AgentImageProposalCreated(
+        uint256 indexed tokenId,
+        string indexed key
+    );
+
     /// @dev Emitted when an image proposal is removed.
     /// @param tokenId The ID of the token whose proposal was removed.
     /// @param key The key of the image proposal.

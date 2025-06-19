@@ -361,6 +361,8 @@ contract AgenticAIAgentCollection is
                 tokenId: tokenId,
                 image: image
             }));
+
+            emit AgentImageProposalCreated(tokenId, image.key);
         }
     }
 

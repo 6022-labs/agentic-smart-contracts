@@ -180,6 +180,19 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
         expect(proposal.image.key).to.equal("profile");
         expect(proposal.image.value).to.equal("cid1");
       });
+
+      it("Should emit 'AgentImageProposalCreated' event", async function () {
+        const tokenId = await proposeAndMint(await _owner.getAddress());
+
+        await expect(
+          _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
+            key: "profile",
+            value: "cid1",
+          })
+        )
+          .to.emit(_agenticAIAgentCollection, "AgentImageProposalCreated")
+          .withArgs(tokenId, "profile");
+      });
     });
 
     describe("And proposal key exists", function () {
@@ -241,6 +254,21 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
         expect(proposal.tokenId).to.equal(tokenId);
         expect(proposal.image.key).to.equal("profile");
         expect(proposal.image.value).to.equal("cid1");
+      });
+
+      it("Should emit 'AgentImageProposalCreated' event", async function () {
+        const tokenId = await proposeAndMint(await _owner.getAddress());
+
+        await expect(
+          _agenticAIAgentCollection
+            .connect(_moderator)
+            .createAddOrUpdateImageProposal(tokenId, {
+              key: "profile",
+              value: "cid1",
+            })
+        )
+          .to.emit(_agenticAIAgentCollection, "AgentImageProposalCreated")
+          .withArgs(tokenId, "profile");
       });
     });
 
