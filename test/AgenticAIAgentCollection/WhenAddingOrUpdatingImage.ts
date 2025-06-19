@@ -181,6 +181,21 @@ describe("WhenAddingOrUpdatingImage", function () {
           .to.emit(_agenticAIAgentCollection, "AgentImageUpdated")
           .withArgs(tokenId, "profile", "", "cid1");
       });
+
+      it("Should emit 'AgentImageProposalRemoved' event", async function () {
+        const tokenId = await proposeAndMint(await _owner.getAddress());
+
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
+          key: "profile",
+          value: "cid1",
+        });
+
+        await expect(
+          _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0)
+        )
+          .to.emit(_agenticAIAgentCollection, "AgentImageProposalRemoved")
+          .withArgs(tokenId, "profile");
+      });
     });
 
     describe("And image key exists", function () {
@@ -243,6 +258,33 @@ describe("WhenAddingOrUpdatingImage", function () {
         )
           .to.emit(_agenticAIAgentCollection, "AgentImageUpdated")
           .withArgs(tokenId, "profile", "cid1", "cid2");
+      });
+
+      it("Should emit 'AgentImageProposalRemoved' event", async function () {
+        const tokenId = await proposeAndMint(await _owner.getAddress());
+
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
+          key: "profile",
+          value: "cid1",
+        });
+        await _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0);
+
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
+          key: "profile",
+          value: "cid2",
+        });
+
+        const proposalIndex =
+          (await _agenticAIAgentCollection.addOrUpdateProposalsLength()) -
+          BigInt(1);
+
+        await expect(
+          _agenticAIAgentCollection
+            .connect(_moderator)
+            .addOrUpdateImage(proposalIndex)
+        )
+          .to.emit(_agenticAIAgentCollection, "AgentImageProposalRemoved")
+          .withArgs(tokenId, "profile");
       });
     });
 

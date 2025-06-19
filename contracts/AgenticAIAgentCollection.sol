@@ -365,19 +365,25 @@ contract AgenticAIAgentCollection is
     }
 
     function _popAddOrUpdateImageProposalAt(uint256 index) private {
+        AddOrUpdateImageProposal memory proposal = _addOrUpdateImageProposals[index];
         uint256 lastIndex = _addOrUpdateImageProposals.length - 1;
         if (index != lastIndex) {
             _addOrUpdateImageProposals[index] = _addOrUpdateImageProposals[lastIndex];
         }
         _addOrUpdateImageProposals.pop();
+
+        emit AgentImageProposalRemoved(proposal.tokenId, proposal.image.key);
     }
 
     function _popMintProposalAt(uint256 index) private {
+        MintProposal memory proposal = _mintProposals[index];
         uint256 lastIndex = _mintProposals.length - 1;
         if (index != lastIndex) {
             _mintProposals[index] = _mintProposals[lastIndex];
         }
         _mintProposals.pop();
+
+        emit MintProposalRemoved(proposal.owner, proposal.signer);
     }
 
     /// @dev Apply an image proposal.

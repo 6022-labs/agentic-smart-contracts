@@ -161,5 +161,20 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
       const proposal = await _collection.addOrUpdateProposal(0);
       expect(proposal.image.key).to.equal("profile2");
     });
+
+    it("Should emit 'AgentImageProposalRemoved' event", async function () {
+      const tokenId = await proposeAndMint(await _owner.getAddress());
+
+      await _collection.createAddOrUpdateImageProposal(tokenId, {
+        key: "profile",
+        value: "cid1",
+      });
+
+      await expect(
+        _collection.connect(_moderator).refuseAddOrUpdateImageProposal(0)
+      )
+        .to.emit(_collection, "AgentImageProposalRemoved")
+        .withArgs(tokenId, "profile");
+    });
   });
 });

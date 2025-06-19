@@ -52,6 +52,22 @@ interface IAgenticAIAgentCollectionEvents {
         string newValue
     );
 
+    /// @dev Emitted when an image proposal is removed.
+    /// @param tokenId The ID of the token whose proposal was removed.
+    /// @param key The key of the image proposal.
+    event AgentImageProposalRemoved(
+        uint256 indexed tokenId,
+        string indexed key
+    );
+
+    /// @dev Emitted when a mint proposal is removed.
+    /// @param owner The address that was set to receive the token.
+    /// @param signer The signer address associated with the proposal.
+    event MintProposalRemoved(
+        address indexed owner,
+        address indexed signer
+    );
+
     /// @dev Emitted when the collections descriptor is updated.
     /// @param oldCollectionsDescriptor The previous collections descriptor address.
     /// @param newCollectionsDescriptor The new collections descriptor address.

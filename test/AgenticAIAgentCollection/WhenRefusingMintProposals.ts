@@ -133,5 +133,15 @@ describe("WhenRefusingMintProposals", function () {
       const proposal = await _collection.mintProposal(0);
       expect(proposal.name).to.equal("agent2");
     });
+
+    it("Should emit a MintProposalRemoved event", async function () {
+      await createMintProposal("agent1", "1");
+
+      await expect(
+        _collection.connect(_moderator).refuseMintProposal(0)
+      )
+        .to.emit(_collection, "MintProposalRemoved")
+        .withArgs(_otherAccount.address, _signer.address);
+    });
   });
 });

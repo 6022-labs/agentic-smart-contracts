@@ -625,6 +625,48 @@ describe("WhenMinting", function () {
         .withArgs(tokenId, ethers.ZeroAddress, _signer.address);
     });
 
+    it("Should emit a MintProposalRemoved event", async function () {
+      const agentAddresses = [generateRandomAddress()];
+
+      const signature = await signCreateMintProposalRequest(
+        _signer,
+        _agenticAIAAgentCollection,
+        {
+          to: _otherAccount.address,
+          agentAddresses,
+          signer: _signer.address,
+          role: DEFAULT_ROLE,
+          name: DEFAULT_NAME,
+          images: DEFAULT_IMAGES,
+          mission: DEFAULT_MISSION,
+          nonce: NONCE_1,
+        }
+      );
+
+      await _agenticAIAAgentCollection.createMintProposal(
+        _otherAccount.address,
+        agentAddresses,
+        _signer.address,
+        DEFAULT_ROLE,
+        DEFAULT_NAME,
+        DEFAULT_MISSION,
+        DEFAULT_IMAGES,
+        ethers.id(NONCE_1),
+        signature
+      );
+
+      const mintProposalsLength =
+        await _agenticAIAAgentCollection.mintProposalsLength();
+
+      await expect(
+        _agenticAIAAgentCollection
+          .connect(_owner)
+          .mint(mintProposalsLength - BigInt(1))
+      )
+        .to.emit(_agenticAIAAgentCollection, "MintProposalRemoved")
+        .withArgs(_otherAccount.address, _signer.address);
+    });
+
     it("Should decrease proposals length", async function () {
       const agentAddresses = [generateRandomAddress()];
 
