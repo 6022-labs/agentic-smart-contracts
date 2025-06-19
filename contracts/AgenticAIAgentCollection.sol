@@ -388,12 +388,15 @@ contract AgenticAIAgentCollection is
         AddOrUpdateImageProposal memory proposalInfo = _addOrUpdateImageProposals[proposalIndex];
 
         bool isImageAlreadyExist = false;
+        string memory oldValue = "";
+
         AgentInformation storage agentInformation = _agentInformationOf[proposalInfo.tokenId];
 
         for (uint256 i = 0; i < agentInformation.images.length; i++) {
             if (
                 keccak256(abi.encodePacked(agentInformation.images[i].key)) == keccak256(abi.encodePacked(proposalInfo.image.key))
             ) {
+                oldValue = agentInformation.images[i].value;
                 agentInformation.images[i].value = proposalInfo.image.value;
                 isImageAlreadyExist = true;
                 break;
@@ -406,6 +409,13 @@ contract AgenticAIAgentCollection is
                 value: proposalInfo.image.value
             }));
         }
+
+        emit AgentImageUpdated(
+            proposalInfo.tokenId,
+            proposalInfo.image.key,
+            oldValue,
+            proposalInfo.image.value
+        );
 
         _popAddOrUpdateImageProposalAt(proposalIndex);
     }

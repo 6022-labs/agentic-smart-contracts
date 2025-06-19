@@ -40,6 +40,18 @@ interface IAgenticAIAgentCollectionEvents {
         string newMission
     );
 
+    /// @dev Emitted when an agent image is added or updated.
+    /// @param tokenId The ID of the token whose image was added or updated.
+    /// @param key The key of the image.
+    /// @param oldValue The previous value of the image.
+    /// @param newValue The new value of the image.
+    event AgentImageUpdated(
+        uint256 indexed tokenId,
+        string indexed key,
+        string oldValue,
+        string newValue
+    );
+
     /// @dev Emitted when the collections descriptor is updated.
     /// @param oldCollectionsDescriptor The previous collections descriptor address.
     /// @param newCollectionsDescriptor The new collections descriptor address.
