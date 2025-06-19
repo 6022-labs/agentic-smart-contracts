@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
-
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
