@@ -1,13 +1,10 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
-import addSigner from "./tasks/add-signer";
-import addModerator from "./tasks/add-moderator";
+import "./tasks/add-signer";
+import "./tasks/add-moderator";
 
 require("dotenv").config();
-
-addSigner.setDescription("Add a signer to a collections manager");
-addModerator.setDescription("Add a moderator to a collection");
 
 const alchemyKey = process?.env?.ALCHEMY_KEY?.trim() ?? "";
 const privateKey = process?.env?.PRIVATE_KEY?.trim() ?? "";

@@ -6,6 +6,7 @@ export default task("add-signer")
     "The address of the collections manager"
   )
   .addParam("signer", "The address of the new signer")
+  .setDescription("Add a signer to a collections manager")
   .setAction(async (taskArgs, hre) => {
     const { collectionsManagerAddress, signer } = taskArgs;
     const agenticAIAgentCollectionsManager = await hre.ethers.getContractAt(
