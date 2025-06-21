@@ -362,7 +362,11 @@ contract AgenticAIAgentCollection is
                 image: image
             }));
 
-            emit AgentImageProposalCreated(tokenId, image.key);
+            emit AgentImageProposalCreated(
+                tokenId,
+                image.key,
+                _addOrUpdateImageProposals.length - 1
+            );
         }
     }
 
@@ -374,7 +378,11 @@ contract AgenticAIAgentCollection is
         }
         _addOrUpdateImageProposals.pop();
 
-        emit AgentImageProposalRemoved(proposal.tokenId, proposal.image.key);
+        emit AgentImageProposalRemoved(
+            proposal.tokenId,
+            proposal.image.key,
+            index
+        );
     }
 
     function _popMintProposalAt(uint256 index) private {
@@ -385,7 +393,7 @@ contract AgenticAIAgentCollection is
         }
         _mintProposals.pop();
 
-        emit MintProposalRemoved(proposal.owner, proposal.signer);
+        emit MintProposalRemoved(proposal.owner, proposal.signer, index);
     }
 
     /// @dev Apply an image proposal.
@@ -527,7 +535,7 @@ contract AgenticAIAgentCollection is
             wallets: agentAddresses
         }));
 
-        emit MintProposalCreated(to, signer);
+        emit MintProposalCreated(to, signer, _mintProposals.length - 1);
     }
 
     /// @dev Mint an agent from an approved proposal.

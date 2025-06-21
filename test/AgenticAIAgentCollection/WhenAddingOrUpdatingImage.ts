@@ -194,7 +194,7 @@ describe("WhenAddingOrUpdatingImage", function () {
           _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0)
         )
           .to.emit(_agenticAIAgentCollection, "AgentImageProposalRemoved")
-          .withArgs(tokenId, "profile");
+          .withArgs(tokenId, "profile", 0n);
       });
     });
 
@@ -284,7 +284,7 @@ describe("WhenAddingOrUpdatingImage", function () {
             .addOrUpdateImage(proposalIndex)
         )
           .to.emit(_agenticAIAgentCollection, "AgentImageProposalRemoved")
-          .withArgs(tokenId, "profile");
+          .withArgs(tokenId, "profile", proposalIndex);
       });
     });
 

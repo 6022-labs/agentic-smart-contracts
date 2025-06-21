@@ -141,7 +141,7 @@ describe("WhenRefusingMintProposals", function () {
         _collection.connect(_moderator).refuseMintProposal(0)
       )
         .to.emit(_collection, "MintProposalRemoved")
-        .withArgs(_otherAccount.address, _signer.address);
+        .withArgs(_otherAccount.address, _signer.address, 0n);
     });
   });
 });

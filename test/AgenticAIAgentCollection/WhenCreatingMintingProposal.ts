@@ -350,7 +350,7 @@ describe("WhenCreatingMintingProposal", function () {
           )
         )
           .to.emit(_agenticAIAgentCollection, "MintProposalCreated")
-          .withArgs(_owner.address, _signer1.address);
+          .withArgs(_owner.address, _signer1.address, 0n);
       });
     });
   });

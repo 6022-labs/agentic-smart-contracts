@@ -664,7 +664,11 @@ describe("WhenMinting", function () {
           .mint(mintProposalsLength - BigInt(1))
       )
         .to.emit(_agenticAIAAgentCollection, "MintProposalRemoved")
-        .withArgs(_otherAccount.address, _signer.address);
+        .withArgs(
+          _otherAccount.address,
+          _signer.address,
+          mintProposalsLength - BigInt(1)
+        );
     });
 
     it("Should decrease proposals length", async function () {

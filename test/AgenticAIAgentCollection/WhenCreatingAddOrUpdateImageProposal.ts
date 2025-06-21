@@ -191,7 +191,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           })
         )
           .to.emit(_agenticAIAgentCollection, "AgentImageProposalCreated")
-          .withArgs(tokenId, "profile");
+          .withArgs(tokenId, "profile", 0n);
       });
     });
 
@@ -268,7 +268,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
             })
         )
           .to.emit(_agenticAIAgentCollection, "AgentImageProposalCreated")
-          .withArgs(tokenId, "profile");
+          .withArgs(tokenId, "profile", 0n);
       });
     });
 

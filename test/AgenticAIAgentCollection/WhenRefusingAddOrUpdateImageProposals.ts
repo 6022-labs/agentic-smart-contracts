@@ -174,7 +174,7 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
         _collection.connect(_moderator).refuseAddOrUpdateImageProposal(0)
       )
         .to.emit(_collection, "AgentImageProposalRemoved")
-        .withArgs(tokenId, "profile");
+        .withArgs(tokenId, "profile", 0n);
     });
   });
 });
