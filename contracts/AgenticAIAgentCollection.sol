@@ -42,10 +42,8 @@ contract AgenticAIAgentCollection is
 
     string private constant SIGNING_DOMAIN = "AgenticAIAgentCollection";
     string private constant SIGNATURE_VERSION = "1";
-    bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
-    string private _description;
-    uint256 private _nextTokenId = 1;
+    bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
     mapping(bytes32 => bool) private _isNonceUsed;
     mapping(string => uint256) private _tokenIdOf;
@@ -54,8 +52,11 @@ contract AgenticAIAgentCollection is
     MintProposal[] private _mintProposals;
     AddOrUpdateImageProposal[] private _addOrUpdateImageProposals;
 
-    IAgenticAIAgentCollectionsManagerStates private _collectionsManager;
-    IAgenticAIAgentCollectionsDescriptorActions private _collectionsDescriptor;
+    string public description;
+    uint256 public nextTokenId = 1;
+
+    address public collectionsManager;
+    address public collectionsDescriptor;
 
     /// @dev Deploy a new agent collection.
     /// @param name ERC721 name of the collection.
@@ -73,14 +74,10 @@ contract AgenticAIAgentCollection is
         address initialCollectionsManager,
         address initialCollectionsDescriptor
     ) ERC721(name, symbol) EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {
-        _collectionsManager = IAgenticAIAgentCollectionsManagerStates(
-            initialCollectionsManager
-        );
-        _collectionsDescriptor = IAgenticAIAgentCollectionsDescriptorActions(
-            initialCollectionsDescriptor
-        );
+        collectionsManager = initialCollectionsManager;
+        collectionsDescriptor = initialCollectionsDescriptor;
 
-        _description = initialDescription;
+        description = initialDescription;
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MODERATOR_ROLE, moderator);
@@ -101,31 +98,14 @@ contract AgenticAIAgentCollection is
             AccessControl.supportsInterface(interfaceId);
     }
 
-    /// @dev Address of the collections manager contract.
-    function collectionsManager() external view returns (address) {
-        return address(_collectionsManager);
-    }
-
-    /// @dev Address of the collections descriptor contract.
-    function collectionsDescriptor() external view returns (address) {
-        return address(_collectionsDescriptor);
-    }
-
-    /// @dev Description of the collection.
-    function description() external view returns (string memory) {
-        return _description;
-    }
-
     /// @dev Update the descriptor contract used for metadata.
     /// @param newCollectionsDescriptor Address of the new descriptor contract.
     function updateCollectionsDescriptor(
         address newCollectionsDescriptor
     ) external onlyRole(MODERATOR_ROLE) {
-        address oldDescriptor = address(_collectionsDescriptor);
+        address oldDescriptor = address(collectionsDescriptor);
 
-        _collectionsDescriptor = IAgenticAIAgentCollectionsDescriptorActions(
-            newCollectionsDescriptor
-        );
+        collectionsDescriptor = newCollectionsDescriptor;
 
         emit CollectionsDescriptorUpdated(oldDescriptor, newCollectionsDescriptor);
     }
@@ -135,15 +115,10 @@ contract AgenticAIAgentCollection is
     function updateDescription(
         string memory newDescription
     ) external onlyRole(MODERATOR_ROLE) {
-        string memory oldDescription = _description;
-        _description = newDescription;
+        string memory oldDescription = description;
+        description = newDescription;
 
         emit DescriptionUpdated(oldDescription, newDescription);
-    }
-
-    /// @dev Get the identifier that will be assigned to the next minted token.
-    function nextTokenId() external view returns (uint256) {
-        return _nextTokenId;
     }
 
     /// @dev Return the token URI as defined by the descriptor contract.
@@ -153,7 +128,8 @@ contract AgenticAIAgentCollection is
     ) public view override(ERC721, IERC721Metadata) returns (string memory) {
         _requireMinted(tokenId);
 
-        return _collectionsDescriptor.buildTokenURI(address(this), tokenId);
+        return IAgenticAIAgentCollectionsDescriptorActions(collectionsDescriptor).
+            buildTokenURI(address(this), tokenId);
     }
 
     /// @dev Get all stored information for an agent.
@@ -288,7 +264,7 @@ contract AgenticAIAgentCollection is
             revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
         }
 
-        if (!_collectionsManager.isSigner(newSigner)) {
+        if (!IAgenticAIAgentCollectionsManagerStates(collectionsManager).isSigner(newSigner)) {
             revert NotSigner(newSigner);
         }
 
@@ -304,7 +280,7 @@ contract AgenticAIAgentCollection is
             signature: signature
         }));
 
-        if (!_collectionsManager.isSigner(recoveredAddress)) {
+        if (!IAgenticAIAgentCollectionsManagerStates(collectionsManager).isSigner(recoveredAddress)) {
             revert NotSigner(recoveredAddress);
         }
 
@@ -516,7 +492,7 @@ contract AgenticAIAgentCollection is
             signature: signature
         }));
 
-        if (!_collectionsManager.isSigner(recoveredAddress)) {
+        if (!IAgenticAIAgentCollectionsManagerStates(collectionsManager).isSigner(recoveredAddress)) {
             revert NotSigner(recoveredAddress);
         }
         if (recoveredAddress != signer) {
@@ -549,7 +525,7 @@ contract AgenticAIAgentCollection is
             revert UsedName(proposalInfo.name);
         }
 
-        _agentInformationOf[_nextTokenId] = AgentInformation({
+        _agentInformationOf[nextTokenId] = AgentInformation({
             name: proposalInfo.name,
             role: proposalInfo.role,
             images: proposalInfo.images,
@@ -559,15 +535,15 @@ contract AgenticAIAgentCollection is
             wallets: proposalInfo.wallets
         });
 
-        _tokenIdOf[proposalInfo.name] = _nextTokenId;
+        _tokenIdOf[proposalInfo.name] = nextTokenId;
 
-        _safeMint(proposalInfo.owner, _nextTokenId);
+        _safeMint(proposalInfo.owner, nextTokenId);
 
-        emit Minted(proposalInfo.owner, proposalInfo.signer, _nextTokenId);
-        emit AgentSignerUpdated(_nextTokenId, address(0), proposalInfo.signer);
+        emit Minted(proposalInfo.owner, proposalInfo.signer, nextTokenId);
+        emit AgentSignerUpdated(nextTokenId, address(0), proposalInfo.signer);
 
         _popMintProposalAt(proposalIndex);
-        _nextTokenId++;
+        nextTokenId++;
     }
 
     /// @dev Refuse a mint proposal.
@@ -677,7 +653,7 @@ contract AgenticAIAgentCollection is
      * (it hasn't been minted or it has been burned).
      */
     function _requireMinted(uint256 tokenId) internal view returns (address) {
-        if (tokenId == 0 || tokenId >= _nextTokenId) {
+        if (tokenId == 0 || tokenId >= nextTokenId) {
             revert ERC721NonexistentToken(tokenId);
         }
         return _ownerOf(tokenId);
