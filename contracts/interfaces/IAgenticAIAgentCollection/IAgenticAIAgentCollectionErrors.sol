@@ -35,6 +35,9 @@ interface IAgenticAIAgentCollectionErrors {
     /// @param tokenId The ID of the token that was attempted to be accessed.
     error OwnableUnauthorizedAccount(address sender, uint256 tokenId);
 
-    /// @dev Error when no moderators are set.
+    /// @dev Error when no moderators are set but the action requires moderators.
     error NoModerators();
+
+    /// @dev Error when moderators are set but the action requires no moderators.
+    error ModeratorsExist();
 }

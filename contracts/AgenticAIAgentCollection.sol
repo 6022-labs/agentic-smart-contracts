@@ -8,6 +8,10 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
+import {ENSUtils} from "./libraries/ENSUtils.sol";
+import {AgentImagesLib} from "./libraries/AgentImagesLib.sol";
+import {AgenticSignatureLib} from "./libraries/AgenticSignatureLib.sol";
+
 import {KeyValue} from "./types/KeyValue.sol";
 import {AgentInformation} from "./types/AgentInformation.sol";
 import {IAgenticAIAgentCollection} from "./interfaces/IAgenticAIAgentCollection/IAgenticAIAgentCollection.sol";
@@ -39,6 +43,7 @@ contract AgenticAIAgentCollection is
     IAgenticAIAgentCollection
 {
     using ECDSA for bytes32;
+    using AgentImagesLib for KeyValue[];
 
     string private constant SIGNING_DOMAIN = "AgenticAIAgentCollection";
     string private constant SIGNATURE_VERSION = "1";
@@ -290,12 +295,11 @@ contract AgenticAIAgentCollection is
             revert SignerUnchanged(oldSigner);
         }
 
-        address recoveredAddress = _recoverUpdateAgentSignerSigner(RecoverUpdateAgentSignerParams({
+        address recoveredAddress = _recoverUpdateAgentSignerSigner(AgenticSignatureLib.UpdateAgentSignerParams({
             tokenId: tokenId,
             newSigner: newSigner,
-            nonce: nonce,
-            signature: signature
-        }));
+            nonce: nonce
+        }), signature);
 
         if (!IAgenticAIAgentCollectionsManagerStates(collectionsManager).isSigner(recoveredAddress)) {
             revert NotSigner(recoveredAddress);
@@ -324,7 +328,7 @@ contract AgenticAIAgentCollection is
         emit AgentMissionUpdated(tokenId, oldMission, newMission);
     }
 
-    /// @dev Propose to add or update an image for a token.
+    /// @dev Propose to add or update an image for a token. (used if moderators setup)
     /// @param tokenId The token affected by the proposal.
     /// @param image The key/value pair representing the image.
     function createAddOrUpdateImageProposal(
@@ -364,6 +368,270 @@ contract AgenticAIAgentCollection is
         }
     }
 
+    /// @dev Add or update an image for a token. (used if no moderators setup)
+    /// @param tokenId The token affected.
+    /// @param image The key/value pair representing the image.
+    function addOrUpdateImage(
+        uint256 tokenId,
+        KeyValue memory image
+    ) external {
+        _requireNoModerator();
+        _requireMinted(tokenId);
+        if (ownerOf(tokenId) != _msgSender()) {
+            revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
+        }
+
+        _addOrUpdateImage(
+            tokenId,
+            image
+        );
+    }
+
+    /// @dev Apply an image proposal.
+    /// @param proposalIndex The index of the proposal to apply.
+    function addOrUpdateImageFromProposal(
+        uint256 proposalIndex
+    ) external onlyRole(MODERATOR_ROLE) {
+        AddOrUpdateImageProposal memory proposalInfo = _addOrUpdateImageProposals[proposalIndex];
+
+        _addOrUpdateImage(
+            proposalInfo.tokenId,
+            proposalInfo.image
+        );
+
+        _popAddOrUpdateImageProposalAt(proposalIndex);
+    }
+
+    function _addOrUpdateImage(
+        uint256 tokenId,
+        KeyValue memory image
+    ) internal {
+        AgentInformation storage agentInformation = _agentInformationOf[tokenId];
+
+        string memory oldValue = agentInformation.images.addOrUpdateImage(image.key, image.value);
+
+        emit AgentImageUpdated(
+            tokenId,
+            image.key,
+            oldValue,
+            image.value
+        );
+    }
+
+    /// @dev Refuse an image proposal.
+    /// @param proposalIndex The index of the proposal to refuse.
+    function refuseAddOrUpdateImageProposal(
+        uint256 proposalIndex
+    ) external onlyRole(MODERATOR_ROLE) {
+        _popAddOrUpdateImageProposalAt(proposalIndex);
+    }
+
+    /// @dev Remove an image from a token.
+    /// @param tokenId The token whose image is removed.
+    /// @param key The key of the image to remove.
+    function removeImage(
+        uint256 tokenId,
+        string memory key
+    ) external {
+        _requireMinted(tokenId);
+        if (ownerOf(tokenId) != _msgSender() && !hasRole(MODERATOR_ROLE, _msgSender())) {
+            revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
+        }
+
+        KeyValue[] storage images = _agentInformationOf[tokenId].images;
+        images.removeImage(key);
+
+        if (!images.imagesContainDefault()) {
+            revert MissingDefaultImage();
+        }
+    }
+
+    /// @dev Propose minting of a new agent token. (used if moderators setup)
+    /// @param to The future owner of the token.
+    /// @param agentAddresses Wallet addresses controlled by the agent.
+    /// @param signer The signer address linked to the agent.
+    /// @param role The agent role.
+    /// @param name The Name of the agent.
+    /// @param mission The initial mission for the agent.
+    /// @param images A set of images describing the agent.
+    /// @param nonce Unique nonce used for signature replay protection.
+    /// @param signature Off-chain signature authorizing the mint.
+    function createMintProposal(
+        address to,
+        address[] memory agentAddresses,
+        address signer,
+        string memory role,
+        string memory name,
+        string memory mission,
+        KeyValue[] memory images,
+        bytes32 nonce,
+        bytes memory signature
+    ) external {
+        _requireModerator();
+        _validateMint(to, agentAddresses, signer, role, name, mission, images, nonce, signature);
+
+        _isNonceUsed[nonce] = true;
+        _mintProposals.push(MintProposal({
+            name: name,
+            role: role,
+            owner: to,
+            signer: signer,
+            images: images,
+            mission: mission,
+            creator: _msgSender(),
+            wallets: agentAddresses
+        }));
+
+        emit MintProposalCreated(to, signer, _mintProposals.length - 1);
+    }
+
+    /// @dev Mint a new agent token. (used if no moderators setup)
+    /// @param to The future owner of the token.
+    /// @param agentAddresses Wallet addresses controlled by the agent.
+    /// @param signer The signer address linked to the agent.
+    /// @param role The agent role.
+    /// @param name The Name of the agent.
+    /// @param mission The initial mission for the agent.
+    /// @param images A set of images describing the agent.
+    /// @param nonce Unique nonce used for signature replay protection.
+    /// @param signature Off-chain signature authorizing the mint.
+    function mint(
+        address to,
+        address[] memory agentAddresses,
+        address signer,
+        string memory role,
+        string memory name,
+        string memory mission,
+        KeyValue[] memory images,
+        bytes32 nonce,
+        bytes memory signature
+    ) external {
+        _requireNoModerator();
+        _validateMint(to, agentAddresses, signer, role, name, mission, images, nonce, signature);
+        _isNonceUsed[nonce] = true;
+        _mintAgent(to, agentAddresses, signer, role, name, mission, images, _msgSender());
+    }
+
+    /// @dev Mint an agent from an approved proposal.
+    /// @param proposalIndex The index of the mint proposal to execute.
+    function mintFromProposal(
+        uint256 proposalIndex
+    ) external onlyRole(MODERATOR_ROLE) {
+        MintProposal memory proposalInfo = _mintProposals[proposalIndex];
+        if (_tokenIdOf[proposalInfo.name] != 0) {
+            revert UsedName(proposalInfo.name);
+        }
+        _mintAgent(
+            proposalInfo.owner,
+            proposalInfo.wallets,
+            proposalInfo.signer,
+            proposalInfo.role,
+            proposalInfo.name,
+            proposalInfo.mission,
+            proposalInfo.images,
+            proposalInfo.creator
+        );
+        _popMintProposalAt(proposalIndex);
+    }
+
+    /// @dev Internal function to validate minting parameters and signature.
+    function _validateMint(
+        address to,
+        address[] memory agentAddresses,
+        address signer,
+        string memory role,
+        string memory name,
+        string memory mission,
+        KeyValue[] memory images,
+        bytes32 nonce,
+        bytes memory signature
+    ) internal view {
+        if (!ENSUtils.isValidENSName(name)) {
+            revert InvalidName(name);
+        }
+        if (_isNonceUsed[nonce]) {
+            revert UsedNonce(nonce);
+        }
+        if (_tokenIdOf[name] != 0) {
+            revert UsedName(name);
+        }
+        if (!images.imagesContainDefault()) {
+            revert MissingDefaultImage();
+        }
+
+        address recoveredAddress = _recoverMintSigner(AgenticSignatureLib.MintParams({
+            to: to,
+            agentAddresses: agentAddresses,
+            signer: signer,
+            role: role,
+            name: name,
+            images: images,
+            mission: mission,
+            nonce: nonce
+        }), signature);
+        if (!IAgenticAIAgentCollectionsManagerStates(collectionsManager).isSigner(recoveredAddress)) {
+            revert NotSigner(recoveredAddress);
+        }
+        if (recoveredAddress != signer) {
+            revert InvalidSigner(recoveredAddress, signer);
+        }
+    }
+
+    /// @dev Internal function to mint an agent NFT and store its information.
+    function _mintAgent(
+        address to,
+        address[] memory agentAddresses,
+        address signer,
+        string memory role,
+        string memory name,
+        string memory mission,
+        KeyValue[] memory images,
+        address creator
+    ) internal {
+        _agentInformationOf[nextTokenId] = AgentInformation({
+            name: name,
+            role: role,
+            images: images,
+            signer: signer,
+            mission: mission,
+            creator: creator,
+            wallets: agentAddresses
+        });
+        _tokenIdOf[name] = nextTokenId;
+        _safeMint(to, nextTokenId);
+        emit Minted(to, signer, nextTokenId);
+        emit AgentSignerUpdated(nextTokenId, address(0), signer);
+        nextTokenId++;
+    }
+
+    /// @dev Refuse a mint proposal.
+    /// @param proposalIndex The index of the proposal to refuse.
+    function refuseMintProposal(
+        uint256 proposalIndex
+    ) external onlyRole(MODERATOR_ROLE) {
+        _popMintProposalAt(proposalIndex);
+    }
+
+    /// @dev Recover the signer used for an update agent signer request.
+    function _recoverUpdateAgentSignerSigner(
+        AgenticSignatureLib.UpdateAgentSignerParams memory params,
+        bytes memory signature
+    ) internal view returns (address) {
+        bytes32 typedDataHash = AgenticSignatureLib.hashUpdateAgentSignerParams(params);
+        bytes32 digest = _hashTypedDataV4(typedDataHash);
+        return ECDSA.recover(digest, signature);
+    }
+
+    /// @dev Recover the signer used for a mint.
+    function _recoverMintSigner(
+        AgenticSignatureLib.MintParams memory params,
+        bytes memory signature
+    ) internal view returns (address) {
+        bytes32 typedDataHash = AgenticSignatureLib.hashMintParams(params);
+        bytes32 digest = _hashTypedDataV4(typedDataHash);
+        return ECDSA.recover(digest, signature);
+    }
+
     function _popAddOrUpdateImageProposalAt(uint256 index) private {
         AddOrUpdateImageProposal memory proposal = _addOrUpdateImageProposals[index];
         uint256 lastIndex = _addOrUpdateImageProposals.length - 1;
@@ -390,284 +658,14 @@ contract AgenticAIAgentCollection is
         emit MintProposalRemoved(proposal.owner, proposal.signer, index);
     }
 
-    /// @dev Apply an image proposal.
-    /// @param proposalIndex The index of the proposal to apply.
-    function addOrUpdateImageFromProposal(
-        uint256 proposalIndex
-    ) external onlyRole(MODERATOR_ROLE) {
-        AddOrUpdateImageProposal memory proposalInfo = _addOrUpdateImageProposals[proposalIndex];
-
-        bool isImageAlreadyExist = false;
-        string memory oldValue = "";
-
-        AgentInformation storage agentInformation = _agentInformationOf[proposalInfo.tokenId];
-
-        for (uint256 i = 0; i < agentInformation.images.length; i++) {
-            if (
-                keccak256(abi.encodePacked(agentInformation.images[i].key)) == keccak256(abi.encodePacked(proposalInfo.image.key))
-            ) {
-                oldValue = agentInformation.images[i].value;
-                agentInformation.images[i].value = proposalInfo.image.value;
-                isImageAlreadyExist = true;
-                break;
-            }
-        }
-
-        if (!isImageAlreadyExist) {
-            agentInformation.images.push(KeyValue({
-                key: proposalInfo.image.key,
-                value: proposalInfo.image.value
-            }));
-        }
-
-        emit AgentImageUpdated(
-            proposalInfo.tokenId,
-            proposalInfo.image.key,
-            oldValue,
-            proposalInfo.image.value
-        );
-
-        _popAddOrUpdateImageProposalAt(proposalIndex);
-    }
-
-    /// @dev Refuse an image proposal.
-    /// @param proposalIndex The index of the proposal to refuse.
-    function refuseAddOrUpdateImageProposal(
-        uint256 proposalIndex
-    ) external onlyRole(MODERATOR_ROLE) {
-        _popAddOrUpdateImageProposalAt(proposalIndex);
-    }
-
-    /// @dev Remove an image from a token.
-    /// @param tokenId The token whose image is removed.
-    /// @param key The key of the image to remove.
-    function removeImage(
-        uint256 tokenId,
-        string memory key
-    ) external {
-        _requireMinted(tokenId);
-        if (ownerOf(tokenId) != _msgSender() && !hasRole(MODERATOR_ROLE, _msgSender())) {
-            revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
-        }
-
-        KeyValue[] storage images = _agentInformationOf[tokenId].images;
-        for (uint256 i = 0; i < images.length; i++) {
-            if (keccak256(abi.encodePacked(images[i].key)) == keccak256(abi.encodePacked(key))) {
-                images[i] = images[images.length - 1];
-                images.pop();
-                break;
-            }
-        }
-
-        if (!_imagesContainDefault(images)) {
-            revert MissingDefaultImage();
+    /// @dev Reverts if there is moderators set.
+    function _requireNoModerator() internal view {
+        if (moderatorCount > 0) {
+            revert ModeratorsExist();
         }
     }
 
-    /// @dev Propose minting of a new agent token.
-    /// @param to The future owner of the token.
-    /// @param agentAddresses Wallet addresses controlled by the agent.
-    /// @param signer The signer address linked to the agent.
-    /// @param role The agent role.
-    /// @param name The Name of the agent.
-    /// @param mission The initial mission for the agent.
-    /// @param images A set of images describing the agent.
-    /// @param nonce Unique nonce used for signature replay protection.
-    /// @param signature Off-chain signature authorizing the mint.
-    function createMintProposal(
-        address to,
-        address[] memory agentAddresses,
-        address signer,
-        string memory role,
-        string memory name,
-        string memory mission,
-        KeyValue[] memory images,
-        bytes32 nonce,
-        bytes memory signature
-    ) external {
-        _requireModerator();
-        if (!_isValidENSName(name)) {
-            revert InvalidName(name);
-        }
-        if (_isNonceUsed[nonce]) {
-            revert UsedNonce(nonce);
-        }
-        if (_tokenIdOf[name] != 0) {
-            revert UsedName(name);
-        }
-        if (!_imagesContainDefault(images)) {
-            revert MissingDefaultImage();
-        }
-
-        address recoveredAddress = _recoverCreateMintProposalSigner(RecoverCreateMintProposalSignerParams({
-            to: to,
-            agentAddresses: agentAddresses,
-            signer: signer,
-            role: role,
-            name: name,
-            images: images,
-            mission: mission,
-            nonce: nonce,
-            signature: signature
-        }));
-
-        if (!IAgenticAIAgentCollectionsManagerStates(collectionsManager).isSigner(recoveredAddress)) {
-            revert NotSigner(recoveredAddress);
-        }
-        if (recoveredAddress != signer) {
-            revert InvalidSigner(recoveredAddress, signer);
-        }
-
-        _isNonceUsed[nonce] = true;
-        _mintProposals.push(MintProposal({
-            name: name,
-            role: role,
-            owner: to,
-            signer: signer,
-            images: images,
-            mission: mission,
-            creator: _msgSender(),
-            wallets: agentAddresses
-        }));
-
-        emit MintProposalCreated(to, signer, _mintProposals.length - 1);
-    }
-
-    /// @dev Mint an agent from an approved proposal.
-    /// @param proposalIndex The index of the mint proposal to execute.
-    function mintFromProposal(
-        uint256 proposalIndex
-    ) external onlyRole(MODERATOR_ROLE) {
-        MintProposal memory proposalInfo = _mintProposals[proposalIndex];
-
-        if (_tokenIdOf[proposalInfo.name] != 0) {
-            revert UsedName(proposalInfo.name);
-        }
-
-        _agentInformationOf[nextTokenId] = AgentInformation({
-            name: proposalInfo.name,
-            role: proposalInfo.role,
-            images: proposalInfo.images,
-            signer: proposalInfo.signer,
-            mission: proposalInfo.mission,
-            creator: proposalInfo.creator,
-            wallets: proposalInfo.wallets
-        });
-
-        _tokenIdOf[proposalInfo.name] = nextTokenId;
-
-        _safeMint(proposalInfo.owner, nextTokenId);
-
-        emit Minted(proposalInfo.owner, proposalInfo.signer, nextTokenId);
-        emit AgentSignerUpdated(nextTokenId, address(0), proposalInfo.signer);
-
-        _popMintProposalAt(proposalIndex);
-        nextTokenId++;
-    }
-
-    /// @dev Refuse a mint proposal.
-    /// @param proposalIndex The index of the proposal to refuse.
-    function refuseMintProposal(
-        uint256 proposalIndex
-    ) external onlyRole(MODERATOR_ROLE) {
-        _popMintProposalAt(proposalIndex);
-    }
-
-    /// @dev Recover the signer used for an update agent signer request.
-    function _recoverUpdateAgentSignerSigner(
-        RecoverUpdateAgentSignerParams memory params
-    ) internal view returns (address) {
-        bytes32 typedDataHash = keccak256(
-            abi.encode(
-                keccak256(
-                    "UpdateAgentSignerRequest(uint256 tokenId,address newSigner,bytes32 nonce)"
-                ),
-                params.tokenId,
-                params.newSigner,
-                params.nonce
-            )
-        );
-
-        // Hash the entire struct
-        bytes32 digest = _hashTypedDataV4(typedDataHash);
-
-        // Recover signer and check role
-        return ECDSA.recover(digest, params.signature);
-    }
-
-    /// @dev Recover the signer used for a create mint proposal request.
-    function _recoverCreateMintProposalSigner(
-        RecoverCreateMintProposalSignerParams memory params
-    ) internal view returns (address) {
-        // Hash the agentAddresses array separately
-        bytes32 agentAddressesHash = keccak256(
-            abi.encodePacked(params.agentAddresses)
-        );
-        bytes32 nameHash = keccak256(abi.encodePacked(params.name));
-        bytes32 roleHash = keccak256(abi.encodePacked(params.role));
-        bytes32 missionHash = keccak256(abi.encodePacked(params.mission));
-
-        bytes32[] memory imagesHashes = new bytes32[](params.images.length);
-        for (uint i = 0; i < params.images.length; i++) {
-            imagesHashes[i] = keccak256(abi.encodePacked(params.images[i].key, params.images[i].value));
-        }
-        bytes32 imagesHash = keccak256(abi.encodePacked(imagesHashes));
-
-        bytes32 typedDataHash = keccak256(
-            abi.encode(
-                keccak256(
-                    "CreateMintProposalRequest(address to,bytes32 agentAddressesHash,address signer,bytes32 roleHash,bytes32 nameHash,bytes32 imagesHash,bytes32 missionHash,bytes32 nonce)"
-                ),
-                params.to,
-                agentAddressesHash,
-                params.signer,
-                roleHash,
-                nameHash,
-                imagesHash,
-                missionHash,
-                params.nonce
-            )
-        );
-
-        // Hash the entire struct
-        bytes32 digest = _hashTypedDataV4(typedDataHash);
-
-        // Recover signer and check role
-        return ECDSA.recover(digest, params.signature);
-    }
-
-    /// @dev Check that the list of images contains one with key `default`.
-    function _imagesContainDefault(KeyValue[] memory images) internal pure returns (bool) {
-        for (uint256 i = 0; i < images.length; i++) {
-            if (keccak256(abi.encodePacked(images[i].key)) == keccak256(abi.encodePacked("default"))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /// @dev Validate that a string is a valid ENS label.
-    function _isValidENSName(string memory name) internal pure returns (bool) {
-        bytes memory nameBytes = bytes(name);
-        if (nameBytes.length == 0) {
-            return false;
-        }
-
-        for (uint256 i = 0; i < nameBytes.length; i++) {
-            bytes1 char = nameBytes[i];
-            if (
-                !(char >= 0x61 && char <= 0x7A) && // a-z
-                !(char >= 0x30 && char <= 0x39) && // 0-9
-                !(char == 0x2D) // -
-            ) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /// @dev Reverts if their is no moderator set.
+    /// @dev Reverts if there is no moderator set.
     function _requireModerator() internal view {
         if (moderatorCount == 0) {
             revert NoModerators();
@@ -683,7 +681,7 @@ contract AgenticAIAgentCollection is
         return _ownerOf(tokenId);
     }
 
-    struct RecoverCreateMintProposalSignerParams {
+    struct RecoverMintSignerParams {
         address to;
         address[] agentAddresses;
         address signer;

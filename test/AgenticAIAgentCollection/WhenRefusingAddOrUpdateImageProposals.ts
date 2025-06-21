@@ -6,7 +6,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   generateRandomAddress,
   generateRandomNonce,
-  signCreateMintProposalRequest,
+  signMintRequest,
 } from "../common";
 
 describe("WhenRefusingAddOrUpdateImageProposals", function () {
@@ -79,20 +79,16 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
     const nonce = generateRandomNonce();
     const agentAddresses = [generateRandomAddress()];
 
-    const signature = await signCreateMintProposalRequest(
-      _signer,
-      _collection,
-      {
-        to,
-        agentAddresses,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name,
-        images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
-        nonce,
-      }
-    );
+    const signature = await signMintRequest(_signer, _collection, {
+      to,
+      agentAddresses,
+      signer: _signer.address,
+      role: DEFAULT_ROLE,
+      name,
+      images: DEFAULT_IMAGES,
+      mission: DEFAULT_MISSION,
+      nonce,
+    });
 
     await _collection.createMintProposal(
       to,

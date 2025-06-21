@@ -3,10 +3,7 @@ import { ethers } from "hardhat";
 import { AgenticAIAgentCollection } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import {
-  generateRandomAddress,
-  signCreateMintProposalRequest,
-} from "../common";
+import { generateRandomAddress, signMintRequest } from "../common";
 
 describe("WhenCreatingMintingProposal", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -93,7 +90,7 @@ describe("WhenCreatingMintingProposal", function () {
         .revokeRole(MODERATOR_ROLE, _moderator.address);
 
       const agentAddresses = [generateRandomAddress()];
-      const signature = await signCreateMintProposalRequest(
+      const signature = await signMintRequest(
         _signer1,
         _agenticAIAgentCollection,
         {
@@ -131,7 +128,7 @@ describe("WhenCreatingMintingProposal", function () {
     describe("Given an invalid name", function () {
       it("Should revert with 'InvalidName' error", async function () {
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signCreateMintProposalRequest(
+        const signature = await signMintRequest(
           _signer1,
           _agenticAIAgentCollection,
           {
@@ -170,7 +167,7 @@ describe("WhenCreatingMintingProposal", function () {
     describe("Given a valid nonce used twice", function () {
       it("Should revert with 'UsedNonce' error on second attempt", async function () {
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signCreateMintProposalRequest(
+        const signature = await signMintRequest(
           _signer1,
           _agenticAIAgentCollection,
           {
@@ -219,7 +216,7 @@ describe("WhenCreatingMintingProposal", function () {
       it("Should revert with 'UsedName' error", async function () {
         const agentAddresses = [generateRandomAddress()];
 
-        const sig1 = await signCreateMintProposalRequest(
+        const sig1 = await signMintRequest(
           _signer1,
           _agenticAIAgentCollection,
           {
@@ -253,7 +250,7 @@ describe("WhenCreatingMintingProposal", function () {
           .connect(_moderator)
           .mintFromProposal(mintProposalsLength - BigInt(1));
 
-        const sig2 = await signCreateMintProposalRequest(
+        const sig2 = await signMintRequest(
           _signer1,
           _agenticAIAgentCollection,
           {
@@ -289,7 +286,7 @@ describe("WhenCreatingMintingProposal", function () {
     describe("Given a signature that does not match signer parameter", function () {
       it("Should revert with 'InvalidSigner' error", async function () {
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signCreateMintProposalRequest(
+        const signature = await signMintRequest(
           _signer1,
           _agenticAIAgentCollection,
           {
@@ -328,7 +325,7 @@ describe("WhenCreatingMintingProposal", function () {
     describe("Given a valid signature", function () {
       it("Should create the proposal", async function () {
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signCreateMintProposalRequest(
+        const signature = await signMintRequest(
           _signer1,
           _agenticAIAgentCollection,
           {
@@ -368,7 +365,7 @@ describe("WhenCreatingMintingProposal", function () {
 
       it("Should emit a MintProposalCreated event", async function () {
         const agentAddresses = [generateRandomAddress()];
-        const signature = await signCreateMintProposalRequest(
+        const signature = await signMintRequest(
           _signer1,
           _agenticAIAgentCollection,
           {
@@ -406,7 +403,7 @@ describe("WhenCreatingMintingProposal", function () {
     it("Should revert with 'NotSigner' error", async function () {
       const agentAddresses = [generateRandomAddress()];
 
-      const signature = await signCreateMintProposalRequest(
+      const signature = await signMintRequest(
         _otherAccount,
         _agenticAIAgentCollection,
         {

@@ -3,10 +3,7 @@ import { ethers } from "hardhat";
 import { AgenticAIAgentCollection } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import {
-  generateRandomAddress,
-  signCreateMintProposalRequest,
-} from "../common";
+import { generateRandomAddress, signMintRequest } from "../common";
 
 describe("WhenMintingFromProposal", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -87,7 +84,7 @@ describe("WhenMintingFromProposal", function () {
     mission: string,
     nonce: string
   ) {
-    const signature = await signCreateMintProposalRequest(
+    const signature = await signMintRequest(
       _signer,
       _agenticAIAAgentCollection,
       {
@@ -130,7 +127,7 @@ describe("WhenMintingFromProposal", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' error", async function () {
       const agentAddresses = [generateRandomAddress()];
 
-      const signature = await signCreateMintProposalRequest(
+      const signature = await signMintRequest(
         _signer,
         _agenticAIAAgentCollection,
         {
@@ -188,20 +185,16 @@ describe("WhenMintingFromProposal", function () {
     it("Should revert minting the second proposal with 'UsedName' error", async function () {
       const agentAddresses = [generateRandomAddress()];
 
-      const sig1 = await signCreateMintProposalRequest(
-        _signer,
-        _agenticAIAAgentCollection,
-        {
-          to: _otherAccount.address,
-          agentAddresses,
-          signer: _signer.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
-          nonce: NONCE_1,
-        }
-      );
+      const sig1 = await signMintRequest(_signer, _agenticAIAAgentCollection, {
+        to: _otherAccount.address,
+        agentAddresses,
+        signer: _signer.address,
+        role: DEFAULT_ROLE,
+        name: DEFAULT_NAME,
+        images: DEFAULT_IMAGES,
+        mission: DEFAULT_MISSION,
+        nonce: NONCE_1,
+      });
 
       await _agenticAIAAgentCollection.createMintProposal(
         _otherAccount.address,
@@ -215,20 +208,16 @@ describe("WhenMintingFromProposal", function () {
         sig1
       );
 
-      const sig2 = await signCreateMintProposalRequest(
-        _signer,
-        _agenticAIAAgentCollection,
-        {
-          to: _otherAccount.address,
-          agentAddresses,
-          signer: _signer.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
-          nonce: NONCE_2,
-        }
-      );
+      const sig2 = await signMintRequest(_signer, _agenticAIAAgentCollection, {
+        to: _otherAccount.address,
+        agentAddresses,
+        signer: _signer.address,
+        role: DEFAULT_ROLE,
+        name: DEFAULT_NAME,
+        images: DEFAULT_IMAGES,
+        mission: DEFAULT_MISSION,
+        nonce: NONCE_2,
+      });
 
       await _agenticAIAAgentCollection.createMintProposal(
         _otherAccount.address,
@@ -257,7 +246,7 @@ describe("WhenMintingFromProposal", function () {
       const agentAddresses = [generateRandomAddress()];
       const tokenId = await _agenticAIAAgentCollection.nextTokenId();
 
-      const signature = await signCreateMintProposalRequest(
+      const signature = await signMintRequest(
         _signer,
         _agenticAIAAgentCollection,
         {
@@ -544,7 +533,7 @@ describe("WhenMintingFromProposal", function () {
 
       const tokenId = await _agenticAIAAgentCollection.nextTokenId();
 
-      const signature = await signCreateMintProposalRequest(
+      const signature = await signMintRequest(
         _signer,
         _agenticAIAAgentCollection,
         {
@@ -588,7 +577,7 @@ describe("WhenMintingFromProposal", function () {
 
       const tokenId = await _agenticAIAAgentCollection.nextTokenId();
 
-      const signature = await signCreateMintProposalRequest(
+      const signature = await signMintRequest(
         _signer,
         _agenticAIAAgentCollection,
         {
@@ -630,7 +619,7 @@ describe("WhenMintingFromProposal", function () {
     it("Should emit a MintProposalRemoved event", async function () {
       const agentAddresses = [generateRandomAddress()];
 
-      const signature = await signCreateMintProposalRequest(
+      const signature = await signMintRequest(
         _signer,
         _agenticAIAAgentCollection,
         {
@@ -676,7 +665,7 @@ describe("WhenMintingFromProposal", function () {
     it("Should decrease proposals length", async function () {
       const agentAddresses = [generateRandomAddress()];
 
-      const signature = await signCreateMintProposalRequest(
+      const signature = await signMintRequest(
         _signer,
         _agenticAIAAgentCollection,
         {
@@ -718,20 +707,16 @@ describe("WhenMintingFromProposal", function () {
     it("Should reorder remaining proposals", async function () {
       const agentAddresses = [generateRandomAddress()];
 
-      const sig1 = await signCreateMintProposalRequest(
-        _signer,
-        _agenticAIAAgentCollection,
-        {
-          to: _otherAccount.address,
-          agentAddresses,
-          signer: _signer.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME_1,
-          images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
-          nonce: NONCE_1,
-        }
-      );
+      const sig1 = await signMintRequest(_signer, _agenticAIAAgentCollection, {
+        to: _otherAccount.address,
+        agentAddresses,
+        signer: _signer.address,
+        role: DEFAULT_ROLE,
+        name: DEFAULT_NAME_1,
+        images: DEFAULT_IMAGES,
+        mission: DEFAULT_MISSION,
+        nonce: NONCE_1,
+      });
 
       await _agenticAIAAgentCollection.createMintProposal(
         _otherAccount.address,
@@ -745,20 +730,16 @@ describe("WhenMintingFromProposal", function () {
         sig1
       );
 
-      const sig2 = await signCreateMintProposalRequest(
-        _signer,
-        _agenticAIAAgentCollection,
-        {
-          to: _otherAccount.address,
-          agentAddresses,
-          signer: _signer.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME_2,
-          images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
-          nonce: NONCE_2,
-        }
-      );
+      const sig2 = await signMintRequest(_signer, _agenticAIAAgentCollection, {
+        to: _otherAccount.address,
+        agentAddresses,
+        signer: _signer.address,
+        role: DEFAULT_ROLE,
+        name: DEFAULT_NAME_2,
+        images: DEFAULT_IMAGES,
+        mission: DEFAULT_MISSION,
+        nonce: NONCE_2,
+      });
 
       await _agenticAIAAgentCollection.createMintProposal(
         _otherAccount.address,

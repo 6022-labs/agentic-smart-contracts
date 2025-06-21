@@ -14,11 +14,11 @@ contract AgenticAIAgentCollectionCreator is
     AccessControl,
     IAgenticAIAgentCollectionCreator
 {
-    address private _requiredToken;
-    uint256 private _minimumTokenBalance;
+    address public requiredToken;
+    uint256 public minimumTokenBalance;
 
-    address private _collectionsManager;
-    address private _defaultCollectionsDescriptor;
+    address public collectionsManager;
+    address public defaultCollectionsDescriptor;
 
     /// @dev Deploy the creator contract.
     /// @param initialCollectionsManager Address of the collections manager.
@@ -31,11 +31,11 @@ contract AgenticAIAgentCollectionCreator is
         address initialRequiredToken,
         uint256 initialMinimumTokenBalance
     ) {
-        _requiredToken = initialRequiredToken;
-        _minimumTokenBalance = initialMinimumTokenBalance;
+        requiredToken = initialRequiredToken;
+        minimumTokenBalance = initialMinimumTokenBalance;
 
-        _collectionsManager = initialCollectionsManager;
-        _defaultCollectionsDescriptor = initialDefaultCollectionsDescriptor;
+        collectionsManager = initialCollectionsManager;
+        defaultCollectionsDescriptor = initialDefaultCollectionsDescriptor;
 
         _grantRole(
             DEFAULT_ADMIN_ROLE,
@@ -43,28 +43,13 @@ contract AgenticAIAgentCollectionCreator is
         );
     }
 
-    /// @dev Get the default collections descriptor.
-    function defaultCollectionsDescriptor() external view returns (address) {
-        return _defaultCollectionsDescriptor;
-    }
-
-    /// @dev Get the token required to create a collection.
-    function requiredToken() external view returns (address) {
-        return _requiredToken;
-    }
-
-    /// @dev Get the minimum token balance required to create a collection.
-    function minimumTokenBalance() external view returns (uint256) {
-        return _minimumTokenBalance;
-    }
-
     /// @dev Update the default collections descriptor.
     /// @param newDescriptor The new default descriptor for the new collections.
     function updateDefaultCollectionsDescriptor(
         address newDescriptor
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        address oldDescriptor = _defaultCollectionsDescriptor;
-        _defaultCollectionsDescriptor = newDescriptor;
+        address oldDescriptor = defaultCollectionsDescriptor;
+        defaultCollectionsDescriptor = newDescriptor;
 
         emit DefaultCollectionsDescriptorUpdated(oldDescriptor, newDescriptor);
     }
@@ -74,8 +59,8 @@ contract AgenticAIAgentCollectionCreator is
     function updateMinimumTokenBalance(
         uint256 newMinimum
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 oldMinimum = _minimumTokenBalance;
-        _minimumTokenBalance = newMinimum;
+        uint256 oldMinimum = minimumTokenBalance;
+        minimumTokenBalance = newMinimum;
 
         emit MinimumTokenBalanceUpdated(oldMinimum, newMinimum);
     }
@@ -94,9 +79,9 @@ contract AgenticAIAgentCollectionCreator is
         address admin,
         address moderator
     ) external override returns (address collectionAddress) {
-        uint256 balance = IERC20(_requiredToken).balanceOf(msg.sender);
-        if (balance < _minimumTokenBalance) {
-            revert InsufficientTokenBalance(balance, _minimumTokenBalance);
+        uint256 balance = IERC20(requiredToken).balanceOf(msg.sender);
+        if (balance < minimumTokenBalance) {
+            revert InsufficientTokenBalance(balance, minimumTokenBalance);
         }
 
         AgenticAIAgentCollection newCollection = new AgenticAIAgentCollection(
@@ -105,13 +90,13 @@ contract AgenticAIAgentCollectionCreator is
             description,
             admin,
             moderator,
-            _collectionsManager,
-            _defaultCollectionsDescriptor
+            collectionsManager,
+            defaultCollectionsDescriptor
         );
 
         address newCollectionAddress = address(newCollection);
 
-        IAgenticAIAgentCollectionsManagerCollectionCreatorActions(_collectionsManager).addCollection(newCollectionAddress);
+        IAgenticAIAgentCollectionsManagerCollectionCreatorActions(collectionsManager).addCollection(newCollectionAddress);
 
         return newCollectionAddress;
     }

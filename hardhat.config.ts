@@ -1,5 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "hardhat-contract-sizer";
 
 import "./tasks/add-signer";
 import "./tasks/add-moderator";
@@ -17,7 +18,7 @@ const config: HardhatUserConfig = {
       viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 200,
+        runs: 1,
       },
     },
   },

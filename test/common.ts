@@ -6,7 +6,7 @@ export function generateRandomAddress(): string {
   return ethers.Wallet.createRandom().address;
 }
 
-export async function signCreateMintProposalRequest(
+export async function signMintRequest(
   signer: HardhatEthersSigner,
   agenticAIAgentCollection: AgenticAIAgentCollection,
   params: {
@@ -32,14 +32,14 @@ export async function signCreateMintProposalRequest(
   };
 
   const types = {
-    CreateMintProposalRequest: [
+    MintRequest: [
       { name: "to", type: "address" },
       { name: "agentAddressesHash", type: "bytes32" },
       { name: "signer", type: "address" },
       { name: "roleHash", type: "bytes32" },
       { name: "nameHash", type: "bytes32" },
-      { name: "imagesHash", type: "bytes32" },
       { name: "missionHash", type: "bytes32" },
+      { name: "imagesHash", type: "bytes32" },
       { name: "nonce", type: "bytes32" },
     ],
   };

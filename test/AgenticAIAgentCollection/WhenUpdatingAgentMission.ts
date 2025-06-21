@@ -6,7 +6,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   generateRandomAddress,
   generateRandomNonce,
-  signCreateMintProposalRequest,
+  signMintRequest,
 } from "../common";
 
 describe("WhenUpdatingAgentMission", function () {
@@ -78,7 +78,7 @@ describe("WhenUpdatingAgentMission", function () {
     const nonce = generateRandomNonce();
     const agentAddresses = [generateRandomAddress()];
 
-    const signature = await signCreateMintProposalRequest(
+    const signature = await signMintRequest(
       _signer,
       _agenticAIAgentCollection,
       {

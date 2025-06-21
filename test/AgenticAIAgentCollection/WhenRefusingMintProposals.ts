@@ -3,10 +3,7 @@ import { ethers } from "hardhat";
 import { AgenticAIAgentCollection } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import {
-  generateRandomAddress,
-  signCreateMintProposalRequest,
-} from "../common";
+import { generateRandomAddress, signMintRequest } from "../common";
 
 describe("WhenRefusingMintProposals", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -75,20 +72,16 @@ describe("WhenRefusingMintProposals", function () {
 
   async function createMintProposal(name: string, nonce: string) {
     const agentAddresses = [generateRandomAddress()];
-    const signature = await signCreateMintProposalRequest(
-      _signer,
-      _collection,
-      {
-        to: _otherAccount.address,
-        agentAddresses,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name,
-        images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
-        nonce,
-      }
-    );
+    const signature = await signMintRequest(_signer, _collection, {
+      to: _otherAccount.address,
+      agentAddresses,
+      signer: _signer.address,
+      role: DEFAULT_ROLE,
+      name,
+      images: DEFAULT_IMAGES,
+      mission: DEFAULT_MISSION,
+      nonce,
+    });
 
     await _collection.createMintProposal(
       _otherAccount.address,
@@ -137,9 +130,7 @@ describe("WhenRefusingMintProposals", function () {
     it("Should emit a MintProposalRemoved event", async function () {
       await createMintProposal("agent1", "1");
 
-      await expect(
-        _collection.connect(_moderator).refuseMintProposal(0)
-      )
+      await expect(_collection.connect(_moderator).refuseMintProposal(0))
         .to.emit(_collection, "MintProposalRemoved")
         .withArgs(_otherAccount.address, _signer.address, 0n);
     });

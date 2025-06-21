@@ -5,7 +5,7 @@ import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   generateRandomAddress,
-  signCreateMintProposalRequest,
+  signMintRequest,
   decodeTokenURI,
 } from "../common";
 
@@ -84,7 +84,7 @@ describe("WhenGettingTokenUri", function () {
       _tokenId = await _agenticAIAgentCollection.nextTokenId();
       const mission = "";
 
-      const signature = await signCreateMintProposalRequest(
+      const signature = await signMintRequest(
         _signer,
         _agenticAIAgentCollection,
         {
