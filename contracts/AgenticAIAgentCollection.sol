@@ -45,8 +45,6 @@ contract AgenticAIAgentCollection is
 
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
-    uint256 private _moderatorCount;
-
     mapping(bytes32 => bool) private _isNonceUsed;
     mapping(string => uint256) private _tokenIdOf;
     mapping(uint256 => AgentInformation) private _agentInformationOf;
@@ -55,6 +53,7 @@ contract AgenticAIAgentCollection is
     AddOrUpdateImageProposal[] private _addOrUpdateImageProposals;
 
     string public description;
+    uint256 public moderatorCount;
     uint256 public nextTokenId = 1;
 
     address public collectionsManager;
@@ -88,7 +87,7 @@ contract AgenticAIAgentCollection is
     /// @dev See {AccessControl-_grantRole}.
     function _grantRole(bytes32 role, address account) internal override returns (bool) {
         if (role == MODERATOR_ROLE) {
-            _moderatorCount++;
+            moderatorCount++;
         }
         return super._grantRole(role, account);
     }
@@ -96,7 +95,7 @@ contract AgenticAIAgentCollection is
     /// @dev See {AccessControl-_revokeRole}.
     function _revokeRole(bytes32 role, address account) internal override returns (bool) {
         if (role == MODERATOR_ROLE) {
-            _moderatorCount--;
+            moderatorCount--;
         }
         return super._revokeRole(role, account);
     }
@@ -332,6 +331,7 @@ contract AgenticAIAgentCollection is
         uint256 tokenId,
         KeyValue memory image
     ) external {
+        _requireModerator();
         _requireMinted(tokenId);
         if (ownerOf(tokenId) != _msgSender() && !hasRole(MODERATOR_ROLE, _msgSender())) {
             revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
@@ -392,7 +392,7 @@ contract AgenticAIAgentCollection is
 
     /// @dev Apply an image proposal.
     /// @param proposalIndex The index of the proposal to apply.
-    function addOrUpdateImage(
+    function addOrUpdateImageFromProposal(
         uint256 proposalIndex
     ) external onlyRole(MODERATOR_ROLE) {
         AddOrUpdateImageProposal memory proposalInfo = _addOrUpdateImageProposals[proposalIndex];
@@ -485,6 +485,7 @@ contract AgenticAIAgentCollection is
         bytes32 nonce,
         bytes memory signature
     ) external {
+        _requireModerator();
         if (!_isValidENSName(name)) {
             revert InvalidName(name);
         }
@@ -666,10 +667,15 @@ contract AgenticAIAgentCollection is
         return true;
     }
 
-    /**
-     * @dev Reverts if the `tokenId` doesn't have a current owner
-     * (it hasn't been minted or it has been burned).
-     */
+    /// @dev Reverts if their is no moderator set.
+    function _requireModerator() internal view {
+        if (moderatorCount == 0) {
+            revert NoModerators();
+        }
+    }
+
+    /// @dev Reverts if the `tokenId` doesn't have a current owner
+    /// (it hasn't been minted or it has been burned).
     function _requireMinted(uint256 tokenId) internal view returns (address) {
         if (tokenId == 0 || tokenId >= nextTokenId) {
             revert ERC721NonexistentToken(tokenId);

@@ -128,7 +128,9 @@ describe("WhenAddingOrUpdatingImage", function () {
       });
 
       await expect(
-        _agenticAIAgentCollection.connect(_owner).addOrUpdateImage(0)
+        _agenticAIAgentCollection
+          .connect(_owner)
+          .addOrUpdateImageFromProposal(0)
       ).to.be.revertedWithCustomError(
         _agenticAIAgentCollection,
         "AccessControlUnauthorizedAccount"
@@ -142,7 +144,9 @@ describe("WhenAddingOrUpdatingImage", function () {
         await proposeAndMint(await _owner.getAddress());
 
         return expect(
-          _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0)
+          _agenticAIAgentCollection
+            .connect(_moderator)
+            .addOrUpdateImageFromProposal(0)
         ).to.be.reverted;
       });
     });
@@ -159,7 +163,9 @@ describe("WhenAddingOrUpdatingImage", function () {
           }
         );
 
-        await _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0);
+        await _agenticAIAgentCollection
+          .connect(_moderator)
+          .addOrUpdateImageFromProposal(0);
 
         const images = await _agenticAIAgentCollection.imagesOf(tokenId);
         expect(images.length).to.equal(2);
@@ -179,7 +185,9 @@ describe("WhenAddingOrUpdatingImage", function () {
         );
 
         await expect(
-          _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0)
+          _agenticAIAgentCollection
+            .connect(_moderator)
+            .addOrUpdateImageFromProposal(0)
         )
           .to.emit(_agenticAIAgentCollection, "AgentImageUpdated")
           .withArgs(tokenId, "profile", "", "cid1");
@@ -197,7 +205,9 @@ describe("WhenAddingOrUpdatingImage", function () {
         );
 
         await expect(
-          _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0)
+          _agenticAIAgentCollection
+            .connect(_moderator)
+            .addOrUpdateImageFromProposal(0)
         )
           .to.emit(_agenticAIAgentCollection, "AgentImageProposalRemoved")
           .withArgs(tokenId, "profile", 0n);
@@ -215,7 +225,9 @@ describe("WhenAddingOrUpdatingImage", function () {
             value: "cid1",
           }
         );
-        await _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0);
+        await _agenticAIAgentCollection
+          .connect(_moderator)
+          .addOrUpdateImageFromProposal(0);
 
         await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
@@ -231,7 +243,7 @@ describe("WhenAddingOrUpdatingImage", function () {
 
         await _agenticAIAgentCollection
           .connect(_moderator)
-          .addOrUpdateImage(proposalIndex);
+          .addOrUpdateImageFromProposal(proposalIndex);
 
         const images = await _agenticAIAgentCollection.imagesOf(tokenId);
         expect(images.length).to.equal(2);
@@ -249,7 +261,9 @@ describe("WhenAddingOrUpdatingImage", function () {
             value: "cid1",
           }
         );
-        await _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0);
+        await _agenticAIAgentCollection
+          .connect(_moderator)
+          .addOrUpdateImageFromProposal(0);
 
         await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
@@ -266,7 +280,7 @@ describe("WhenAddingOrUpdatingImage", function () {
         await expect(
           _agenticAIAgentCollection
             .connect(_moderator)
-            .addOrUpdateImage(proposalIndex)
+            .addOrUpdateImageFromProposal(proposalIndex)
         )
           .to.emit(_agenticAIAgentCollection, "AgentImageUpdated")
           .withArgs(tokenId, "profile", "cid1", "cid2");
@@ -282,7 +296,9 @@ describe("WhenAddingOrUpdatingImage", function () {
             value: "cid1",
           }
         );
-        await _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0);
+        await _agenticAIAgentCollection
+          .connect(_moderator)
+          .addOrUpdateImageFromProposal(0);
 
         await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
@@ -299,7 +315,7 @@ describe("WhenAddingOrUpdatingImage", function () {
         await expect(
           _agenticAIAgentCollection
             .connect(_moderator)
-            .addOrUpdateImage(proposalIndex)
+            .addOrUpdateImageFromProposal(proposalIndex)
         )
           .to.emit(_agenticAIAgentCollection, "AgentImageProposalRemoved")
           .withArgs(tokenId, "profile", proposalIndex);
@@ -324,7 +340,7 @@ describe("WhenAddingOrUpdatingImage", function () {
 
         await _agenticAIAgentCollection
           .connect(_moderator)
-          .addOrUpdateImage(proposalIndex);
+          .addOrUpdateImageFromProposal(proposalIndex);
 
         expect(
           await _agenticAIAgentCollection.addOrUpdateProposalsLength()
@@ -333,7 +349,7 @@ describe("WhenAddingOrUpdatingImage", function () {
         await expect(
           _agenticAIAgentCollection
             .connect(_moderator)
-            .addOrUpdateImage(proposalIndex)
+            .addOrUpdateImageFromProposal(proposalIndex)
         ).to.be.reverted;
       });
 
@@ -360,7 +376,9 @@ describe("WhenAddingOrUpdatingImage", function () {
           await _agenticAIAgentCollection.addOrUpdateProposalsLength()
         ).to.eq(2n);
 
-        await _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0);
+        await _agenticAIAgentCollection
+          .connect(_moderator)
+          .addOrUpdateImageFromProposal(0);
 
         expect(
           await _agenticAIAgentCollection.addOrUpdateProposalsLength()

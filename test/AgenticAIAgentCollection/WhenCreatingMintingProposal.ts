@@ -30,12 +30,14 @@ describe("WhenCreatingMintingProposal", function () {
   let _owner: HardhatEthersSigner;
   let _signer1: HardhatEthersSigner;
   let _signer2: HardhatEthersSigner;
+  let _moderator: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
 
   async function deployAgenticAIAgentCollection() {
     await reset();
 
-    const [owner, signer1, signer2, otherAccount] = await ethers.getSigners();
+    const [owner, signer1, signer2, moderator, otherAccount] =
+      await ethers.getSigners();
 
     const CollectionsManager = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsManager"
@@ -57,7 +59,7 @@ describe("WhenCreatingMintingProposal", function () {
       "AIA",
       "description",
       owner.address,
-      owner.address,
+      moderator.address,
       await collectionsManager.getAddress(),
       await collectionsDescriptor.getAddress()
     );
@@ -66,18 +68,63 @@ describe("WhenCreatingMintingProposal", function () {
     await collectionsManager.grantRole(signerRole, signer1.address);
     await collectionsManager.grantRole(signerRole, signer2.address);
 
-    return { collection, owner, signer1, signer2, otherAccount };
+    return { collection, owner, signer1, signer2, moderator, otherAccount };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer1, signer2, otherAccount } =
+    const { collection, owner, signer1, signer2, moderator, otherAccount } =
       await loadFixture(deployAgenticAIAgentCollection);
 
     _owner = owner;
     _signer1 = signer1;
     _signer2 = signer2;
+    _moderator = moderator;
     _otherAccount = otherAccount;
     _agenticAIAgentCollection = collection;
+  });
+
+  describe("Given no moderators are set", function () {
+    it("Should revert with 'NoModerators' error", async function () {
+      // Remove all moderators
+      const MODERATOR_ROLE = await _agenticAIAgentCollection.MODERATOR_ROLE();
+
+      await _agenticAIAgentCollection
+        .connect(_owner)
+        .revokeRole(MODERATOR_ROLE, _moderator.address);
+
+      const agentAddresses = [generateRandomAddress()];
+      const signature = await signCreateMintProposalRequest(
+        _signer1,
+        _agenticAIAgentCollection,
+        {
+          to: _owner.address,
+          agentAddresses,
+          signer: _signer1.address,
+          role: DEFAULT_ROLE,
+          name: INVALID_NAME,
+          images: DEFAULT_IMAGES,
+          mission: DEFAULT_MISSION,
+          nonce: NONCE_1,
+        }
+      );
+
+      await expect(
+        _agenticAIAgentCollection.createMintProposal(
+          _owner.address,
+          agentAddresses,
+          _signer1.address,
+          DEFAULT_ROLE,
+          INVALID_NAME,
+          DEFAULT_MISSION,
+          DEFAULT_IMAGES,
+          ethers.id(NONCE_1),
+          signature
+        )
+      ).to.be.revertedWithCustomError(
+        _agenticAIAgentCollection,
+        "NoModerators"
+      );
+    });
   });
 
   describe("Given a signature from signer", function () {
@@ -203,7 +250,7 @@ describe("WhenCreatingMintingProposal", function () {
           await _agenticAIAgentCollection.mintProposalsLength();
 
         await _agenticAIAgentCollection
-          .connect(_owner)
+          .connect(_moderator)
           .mintFromProposal(mintProposalsLength - BigInt(1));
 
         const sig2 = await signCreateMintProposalRequest(

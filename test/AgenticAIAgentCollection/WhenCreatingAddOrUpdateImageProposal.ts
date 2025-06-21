@@ -118,6 +118,27 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
     return tokenId;
   }
 
+  describe("Given no moderators are set", function () {
+    it("Should revert with 'NoModerators' error", async function () {
+      // Remove all moderators
+      const MODERATOR_ROLE = await _agenticAIAgentCollection.MODERATOR_ROLE();
+
+      await _agenticAIAgentCollection
+        .connect(_owner)
+        .revokeRole(MODERATOR_ROLE, _moderator.address);
+
+      await expect(
+        _agenticAIAgentCollection.createAddOrUpdateImageProposal(1n, {
+          key: "profile",
+          value: "cid1",
+        })
+      ).to.be.revertedWithCustomError(
+        _agenticAIAgentCollection,
+        "NoModerators"
+      );
+    });
+  });
+
   describe("Given token does not exist", function () {
     it("Should revert with 'ERC721NonexistentToken' error", async function () {
       await expect(

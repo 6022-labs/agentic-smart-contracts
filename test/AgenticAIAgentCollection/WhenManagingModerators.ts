@@ -57,30 +57,66 @@ describe("WhenManagingModerators", function () {
   });
 
   describe("Given sender is admin", function () {
-    it("Should add a moderator", async function () {
-      const MODERATOR_ROLE = await _collection.MODERATOR_ROLE();
+    describe("And granting a moderator role", function () {
+      it("Should add a moderator", async function () {
+        const MODERATOR_ROLE = await _collection.MODERATOR_ROLE();
 
-      await _collection
-        .connect(_owner)
-        .grantRole(MODERATOR_ROLE, _otherAccount.address);
+        await _collection
+          .connect(_owner)
+          .grantRole(MODERATOR_ROLE, _otherAccount.address);
 
-      expect(await _collection.hasRole(MODERATOR_ROLE, _otherAccount.address))
-        .to.be.true;
+        expect(await _collection.hasRole(MODERATOR_ROLE, _otherAccount.address))
+          .to.be.true;
+      });
+
+      it("Should increase the number of moderators", async function () {
+        const MODERATOR_ROLE = await _collection.MODERATOR_ROLE();
+
+        const initialModeratorCount = await _collection.moderatorCount();
+
+        await _collection
+          .connect(_owner)
+          .grantRole(MODERATOR_ROLE, _otherAccount.address);
+
+        const newModeratorCount = await _collection.moderatorCount();
+
+        expect(newModeratorCount).to.equal(initialModeratorCount + BigInt(1));
+      });
     });
 
-    it("Should remove a moderator", async function () {
-      const MODERATOR_ROLE = await _collection.MODERATOR_ROLE();
+    describe("And revoking a moderator role", function () {
+      it("Should remove a moderator", async function () {
+        const MODERATOR_ROLE = await _collection.MODERATOR_ROLE();
 
-      await _collection
-        .connect(_owner)
-        .grantRole(MODERATOR_ROLE, _otherAccount.address);
+        await _collection
+          .connect(_owner)
+          .grantRole(MODERATOR_ROLE, _otherAccount.address);
 
-      await _collection
-        .connect(_owner)
-        .revokeRole(MODERATOR_ROLE, _otherAccount.address);
+        await _collection
+          .connect(_owner)
+          .revokeRole(MODERATOR_ROLE, _otherAccount.address);
 
-      expect(await _collection.hasRole(MODERATOR_ROLE, _otherAccount.address))
-        .to.be.false;
+        expect(await _collection.hasRole(MODERATOR_ROLE, _otherAccount.address))
+          .to.be.false;
+      });
+
+      it("Should decrease the number of moderators", async function () {
+        const MODERATOR_ROLE = await _collection.MODERATOR_ROLE();
+
+        await _collection
+          .connect(_owner)
+          .grantRole(MODERATOR_ROLE, _otherAccount.address);
+
+        const initialModeratorCount = await _collection.moderatorCount();
+
+        await _collection
+          .connect(_owner)
+          .revokeRole(MODERATOR_ROLE, _otherAccount.address);
+
+        const newModeratorCount = await _collection.moderatorCount();
+
+        expect(newModeratorCount).to.equal(initialModeratorCount - BigInt(1));
+      });
     });
   });
 
@@ -92,6 +128,19 @@ describe("WhenManagingModerators", function () {
         _collection
           .connect(_moderator)
           .grantRole(MODERATOR_ROLE, _otherAccount.address)
+      ).to.be.revertedWithCustomError(
+        _collection,
+        "AccessControlUnauthorizedAccount"
+      );
+    });
+
+    it("Should revert when removing a moderator", async function () {
+      const MODERATOR_ROLE = await _collection.MODERATOR_ROLE();
+
+      await expect(
+        _collection
+          .connect(_moderator)
+          .revokeRole(MODERATOR_ROLE, _otherAccount.address)
       ).to.be.revertedWithCustomError(
         _collection,
         "AccessControlUnauthorizedAccount"

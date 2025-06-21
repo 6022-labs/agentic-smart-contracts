@@ -14,7 +14,7 @@ interface IAgenticAIAgentCollectionModeratorActions {
 
     /// @dev Apply an image proposal.
     /// @param proposalIndex The index of the proposal to apply.
-    function addOrUpdateImage(
+    function addOrUpdateImageFromProposal(
         uint256 proposalIndex
     ) external;
 
