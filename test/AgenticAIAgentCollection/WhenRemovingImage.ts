@@ -111,7 +111,7 @@ describe("WhenRemovingImage", function () {
 
     await _agenticAIAgentCollection
       .connect(_moderator)
-      .mint(mintProposalsLength - BigInt(1));
+      .mintFromProposal(mintProposalsLength - BigInt(1));
 
     return tokenId;
   }

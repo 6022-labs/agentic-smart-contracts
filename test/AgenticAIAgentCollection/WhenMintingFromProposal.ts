@@ -8,7 +8,7 @@ import {
   signCreateMintProposalRequest,
 } from "../common";
 
-describe("WhenMinting", function () {
+describe("WhenMintingFromProposal", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   // Common constants to avoid repetition
@@ -121,7 +121,7 @@ describe("WhenMinting", function () {
 
     await _agenticAIAAgentCollection
       .connect(_owner)
-      .mint(mintProposalsLength - BigInt(1));
+      .mintFromProposal(mintProposalsLength - BigInt(1));
 
     return tokenId;
   }
@@ -163,7 +163,7 @@ describe("WhenMinting", function () {
       await expect(
         _agenticAIAAgentCollection
           .connect(_otherAccount)
-          .mint(mintProposalsLength - BigInt(1))
+          .mintFromProposal(mintProposalsLength - BigInt(1))
       ).to.be.revertedWithCustomError(
         _agenticAIAAgentCollection,
         "AccessControlUnauthorizedAccount"
@@ -179,7 +179,7 @@ describe("WhenMinting", function () {
       await expect(
         _agenticAIAAgentCollection
           .connect(_owner)
-          .mint(mintProposalsLength + BigInt(1))
+          .mintFromProposal(mintProposalsLength + BigInt(1))
       ).to.be.reverted;
     });
   });
@@ -242,9 +242,11 @@ describe("WhenMinting", function () {
         sig2
       );
 
-      await _agenticAIAAgentCollection.connect(_owner).mint(0);
+      await _agenticAIAAgentCollection.connect(_owner).mintFromProposal(0);
 
-      await expect(_agenticAIAAgentCollection.connect(_owner).mint(0))
+      await expect(
+        _agenticAIAAgentCollection.connect(_owner).mintFromProposal(0)
+      )
         .to.be.revertedWithCustomError(_agenticAIAAgentCollection, "UsedName")
         .withArgs(DEFAULT_NAME);
     });
@@ -288,7 +290,7 @@ describe("WhenMinting", function () {
       await expect(
         _agenticAIAAgentCollection
           .connect(_owner)
-          .mint(mintProposalsLength - BigInt(1))
+          .mintFromProposal(mintProposalsLength - BigInt(1))
       )
         .to.emit(_agenticAIAAgentCollection, "Transfer")
         .withArgs(ethers.ZeroAddress, _otherAccount.address, tokenId);
@@ -575,7 +577,7 @@ describe("WhenMinting", function () {
       await expect(
         _agenticAIAAgentCollection
           .connect(_owner)
-          .mint(mintProposalsLength - BigInt(1))
+          .mintFromProposal(mintProposalsLength - BigInt(1))
       )
         .to.emit(_agenticAIAAgentCollection, "Minted")
         .withArgs(_otherAccount.address, _signer.address, tokenId);
@@ -619,7 +621,7 @@ describe("WhenMinting", function () {
       await expect(
         _agenticAIAAgentCollection
           .connect(_owner)
-          .mint(mintProposalsLength - BigInt(1))
+          .mintFromProposal(mintProposalsLength - BigInt(1))
       )
         .to.emit(_agenticAIAAgentCollection, "AgentSignerUpdated")
         .withArgs(tokenId, ethers.ZeroAddress, _signer.address);
@@ -661,7 +663,7 @@ describe("WhenMinting", function () {
       await expect(
         _agenticAIAAgentCollection
           .connect(_owner)
-          .mint(mintProposalsLength - BigInt(1))
+          .mintFromProposal(mintProposalsLength - BigInt(1))
       )
         .to.emit(_agenticAIAAgentCollection, "MintProposalRemoved")
         .withArgs(
@@ -706,7 +708,7 @@ describe("WhenMinting", function () {
 
       await _agenticAIAAgentCollection
         .connect(_owner)
-        .mint(lengthBefore - BigInt(1));
+        .mintFromProposal(lengthBefore - BigInt(1));
 
       expect(await _agenticAIAAgentCollection.mintProposalsLength()).to.eq(
         lengthBefore - BigInt(1)
@@ -772,7 +774,7 @@ describe("WhenMinting", function () {
 
       expect(await _agenticAIAAgentCollection.mintProposalsLength()).to.eq(2n);
 
-      await _agenticAIAAgentCollection.connect(_owner).mint(0);
+      await _agenticAIAAgentCollection.connect(_owner).mintFromProposal(0);
 
       expect(await _agenticAIAAgentCollection.mintProposalsLength()).to.eq(1n);
 

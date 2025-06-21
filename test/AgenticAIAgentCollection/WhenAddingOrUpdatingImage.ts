@@ -113,7 +113,7 @@ describe("WhenAddingOrUpdatingImage", function () {
 
     await _agenticAIAgentCollection
       .connect(_moderator)
-      .mint(mintProposalsLength - BigInt(1));
+      .mintFromProposal(mintProposalsLength - BigInt(1));
 
     return tokenId;
   }
@@ -170,10 +170,13 @@ describe("WhenAddingOrUpdatingImage", function () {
       it("Should emit 'AgentImageUpdated' event", async function () {
         const tokenId = await proposeAndMint(await _owner.getAddress());
 
-        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
-          key: "profile",
-          value: "cid1",
-        });
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
+          tokenId,
+          {
+            key: "profile",
+            value: "cid1",
+          }
+        );
 
         await expect(
           _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0)
@@ -185,10 +188,13 @@ describe("WhenAddingOrUpdatingImage", function () {
       it("Should emit 'AgentImageProposalRemoved' event", async function () {
         const tokenId = await proposeAndMint(await _owner.getAddress());
 
-        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
-          key: "profile",
-          value: "cid1",
-        });
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
+          tokenId,
+          {
+            key: "profile",
+            value: "cid1",
+          }
+        );
 
         await expect(
           _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0)
@@ -236,16 +242,22 @@ describe("WhenAddingOrUpdatingImage", function () {
       it("Should emit 'AgentImageUpdated' event", async function () {
         const tokenId = await proposeAndMint(await _owner.getAddress());
 
-        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
-          key: "profile",
-          value: "cid1",
-        });
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
+          tokenId,
+          {
+            key: "profile",
+            value: "cid1",
+          }
+        );
         await _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0);
 
-        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
-          key: "profile",
-          value: "cid2",
-        });
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
+          tokenId,
+          {
+            key: "profile",
+            value: "cid2",
+          }
+        );
 
         const proposalIndex =
           (await _agenticAIAgentCollection.addOrUpdateProposalsLength()) -
@@ -263,16 +275,22 @@ describe("WhenAddingOrUpdatingImage", function () {
       it("Should emit 'AgentImageProposalRemoved' event", async function () {
         const tokenId = await proposeAndMint(await _owner.getAddress());
 
-        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
-          key: "profile",
-          value: "cid1",
-        });
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
+          tokenId,
+          {
+            key: "profile",
+            value: "cid1",
+          }
+        );
         await _agenticAIAgentCollection.connect(_moderator).addOrUpdateImage(0);
 
-        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
-          key: "profile",
-          value: "cid2",
-        });
+        await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
+          tokenId,
+          {
+            key: "profile",
+            value: "cid2",
+          }
+        );
 
         const proposalIndex =
           (await _agenticAIAgentCollection.addOrUpdateProposalsLength()) -

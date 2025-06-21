@@ -26,7 +26,7 @@ interface IAgenticAIAgentCollectionModeratorActions {
 
     /// @dev Mint an agent from an approved proposal.
     /// @param proposalIndex The index of the mint proposal to execute.
-    function mint(
+    function mintFromProposal(
         uint256 proposalIndex
     ) external;
 

@@ -110,7 +110,7 @@ describe("WhenUpdatingAgentMission", function () {
 
     await _agenticAIAgentCollection
       .connect(_owner)
-      .mint(mintProposalsLength - BigInt(1));
+      .mintFromProposal(mintProposalsLength - BigInt(1));
 
     return (await _agenticAIAgentCollection.nextTokenId()) - BigInt(1);
   }

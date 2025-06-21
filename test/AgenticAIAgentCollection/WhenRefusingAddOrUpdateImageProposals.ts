@@ -109,7 +109,7 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
     const proposalIndex = (await _collection.mintProposalsLength()) - BigInt(1);
     const tokenId = await _collection.nextTokenId();
 
-    await _collection.connect(_moderator).mint(proposalIndex);
+    await _collection.connect(_moderator).mintFromProposal(proposalIndex);
 
     return tokenId;
   }

@@ -127,7 +127,7 @@ describe("WhenUpdatingAgentSigner", function () {
 
     await _agenticAIAgentCollection
       .connect(_owner)
-      .mint(mintProposalsLength - BigInt(1));
+      .mintFromProposal(mintProposalsLength - BigInt(1));
   }
 
   describe("Given nonce has already been used", function () {

@@ -45,6 +45,8 @@ contract AgenticAIAgentCollection is
 
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
+    uint256 private _moderatorCount;
+
     mapping(bytes32 => bool) private _isNonceUsed;
     mapping(string => uint256) private _tokenIdOf;
     mapping(uint256 => AgentInformation) private _agentInformationOf;
@@ -81,6 +83,22 @@ contract AgenticAIAgentCollection is
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MODERATOR_ROLE, moderator);
+    }
+
+    /// @dev See {AccessControl-_grantRole}.
+    function _grantRole(bytes32 role, address account) internal override returns (bool) {
+        if (role == MODERATOR_ROLE) {
+            _moderatorCount++;
+        }
+        return super._grantRole(role, account);
+    }
+
+    /// @dev See {AccessControl-_revokeRole}.
+    function _revokeRole(bytes32 role, address account) internal override returns (bool) {
+        if (role == MODERATOR_ROLE) {
+            _moderatorCount--;
+        }
+        return super._revokeRole(role, account);
     }
 
     /// @dev See {IERC165-supportsInterface}.
@@ -516,7 +534,7 @@ contract AgenticAIAgentCollection is
 
     /// @dev Mint an agent from an approved proposal.
     /// @param proposalIndex The index of the mint proposal to execute.
-    function mint(
+    function mintFromProposal(
         uint256 proposalIndex
     ) external onlyRole(MODERATOR_ROLE) {
         MintProposal memory proposalInfo = _mintProposals[proposalIndex];

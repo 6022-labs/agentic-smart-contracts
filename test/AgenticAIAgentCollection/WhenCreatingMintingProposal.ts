@@ -204,7 +204,7 @@ describe("WhenCreatingMintingProposal", function () {
 
         await _agenticAIAgentCollection
           .connect(_owner)
-          .mint(mintProposalsLength - BigInt(1));
+          .mintFromProposal(mintProposalsLength - BigInt(1));
 
         const sig2 = await signCreateMintProposalRequest(
           _signer1,

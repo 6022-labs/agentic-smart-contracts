@@ -151,7 +151,7 @@ describe("WhenBuildingTokenUri", function () {
 
       await _agenticAIAgentCollection
         .connect(_owner)
-        .mint(mintProposalsLength - BigInt(1));
+        .mintFromProposal(mintProposalsLength - BigInt(1));
     });
 
     it("Should return token URI as base 64 encoded JSON", async function () {
