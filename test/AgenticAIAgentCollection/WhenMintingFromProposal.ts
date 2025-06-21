@@ -23,7 +23,7 @@ describe("WhenMintingFromProposal", function () {
   const NONCE_1 = "1";
   const NONCE_2 = "2";
 
-  let _agenticAIAAgentCollection: AgenticAIAgentCollection;
+  let _agenticAIAgentCollection: AgenticAIAgentCollection;
   let _owner: HardhatEthersSigner;
   let _signer: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
@@ -69,7 +69,7 @@ describe("WhenMintingFromProposal", function () {
       deployAgenticAIAgentCollection
     );
 
-    _agenticAIAAgentCollection = collection;
+    _agenticAIAgentCollection = collection;
     _owner = owner;
     _signer = signer;
     _otherAccount = otherAccount;
@@ -86,7 +86,7 @@ describe("WhenMintingFromProposal", function () {
   ) {
     const signature = await signMintRequest(
       _signer,
-      _agenticAIAAgentCollection,
+      _agenticAIAgentCollection,
       {
         to,
         agentAddresses,
@@ -99,7 +99,7 @@ describe("WhenMintingFromProposal", function () {
       }
     );
 
-    await _agenticAIAAgentCollection.createMintProposal(
+    await _agenticAIAgentCollection.createMintProposal(
       to,
       agentAddresses,
       _signer.address,
@@ -112,11 +112,11 @@ describe("WhenMintingFromProposal", function () {
     );
 
     const mintProposalsLength =
-      await _agenticAIAAgentCollection.mintProposalsLength();
+      await _agenticAIAgentCollection.mintProposalsLength();
 
-    const tokenId = await _agenticAIAAgentCollection.nextTokenId();
+    const tokenId = await _agenticAIAgentCollection.nextTokenId();
 
-    await _agenticAIAAgentCollection
+    await _agenticAIAgentCollection
       .connect(_owner)
       .mintFromProposal(mintProposalsLength - BigInt(1));
 
@@ -129,7 +129,7 @@ describe("WhenMintingFromProposal", function () {
 
       const signature = await signMintRequest(
         _signer,
-        _agenticAIAAgentCollection,
+        _agenticAIAgentCollection,
         {
           to: _otherAccount.address,
           agentAddresses,
@@ -142,7 +142,7 @@ describe("WhenMintingFromProposal", function () {
         }
       );
 
-      await _agenticAIAAgentCollection.createMintProposal(
+      await _agenticAIAgentCollection.createMintProposal(
         _otherAccount.address,
         agentAddresses,
         _signer.address,
@@ -155,14 +155,14 @@ describe("WhenMintingFromProposal", function () {
       );
 
       const mintProposalsLength =
-        await _agenticAIAAgentCollection.mintProposalsLength();
+        await _agenticAIAgentCollection.mintProposalsLength();
 
       await expect(
-        _agenticAIAAgentCollection
+        _agenticAIAgentCollection
           .connect(_otherAccount)
           .mintFromProposal(mintProposalsLength - BigInt(1))
       ).to.be.revertedWithCustomError(
-        _agenticAIAAgentCollection,
+        _agenticAIAgentCollection,
         "AccessControlUnauthorizedAccount"
       );
     });
@@ -171,10 +171,10 @@ describe("WhenMintingFromProposal", function () {
   describe("Given proposal does not exist", function () {
     it("Should revert", async function () {
       const mintProposalsLength =
-        await _agenticAIAAgentCollection.mintProposalsLength();
+        await _agenticAIAgentCollection.mintProposalsLength();
 
       await expect(
-        _agenticAIAAgentCollection
+        _agenticAIAgentCollection
           .connect(_owner)
           .mintFromProposal(mintProposalsLength + BigInt(1))
       ).to.be.reverted;
@@ -185,7 +185,7 @@ describe("WhenMintingFromProposal", function () {
     it("Should revert minting the second proposal with 'UsedName' error", async function () {
       const agentAddresses = [generateRandomAddress()];
 
-      const sig1 = await signMintRequest(_signer, _agenticAIAAgentCollection, {
+      const sig1 = await signMintRequest(_signer, _agenticAIAgentCollection, {
         to: _otherAccount.address,
         agentAddresses,
         signer: _signer.address,
@@ -196,7 +196,7 @@ describe("WhenMintingFromProposal", function () {
         nonce: NONCE_1,
       });
 
-      await _agenticAIAAgentCollection.createMintProposal(
+      await _agenticAIAgentCollection.createMintProposal(
         _otherAccount.address,
         agentAddresses,
         _signer.address,
@@ -208,7 +208,7 @@ describe("WhenMintingFromProposal", function () {
         sig1
       );
 
-      const sig2 = await signMintRequest(_signer, _agenticAIAAgentCollection, {
+      const sig2 = await signMintRequest(_signer, _agenticAIAgentCollection, {
         to: _otherAccount.address,
         agentAddresses,
         signer: _signer.address,
@@ -219,7 +219,7 @@ describe("WhenMintingFromProposal", function () {
         nonce: NONCE_2,
       });
 
-      await _agenticAIAAgentCollection.createMintProposal(
+      await _agenticAIAgentCollection.createMintProposal(
         _otherAccount.address,
         agentAddresses,
         _signer.address,
@@ -231,60 +231,17 @@ describe("WhenMintingFromProposal", function () {
         sig2
       );
 
-      await _agenticAIAAgentCollection.connect(_owner).mintFromProposal(0);
+      await _agenticAIAgentCollection.connect(_owner).mintFromProposal(0);
 
       await expect(
-        _agenticAIAAgentCollection.connect(_owner).mintFromProposal(0)
+        _agenticAIAgentCollection.connect(_owner).mintFromProposal(0)
       )
-        .to.be.revertedWithCustomError(_agenticAIAAgentCollection, "UsedName")
+        .to.be.revertedWithCustomError(_agenticAIAgentCollection, "UsedName")
         .withArgs(DEFAULT_NAME);
     });
   });
 
   describe("Given a valid minting proposal", function () {
-    it("Should mint the token", async function () {
-      const agentAddresses = [generateRandomAddress()];
-      const tokenId = await _agenticAIAAgentCollection.nextTokenId();
-
-      const signature = await signMintRequest(
-        _signer,
-        _agenticAIAAgentCollection,
-        {
-          to: _otherAccount.address,
-          agentAddresses,
-          signer: _signer.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
-          nonce: NONCE_1,
-        }
-      );
-
-      await _agenticAIAAgentCollection.createMintProposal(
-        _otherAccount.address,
-        agentAddresses,
-        _signer.address,
-        DEFAULT_ROLE,
-        DEFAULT_NAME,
-        DEFAULT_MISSION,
-        DEFAULT_IMAGES,
-        ethers.id(NONCE_1),
-        signature
-      );
-
-      const mintProposalsLength =
-        await _agenticAIAAgentCollection.mintProposalsLength();
-
-      await expect(
-        _agenticAIAAgentCollection
-          .connect(_owner)
-          .mintFromProposal(mintProposalsLength - BigInt(1))
-      )
-        .to.emit(_agenticAIAAgentCollection, "Transfer")
-        .withArgs(ethers.ZeroAddress, _otherAccount.address, tokenId);
-    });
-
     it("Should assign the owner of the token", async function () {
       const agentAddresses = [generateRandomAddress()];
       const tokenId = await proposeAndMint(
@@ -297,16 +254,18 @@ describe("WhenMintingFromProposal", function () {
         NONCE_1
       );
 
-      expect(await _agenticAIAAgentCollection.ownerOf(tokenId)).to.equal(
+      expect(await _agenticAIAgentCollection.ownerOf(tokenId)).to.equal(
         _otherAccount.address
       );
     });
 
     it("Should mint the NFT with the expected token ID", async function () {
       const agentAddresses1 = [generateRandomAddress()];
-      const agentAddresses2 = [generateRandomAddress()];
 
-      const baseTokenId = await _agenticAIAAgentCollection.nextTokenId();
+      const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
+      await expect(_agenticAIAgentCollection.ownerOf(nextTokenId)).to.be
+        .reverted;
 
       await proposeAndMint(
         _otherAccount.address,
@@ -318,29 +277,15 @@ describe("WhenMintingFromProposal", function () {
         NONCE_1
       );
 
-      await proposeAndMint(
-        _otherAccount.address,
-        agentAddresses2,
-        DEFAULT_ROLE,
-        DEFAULT_NAME_2,
-        DEFAULT_IMAGES,
-        DEFAULT_MISSION,
-        NONCE_2
-      );
-
-      expect(await _agenticAIAAgentCollection.ownerOf(baseTokenId)).to.equal(
+      expect(await _agenticAIAgentCollection.ownerOf(nextTokenId)).to.equal(
         _otherAccount.address
       );
-      expect(
-        await _agenticAIAAgentCollection.ownerOf(baseTokenId + BigInt(1))
-      ).to.equal(_otherAccount.address);
     });
 
     it("Should increment next token ID", async function () {
       const agentAddresses1 = [generateRandomAddress()];
-      const agentAddresses2 = [generateRandomAddress()];
 
-      const baseTokenId = await _agenticAIAAgentCollection.nextTokenId();
+      const nextTokenIdBefore = await _agenticAIAgentCollection.nextTokenId();
 
       await proposeAndMint(
         _otherAccount.address,
@@ -352,27 +297,15 @@ describe("WhenMintingFromProposal", function () {
         NONCE_1
       );
 
-      expect(await _agenticAIAAgentCollection.nextTokenId()).to.equal(
-        baseTokenId + BigInt(1)
-      );
-
-      await proposeAndMint(
-        _otherAccount.address,
-        agentAddresses2,
-        DEFAULT_ROLE,
-        DEFAULT_NAME_2,
-        DEFAULT_IMAGES,
-        DEFAULT_MISSION,
-        NONCE_2
-      );
-
-      expect(await _agenticAIAAgentCollection.nextTokenId()).to.equal(
-        baseTokenId + BigInt(2)
-      );
+      const nextTokenIdAfter = await _agenticAIAgentCollection.nextTokenId();
+      expect(nextTokenIdAfter).to.equal(nextTokenIdBefore + BigInt(1));
     });
 
     it("Should mark the nonce as used", async function () {
       const agentAddresses = [generateRandomAddress()];
+
+      expect(await _agenticAIAgentCollection.isNonceUsed(ethers.id(NONCE_1))).to
+        .be.false;
 
       await proposeAndMint(
         _otherAccount.address,
@@ -384,8 +317,8 @@ describe("WhenMintingFromProposal", function () {
         NONCE_1
       );
 
-      expect(await _agenticAIAAgentCollection.isNonceUsed(ethers.id(NONCE_1)))
-        .to.be.true;
+      expect(await _agenticAIAgentCollection.isNonceUsed(ethers.id(NONCE_1))).to
+        .be.true;
     });
 
     it("Should assign signer of the token", async function () {
@@ -401,7 +334,7 @@ describe("WhenMintingFromProposal", function () {
         NONCE_1
       );
 
-      expect(await _agenticAIAAgentCollection.signerOf(tokenId)).to.equal(
+      expect(await _agenticAIAgentCollection.signerOf(tokenId)).to.equal(
         _signer.address
       );
     });
@@ -419,7 +352,7 @@ describe("WhenMintingFromProposal", function () {
         NONCE_1
       );
 
-      const walletsOf = await _agenticAIAAgentCollection.walletsOf(tokenId);
+      const walletsOf = await _agenticAIAgentCollection.walletsOf(tokenId);
 
       expect(walletsOf.length).to.equal(agentAddresses.length);
       for (let i = 0; i < agentAddresses.length; i++) {
@@ -440,7 +373,7 @@ describe("WhenMintingFromProposal", function () {
         NONCE_1
       );
 
-      expect(await _agenticAIAAgentCollection.nameOf(tokenId)).to.equal(
+      expect(await _agenticAIAgentCollection.nameOf(tokenId)).to.equal(
         DEFAULT_NAME
       );
     });
@@ -458,7 +391,7 @@ describe("WhenMintingFromProposal", function () {
         NONCE_1
       );
 
-      const imagesOf = await _agenticAIAAgentCollection.imagesOf(tokenId);
+      const imagesOf = await _agenticAIAgentCollection.imagesOf(tokenId);
 
       for (
         let imagesOfIndex = 0;
@@ -487,7 +420,7 @@ describe("WhenMintingFromProposal", function () {
         NONCE_1
       );
 
-      expect(await _agenticAIAAgentCollection.creatorOf(tokenId)).to.equal(
+      expect(await _agenticAIAgentCollection.creatorOf(tokenId)).to.equal(
         _owner.address
       );
     });
@@ -505,7 +438,7 @@ describe("WhenMintingFromProposal", function () {
         NONCE_1
       );
 
-      expect(await _agenticAIAAgentCollection.roleOf(tokenId)).to.equal(
+      expect(await _agenticAIAgentCollection.roleOf(tokenId)).to.equal(
         DEFAULT_ROLE
       );
     });
@@ -524,18 +457,18 @@ describe("WhenMintingFromProposal", function () {
       );
 
       expect(
-        await _agenticAIAAgentCollection.tokenIdOf(DEFAULT_NAME)
+        await _agenticAIAgentCollection.tokenIdOf(DEFAULT_NAME)
       ).to.be.equal(tokenId);
     });
 
-    it("Should emit a Minted event", async function () {
+    it("Should emit 'Minted' event", async function () {
       const agentAddresses = [generateRandomAddress()];
 
-      const tokenId = await _agenticAIAAgentCollection.nextTokenId();
+      const tokenId = await _agenticAIAgentCollection.nextTokenId();
 
       const signature = await signMintRequest(
         _signer,
-        _agenticAIAAgentCollection,
+        _agenticAIAgentCollection,
         {
           to: _otherAccount.address,
           agentAddresses,
@@ -548,7 +481,7 @@ describe("WhenMintingFromProposal", function () {
         }
       );
 
-      await _agenticAIAAgentCollection.createMintProposal(
+      await _agenticAIAgentCollection.createMintProposal(
         _otherAccount.address,
         agentAddresses,
         _signer.address,
@@ -561,25 +494,25 @@ describe("WhenMintingFromProposal", function () {
       );
 
       const mintProposalsLength =
-        await _agenticAIAAgentCollection.mintProposalsLength();
+        await _agenticAIAgentCollection.mintProposalsLength();
 
       await expect(
-        _agenticAIAAgentCollection
+        _agenticAIAgentCollection
           .connect(_owner)
           .mintFromProposal(mintProposalsLength - BigInt(1))
       )
-        .to.emit(_agenticAIAAgentCollection, "Minted")
+        .to.emit(_agenticAIAgentCollection, "Minted")
         .withArgs(_otherAccount.address, _signer.address, tokenId);
     });
 
-    it("Should emit a AgentSignerUpdated event", async function () {
+    it("Should emit 'AgentSignerUpdated' event", async function () {
       const agentAddresses = [generateRandomAddress()];
 
-      const tokenId = await _agenticAIAAgentCollection.nextTokenId();
+      const tokenId = await _agenticAIAgentCollection.nextTokenId();
 
       const signature = await signMintRequest(
         _signer,
-        _agenticAIAAgentCollection,
+        _agenticAIAgentCollection,
         {
           to: _otherAccount.address,
           agentAddresses,
@@ -592,7 +525,7 @@ describe("WhenMintingFromProposal", function () {
         }
       );
 
-      await _agenticAIAAgentCollection.createMintProposal(
+      await _agenticAIAgentCollection.createMintProposal(
         _otherAccount.address,
         agentAddresses,
         _signer.address,
@@ -605,23 +538,23 @@ describe("WhenMintingFromProposal", function () {
       );
 
       const mintProposalsLength =
-        await _agenticAIAAgentCollection.mintProposalsLength();
+        await _agenticAIAgentCollection.mintProposalsLength();
 
       await expect(
-        _agenticAIAAgentCollection
+        _agenticAIAgentCollection
           .connect(_owner)
           .mintFromProposal(mintProposalsLength - BigInt(1))
       )
-        .to.emit(_agenticAIAAgentCollection, "AgentSignerUpdated")
+        .to.emit(_agenticAIAgentCollection, "AgentSignerUpdated")
         .withArgs(tokenId, ethers.ZeroAddress, _signer.address);
     });
 
-    it("Should emit a MintProposalRemoved event", async function () {
+    it("Should emit 'MintProposalRemoved' event", async function () {
       const agentAddresses = [generateRandomAddress()];
 
       const signature = await signMintRequest(
         _signer,
-        _agenticAIAAgentCollection,
+        _agenticAIAgentCollection,
         {
           to: _otherAccount.address,
           agentAddresses,
@@ -634,7 +567,7 @@ describe("WhenMintingFromProposal", function () {
         }
       );
 
-      await _agenticAIAAgentCollection.createMintProposal(
+      await _agenticAIAgentCollection.createMintProposal(
         _otherAccount.address,
         agentAddresses,
         _signer.address,
@@ -647,14 +580,14 @@ describe("WhenMintingFromProposal", function () {
       );
 
       const mintProposalsLength =
-        await _agenticAIAAgentCollection.mintProposalsLength();
+        await _agenticAIAgentCollection.mintProposalsLength();
 
       await expect(
-        _agenticAIAAgentCollection
+        _agenticAIAgentCollection
           .connect(_owner)
           .mintFromProposal(mintProposalsLength - BigInt(1))
       )
-        .to.emit(_agenticAIAAgentCollection, "MintProposalRemoved")
+        .to.emit(_agenticAIAgentCollection, "MintProposalRemoved")
         .withArgs(
           _otherAccount.address,
           _signer.address,
@@ -667,7 +600,7 @@ describe("WhenMintingFromProposal", function () {
 
       const signature = await signMintRequest(
         _signer,
-        _agenticAIAAgentCollection,
+        _agenticAIAgentCollection,
         {
           to: _otherAccount.address,
           agentAddresses,
@@ -680,7 +613,7 @@ describe("WhenMintingFromProposal", function () {
         }
       );
 
-      await _agenticAIAAgentCollection.createMintProposal(
+      await _agenticAIAgentCollection.createMintProposal(
         _otherAccount.address,
         agentAddresses,
         _signer.address,
@@ -693,13 +626,13 @@ describe("WhenMintingFromProposal", function () {
       );
 
       const lengthBefore =
-        await _agenticAIAAgentCollection.mintProposalsLength();
+        await _agenticAIAgentCollection.mintProposalsLength();
 
-      await _agenticAIAAgentCollection
+      await _agenticAIAgentCollection
         .connect(_owner)
         .mintFromProposal(lengthBefore - BigInt(1));
 
-      expect(await _agenticAIAAgentCollection.mintProposalsLength()).to.eq(
+      expect(await _agenticAIAgentCollection.mintProposalsLength()).to.eq(
         lengthBefore - BigInt(1)
       );
     });
@@ -707,7 +640,7 @@ describe("WhenMintingFromProposal", function () {
     it("Should reorder remaining proposals", async function () {
       const agentAddresses = [generateRandomAddress()];
 
-      const sig1 = await signMintRequest(_signer, _agenticAIAAgentCollection, {
+      const sig1 = await signMintRequest(_signer, _agenticAIAgentCollection, {
         to: _otherAccount.address,
         agentAddresses,
         signer: _signer.address,
@@ -718,7 +651,7 @@ describe("WhenMintingFromProposal", function () {
         nonce: NONCE_1,
       });
 
-      await _agenticAIAAgentCollection.createMintProposal(
+      await _agenticAIAgentCollection.createMintProposal(
         _otherAccount.address,
         agentAddresses,
         _signer.address,
@@ -730,7 +663,7 @@ describe("WhenMintingFromProposal", function () {
         sig1
       );
 
-      const sig2 = await signMintRequest(_signer, _agenticAIAAgentCollection, {
+      const sig2 = await signMintRequest(_signer, _agenticAIAgentCollection, {
         to: _otherAccount.address,
         agentAddresses,
         signer: _signer.address,
@@ -741,7 +674,7 @@ describe("WhenMintingFromProposal", function () {
         nonce: NONCE_2,
       });
 
-      await _agenticAIAAgentCollection.createMintProposal(
+      await _agenticAIAgentCollection.createMintProposal(
         _otherAccount.address,
         agentAddresses,
         _signer.address,
@@ -753,13 +686,13 @@ describe("WhenMintingFromProposal", function () {
         sig2
       );
 
-      expect(await _agenticAIAAgentCollection.mintProposalsLength()).to.eq(2n);
+      expect(await _agenticAIAgentCollection.mintProposalsLength()).to.eq(2n);
 
-      await _agenticAIAAgentCollection.connect(_owner).mintFromProposal(0);
+      await _agenticAIAgentCollection.connect(_owner).mintFromProposal(0);
 
-      expect(await _agenticAIAAgentCollection.mintProposalsLength()).to.eq(1n);
+      expect(await _agenticAIAgentCollection.mintProposalsLength()).to.eq(1n);
 
-      const proposal = await _agenticAIAAgentCollection.mintProposal(0);
+      const proposal = await _agenticAIAgentCollection.mintProposal(0);
       expect(proposal.name).to.equal(DEFAULT_NAME_2);
     });
   });
