@@ -1,14 +1,9 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { AgenticAIAgentCollection } from "../../typechain-types";
+import { proposeAndMint, deployCollectionWithCreator } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import {
-  generateRandomAddress,
-  generateRandomNonce,
-  signMintRequest,
-  proposeAndMint,
-} from "../common";
 
 describe("WhenCreatingAddOrUpdateImageProposal", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -24,58 +19,12 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
 
     const [owner, signer, moderator, otherAccount] = await ethers.getSigners();
 
-    const CollectionsManager = await ethers.getContractFactory(
-      "AgenticAIAgentCollectionsManager"
-    );
-    const collectionsManager = await CollectionsManager.deploy();
-
-    const CollectionsDescriptor = await ethers.getContractFactory(
-      "AgenticAIAgentCollectionsDescriptor"
-    );
-    const collectionsDescriptor = await CollectionsDescriptor.deploy(
-      ipfsGateway
-    );
-
-    const Collection = await ethers.getContractFactory(
-      "AgenticAIAgentCollection"
-    );
-    const collectionImplementation = await Collection.deploy();
-
-    const TestErc20 = await ethers.getContractFactory("TestERC20");
-    const testErc20 = await TestErc20.deploy();
-
-    const CollectionCreator = await ethers.getContractFactory(
-      "AgenticAIAgentCollectionCreator"
-    );
-    const collectionCreator = await CollectionCreator.deploy(
-      await collectionsManager.getAddress(),
-      await collectionsDescriptor.getAddress(),
-      await collectionImplementation.getAddress()
-    );
-
-    await collectionCreator.addAuthorizedTokenForCreation(
-      await testErc20.getAddress(),
-      0n // No minimum balance required
-    );
-    await collectionsManager.grantRole(
-      await collectionsManager.CREATOR_ROLE(),
-      await collectionCreator.getAddress()
-    );
-
-    await collectionCreator.createCollection(
-      "AgenticAI",
-      "AIA",
-      "description",
-      owner.address,
-      moderator.address
-    );
-
-    const collectionAddress = await collectionsManager.collections(
-      (await collectionsManager.nextCollectionId()) - BigInt(1)
-    );
-    const collection = Collection.attach(
-      collectionAddress
-    ) as AgenticAIAgentCollection;
+    const { collection, collectionsManager } =
+      await deployCollectionWithCreator({
+        owner,
+        moderator,
+        ipfsGateway,
+      });
 
     const signerRole = await collectionsManager.SIGNER_ROLE();
     await collectionsManager.grantRole(signerRole, signer.address);
@@ -93,7 +42,6 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
     _moderator = moderator;
     _otherAccount = otherAccount;
   });
-
 
   describe("Given no moderators are set", function () {
     it("Should revert with 'NoModerators' error", async function () {

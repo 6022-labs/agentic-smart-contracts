@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { deployCollectionWithCreator } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
@@ -19,68 +20,18 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
   async function deployAgenticAIAgentCollection() {
     await reset();
 
-    // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await ethers.getSigners();
 
-    const AgenticAIAgentCollectionsManager = await ethers.getContractFactory(
-      "AgenticAIAgentCollectionsManager"
-    );
-    const agenticAIAgentCollectionsManager =
-      await AgenticAIAgentCollectionsManager.deploy();
-
-    const AgenticAIAgentCollectionsDescriptor = await ethers.getContractFactory(
-      "AgenticAIAgentCollectionsDescriptor"
-    );
-    const agenticAIAgentCollectionsDescriptor =
-      await AgenticAIAgentCollectionsDescriptor.deploy(ipfsGateway);
-
-    const AgenticAIAgentCollection = await ethers.getContractFactory(
-      "AgenticAIAgentCollection"
-    );
-    const agenticAIAgentCollectionImplementation =
-      await AgenticAIAgentCollection.deploy();
-
-    const TestErc20 = await ethers.getContractFactory("TestERC20");
-    const testErc20 = await TestErc20.deploy();
-
-    const AgenticAIAgentCollectionCreator = await ethers.getContractFactory(
-      "AgenticAIAgentCollectionCreator"
-    );
-    const agenticAIAgentCollectionCreator =
-      await AgenticAIAgentCollectionCreator.deploy(
-        await agenticAIAgentCollectionsManager.getAddress(),
-        await agenticAIAgentCollectionsDescriptor.getAddress(),
-        await agenticAIAgentCollectionImplementation.getAddress()
-      );
-
-    await agenticAIAgentCollectionCreator.addAuthorizedTokenForCreation(
-      await testErc20.getAddress(),
-      0n // No minimum balance required
-    );
-    await agenticAIAgentCollectionsManager.grantRole(
-      await agenticAIAgentCollectionsManager.CREATOR_ROLE(),
-      await agenticAIAgentCollectionCreator.getAddress()
-    );
-
-    await agenticAIAgentCollectionCreator.createCollection(
-      "AgenticAI",
-      "AIA",
-      "description",
-      owner.address,
-      owner.address
-    );
-
-    const agenticAIAgentCollectionAddress =
-      await agenticAIAgentCollectionsManager.collections(
-        (await agenticAIAgentCollectionsManager.nextCollectionId()) - BigInt(1)
-      );
-    const agenticAIAgentCollection = AgenticAIAgentCollection.attach(
-      agenticAIAgentCollectionAddress
-    ) as AgenticAIAgentCollection;
+    const { collection, collectionsDescriptor } =
+      await deployCollectionWithCreator({
+        owner,
+        moderator: owner,
+        ipfsGateway,
+      });
 
     return {
-      agenticAIAgentCollection,
-      agenticAIAgentCollectionsDescriptor,
+      agenticAIAgentCollection: collection,
+      agenticAIAgentCollectionsDescriptor: collectionsDescriptor,
       owner,
       otherAccount,
     };

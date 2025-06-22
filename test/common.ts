@@ -175,3 +175,79 @@ export function decodeTokenURI(tokenURI: string) {
 
   return JSON.parse(decoded);
 }
+export async function deployCollectionWithCreator(params: {
+  ipfsGateway?: string;
+  name?: string;
+  symbol?: string;
+  description?: string;
+  owner: HardhatEthersSigner;
+  moderator: HardhatEthersSigner;
+}) {
+  const {
+    ipfsGateway = "https://ipfs.io/ipfs/",
+    name = "AgenticAI",
+    symbol = "AIA",
+    description = "description",
+    owner,
+    moderator,
+  } = params;
+
+  const CollectionsManager = await ethers.getContractFactory(
+    "AgenticAIAgentCollectionsManager"
+  );
+  const collectionsManager = await CollectionsManager.deploy();
+
+  const CollectionsDescriptor = await ethers.getContractFactory(
+    "AgenticAIAgentCollectionsDescriptor"
+  );
+  const collectionsDescriptor = await CollectionsDescriptor.deploy(ipfsGateway);
+
+  const Collection = await ethers.getContractFactory(
+    "AgenticAIAgentCollection"
+  );
+  const collectionImplementation = await Collection.deploy();
+
+  const TestErc20 = await ethers.getContractFactory("TestERC20");
+  const testErc20 = await TestErc20.deploy();
+
+  const CollectionCreator = await ethers.getContractFactory(
+    "AgenticAIAgentCollectionCreator"
+  );
+  const collectionCreator = await CollectionCreator.deploy(
+    await collectionsManager.getAddress(),
+    await collectionsDescriptor.getAddress(),
+    await collectionImplementation.getAddress()
+  );
+
+  await collectionCreator.addAuthorizedTokenForCreation(
+    await testErc20.getAddress(),
+    0n
+  );
+  await collectionsManager.grantRole(
+    await collectionsManager.CREATOR_ROLE(),
+    await collectionCreator.getAddress()
+  );
+
+  await collectionCreator.createCollection(
+    name,
+    symbol,
+    description,
+    owner.address,
+    moderator.address
+  );
+
+  const collectionAddress = await collectionsManager.collections(
+    (await collectionsManager.nextCollectionId()) - BigInt(1)
+  );
+  const collection = Collection.attach(
+    collectionAddress
+  ) as AgenticAIAgentCollection;
+
+  return {
+    collection,
+    collectionsManager,
+    collectionsDescriptor,
+    collectionCreator,
+  };
+}
+
