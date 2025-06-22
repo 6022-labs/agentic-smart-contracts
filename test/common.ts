@@ -106,6 +106,67 @@ export async function signUpdateAgentSignerRequest(
   return await signer.signTypedData(domain, types, message);
 }
 
+export async function proposeAndMint(
+  signer: HardhatEthersSigner,
+  collection: AgenticAIAgentCollection,
+  minter: HardhatEthersSigner,
+  params: {
+    to: string;
+    agentAddresses?: string[];
+    role?: string;
+    name?: string;
+    images?: { key: string; value: string }[];
+    mission?: string;
+    nonce?: string;
+  }
+) {
+  const {
+    agentAddresses = [generateRandomAddress()],
+    role = "facilitator",
+    name = "test-agent",
+    images = [
+      {
+        key: "default",
+        value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
+      },
+    ],
+    mission = "",
+    nonce = generateRandomNonce(),
+  } = params;
+
+  const signature = await signMintRequest(signer, collection, {
+    to: params.to,
+    agentAddresses,
+    signer: signer.address,
+    role,
+    name,
+    images,
+    mission,
+    nonce,
+  });
+
+  await collection.createMintProposal(
+    params.to,
+    agentAddresses,
+    signer.address,
+    role,
+    name,
+    mission,
+    images,
+    ethers.id(nonce),
+    signature,
+  );
+
+  const mintProposalsLength = await collection.mintProposalsLength();
+  const tokenId = await collection.nextTokenId();
+
+  await collection
+    .connect(minter)
+    .mintFromProposal(mintProposalsLength - BigInt(1));
+
+  return tokenId;
+}
+
 export function decodeTokenURI(tokenURI: string) {
   const decoded = Buffer.from(
     tokenURI.replace("data:application/json;base64,", ""),

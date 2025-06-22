@@ -7,6 +7,7 @@ import {
   generateRandomAddress,
   generateRandomNonce,
   signMintRequest,
+  proposeAndMint,
 } from "../common";
 
 describe("WhenAddingOrUpdatingImage", function () {
@@ -93,62 +94,15 @@ describe("WhenAddingOrUpdatingImage", function () {
     _otherAccount = otherAccount;
   });
 
-  async function proposeAndMint(to: string) {
-    const name = "test-agent";
-    const images = [
-      {
-        key: "default",
-        value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
-      },
-    ];
-    const role = "facilitator";
-    const mission = "";
-
-    const nonce = generateRandomNonce();
-    const agentAddresses = [generateRandomAddress()];
-
-    const signature = await signMintRequest(
-      _signer,
-      _agenticAIAgentCollection,
-      {
-        to,
-        agentAddresses,
-        signer: _signer.address,
-        role,
-        name,
-        images,
-        mission,
-        nonce,
-      }
-    );
-
-    await _agenticAIAgentCollection.createMintProposal(
-      to,
-      agentAddresses,
-      _signer.address,
-      role,
-      name,
-      mission,
-      images,
-      ethers.id(nonce),
-      signature
-    );
-
-    const mintProposalsLength =
-      await _agenticAIAgentCollection.mintProposalsLength();
-
-    const tokenId = await _agenticAIAgentCollection.nextTokenId();
-
-    await _agenticAIAgentCollection
-      .connect(_moderator)
-      .mintFromProposal(mintProposalsLength - BigInt(1));
-
-    return tokenId;
-  }
 
   describe("Given caller is not moderator", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' error", async function () {
-      const tokenId = await proposeAndMint(await _owner.getAddress());
+      const tokenId = await proposeAndMint(
+        _signer,
+        _agenticAIAgentCollection,
+        _moderator,
+        { to: await _owner.getAddress() }
+      );
 
       await _agenticAIAgentCollection.createAddOrUpdateImageProposal(tokenId, {
         key: "profile",
@@ -169,7 +123,12 @@ describe("WhenAddingOrUpdatingImage", function () {
   describe("Given caller is moderator", function () {
     describe("And proposal does not exist", function () {
       it("Should revert", async function () {
-        await proposeAndMint(await _owner.getAddress());
+        await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
 
         return expect(
           _agenticAIAgentCollection
@@ -181,7 +140,12 @@ describe("WhenAddingOrUpdatingImage", function () {
 
     describe("And image key does not exist", function () {
       it("Should add the image", async function () {
-        const tokenId = await proposeAndMint(await _owner.getAddress());
+        const tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
 
         await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
@@ -202,7 +166,12 @@ describe("WhenAddingOrUpdatingImage", function () {
       });
 
       it("Should emit 'AgentImageUpdated' event", async function () {
-        const tokenId = await proposeAndMint(await _owner.getAddress());
+        const tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
 
         await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
@@ -222,7 +191,12 @@ describe("WhenAddingOrUpdatingImage", function () {
       });
 
       it("Should emit 'AgentImageProposalRemoved' event", async function () {
-        const tokenId = await proposeAndMint(await _owner.getAddress());
+        const tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
 
         await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
@@ -244,7 +218,12 @@ describe("WhenAddingOrUpdatingImage", function () {
 
     describe("And image key exists", function () {
       it("Should update the image value", async function () {
-        const tokenId = await proposeAndMint(await _owner.getAddress());
+        const tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
 
         await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
@@ -280,7 +259,12 @@ describe("WhenAddingOrUpdatingImage", function () {
       });
 
       it("Should emit 'AgentImageUpdated' event", async function () {
-        const tokenId = await proposeAndMint(await _owner.getAddress());
+        const tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
 
         await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
@@ -315,7 +299,12 @@ describe("WhenAddingOrUpdatingImage", function () {
       });
 
       it("Should emit 'AgentImageProposalRemoved' event", async function () {
-        const tokenId = await proposeAndMint(await _owner.getAddress());
+        const tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
 
         await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
@@ -352,7 +341,12 @@ describe("WhenAddingOrUpdatingImage", function () {
 
     describe("And proposal is executed", function () {
       it("Should not be executable twice", async function () {
-        const tokenId = await proposeAndMint(await _owner.getAddress());
+        const tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
 
         await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,
@@ -382,7 +376,12 @@ describe("WhenAddingOrUpdatingImage", function () {
       });
 
       it("Should reorder remaining proposals", async function () {
-        const tokenId = await proposeAndMint(await _owner.getAddress());
+        const tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
 
         await _agenticAIAgentCollection.createAddOrUpdateImageProposal(
           tokenId,

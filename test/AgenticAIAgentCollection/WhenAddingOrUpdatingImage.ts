@@ -7,6 +7,7 @@ import {
   generateRandomAddress,
   generateRandomNonce,
   signMintRequest,
+  proposeAndMint,
 } from "../common";
 
 describe("WhenAddingOrUpdatingImage", function () {
@@ -93,57 +94,6 @@ describe("WhenAddingOrUpdatingImage", function () {
     _otherAccount = otherAccount;
   });
 
-  async function proposeAndMint(to: string) {
-    const name = "test-agent";
-    const images = [
-      {
-        key: "default",
-        value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
-      },
-    ];
-    const role = "facilitator";
-    const mission = "";
-
-    const nonce = generateRandomNonce();
-    const agentAddresses = [generateRandomAddress()];
-
-    const signature = await signMintRequest(
-      _signer,
-      _agenticAIAgentCollection,
-      {
-        to,
-        agentAddresses,
-        signer: _signer.address,
-        role,
-        name,
-        images,
-        mission,
-        nonce,
-      }
-    );
-
-    await _agenticAIAgentCollection.createMintProposal(
-      to,
-      agentAddresses,
-      _signer.address,
-      role,
-      name,
-      mission,
-      images,
-      ethers.id(nonce),
-      signature
-    );
-
-    const mintProposalsLength =
-      await _agenticAIAgentCollection.mintProposalsLength();
-    const tokenId = await _agenticAIAgentCollection.nextTokenId();
-
-    await _agenticAIAgentCollection
-      .connect(_moderator)
-      .mintFromProposal(mintProposalsLength - BigInt(1));
-
-    return tokenId;
-  }
 
   async function revokeModerator() {
     await _agenticAIAgentCollection
@@ -171,7 +121,12 @@ describe("WhenAddingOrUpdatingImage", function () {
 
     describe("And caller is a moderator", function () {
       it("Should allow a moderator to update an image directly", async function () {
-        const tokenId = await proposeAndMint(await _owner.getAddress());
+        const tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
 
         await expect(
           _agenticAIAgentCollection
@@ -211,7 +166,12 @@ describe("WhenAddingOrUpdatingImage", function () {
     describe("And caller is not the owner of the token", function () {
       let tokenId: bigint;
       beforeEach(async function () {
-        tokenId = await proposeAndMint(await _owner.getAddress());
+        tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
         await revokeModerator();
       });
 
@@ -232,7 +192,12 @@ describe("WhenAddingOrUpdatingImage", function () {
     describe("And image key does not exist", function () {
       let tokenId: bigint;
       beforeEach(async function () {
-        tokenId = await proposeAndMint(await _owner.getAddress());
+        tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
         await revokeModerator();
       });
 
@@ -263,7 +228,12 @@ describe("WhenAddingOrUpdatingImage", function () {
     describe("And image key exists", function () {
       let tokenId: bigint;
       beforeEach(async function () {
-        tokenId = await proposeAndMint(await _owner.getAddress());
+        tokenId = await proposeAndMint(
+          _signer,
+          _agenticAIAgentCollection,
+          _moderator,
+          { to: await _owner.getAddress() }
+        );
         await revokeModerator();
         await _agenticAIAgentCollection.addOrUpdateImage(tokenId, {
           key: "profile",
