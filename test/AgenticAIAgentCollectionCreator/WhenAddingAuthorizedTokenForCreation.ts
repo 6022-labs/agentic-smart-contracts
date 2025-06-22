@@ -5,8 +5,6 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   TestERC20,
   AgenticAIAgentCollectionCreator,
-  AgenticAIAgentCollectionsManager,
-  AgenticAIAgentCollectionsDescriptor,
 } from "../../typechain-types";
 
 describe("WhenAddingAuthorizedTokenForCreation", function () {
@@ -25,15 +23,12 @@ describe("WhenAddingAuthorizedTokenForCreation", function () {
     const CollectionsManager = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsManager"
     );
-    const collectionsManager =
-      (await CollectionsManager.deploy()) as AgenticAIAgentCollectionsManager;
+    const collectionsManager = await CollectionsManager.deploy();
 
     const Descriptor = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsDescriptor"
     );
-    const descriptor = (await Descriptor.deploy(
-      ipfsGateway
-    )) as AgenticAIAgentCollectionsDescriptor;
+    const descriptor = await Descriptor.deploy(ipfsGateway);
 
     const Collection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
@@ -41,16 +36,16 @@ describe("WhenAddingAuthorizedTokenForCreation", function () {
     const collectionImplementation = await Collection.deploy();
 
     const TestErc20 = await ethers.getContractFactory("TestERC20");
-    const testErc20 = (await TestErc20.deploy()) as TestERC20;
+    const testErc20 = await TestErc20.deploy();
 
     const CollectionCreator = await ethers.getContractFactory(
       "AgenticAIAgentCollectionCreator"
     );
-    const collectionCreator = (await CollectionCreator.deploy(
+    const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
       await descriptor.getAddress(),
       await collectionImplementation.getAddress()
-    )) as AgenticAIAgentCollectionCreator;
+    );
 
     return { owner, otherAccount, collectionCreator, testErc20 };
   }
@@ -81,11 +76,13 @@ describe("WhenAddingAuthorizedTokenForCreation", function () {
             await _testErc20.getAddress()
           )
         ).to.be.true;
+
         expect(
           await _collectionCreator.minimumTokenBalanceForCreation(
             await _testErc20.getAddress()
           )
         ).to.equal(minimum);
+
         expect(
           await _collectionCreator.authorizedTokensForCreation(0)
         ).to.equal(await _testErc20.getAddress());
