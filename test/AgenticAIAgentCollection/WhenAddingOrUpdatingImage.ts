@@ -79,16 +79,20 @@ describe("WhenAddingOrUpdatingImage", function () {
     const nonce = generateRandomNonce();
     const agentAddresses = [generateRandomAddress()];
 
-    const signature = await signMintRequest(_signer, _agenticAIAgentCollection, {
-      to,
-      agentAddresses,
-      signer: _signer.address,
-      role,
-      name,
-      images,
-      mission,
-      nonce,
-    });
+    const signature = await signMintRequest(
+      _signer,
+      _agenticAIAgentCollection,
+      {
+        to,
+        agentAddresses,
+        signer: _signer.address,
+        role,
+        name,
+        images,
+        mission,
+        nonce,
+      }
+    );
 
     await _agenticAIAgentCollection.createMintProposal(
       to,
@@ -102,7 +106,8 @@ describe("WhenAddingOrUpdatingImage", function () {
       signature
     );
 
-    const mintProposalsLength = await _agenticAIAgentCollection.mintProposalsLength();
+    const mintProposalsLength =
+      await _agenticAIAgentCollection.mintProposalsLength();
     const tokenId = await _agenticAIAgentCollection.nextTokenId();
 
     await _agenticAIAgentCollection
@@ -122,16 +127,33 @@ describe("WhenAddingOrUpdatingImage", function () {
   }
 
   describe("Given a moderator exists", function () {
-    it("Should revert with 'ModeratorsExist' error", async function () {
-      await expect(
-        _agenticAIAgentCollection.addOrUpdateImage(1n, {
-          key: "profile",
-          value: "cid1",
-        })
-      ).to.be.revertedWithCustomError(
-        _agenticAIAgentCollection,
-        "ModeratorsExist"
-      );
+    describe("And caller is not a moderator", function () {
+      it("Should revert with 'NotModerator' error", async function () {
+        await expect(
+          _agenticAIAgentCollection.addOrUpdateImage(1n, {
+            key: "profile",
+            value: "cid1",
+          })
+        ).to.be.revertedWithCustomError(
+          _agenticAIAgentCollection,
+          "NotModerator"
+        );
+      });
+    });
+
+    describe("And caller is a moderator", function () {
+      it("Should allow a moderator to update an image directly", async function () {
+        const tokenId = await proposeAndMint(await _owner.getAddress());
+
+        await expect(
+          _agenticAIAgentCollection
+            .connect(_moderator)
+            .addOrUpdateImage(tokenId, {
+              key: "profile",
+              value: "cid1",
+            })
+        ).to.emit(_agenticAIAgentCollection, "AgentImageUpdated");
+      });
     });
   });
 
@@ -246,4 +268,3 @@ describe("WhenAddingOrUpdatingImage", function () {
     });
   });
 });
-

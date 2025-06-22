@@ -358,16 +358,17 @@ contract AgenticAIAgentCollection is
         }
     }
 
-    /// @dev Add or update an image for a token. (used if no moderators setup)
+    /// @dev Add or update an image for a token. (allowed when no moderators are
+    /// setup or the caller is a moderator)
     /// @param tokenId The token affected.
     /// @param image The key/value pair representing the image.
     function addOrUpdateImage(
         uint256 tokenId,
         KeyValue memory image
     ) external {
-        _requireNoModerator();
+        _requireNoModeratorOrSenderIsModerator();
         _requireMinted(tokenId);
-        if (ownerOf(tokenId) != _msgSender()) {
+        if (ownerOf(tokenId) != _msgSender() && !hasRole(MODERATOR_ROLE, _msgSender())) {
             revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
         }
 
@@ -475,7 +476,8 @@ contract AgenticAIAgentCollection is
         emit MintProposalCreated(to, signer, _mintProposals.length - 1);
     }
 
-    /// @dev Mint a new agent token. (used if no moderators setup)
+    /// @dev Mint a new agent token. (allowed when no moderators are setup or
+    /// the caller is a moderator)
     /// @param to The future owner of the token.
     /// @param agentAddresses Wallet addresses controlled by the agent.
     /// @param signer The signer address linked to the agent.
@@ -496,7 +498,7 @@ contract AgenticAIAgentCollection is
         bytes32 nonce,
         bytes memory signature
     ) external {
-        _requireNoModerator();
+        _requireNoModeratorOrSenderIsModerator();
         _validateMint(to, agentAddresses, signer, role, name, mission, images, nonce, signature);
         _isNonceUsed[nonce] = true;
         _mintAgent(to, agentAddresses, signer, role, name, mission, images, _msgSender());
@@ -648,10 +650,10 @@ contract AgenticAIAgentCollection is
         emit MintProposalRemoved(proposal.owner, proposal.signer, index);
     }
 
-    /// @dev Reverts if there is moderators set.
-    function _requireNoModerator() internal view {
-        if (moderatorCount > 0) {
-            revert ModeratorsExist();
+    /// @dev Reverts if there is a moderator set and the caller is not one.
+    function _requireNoModeratorOrSenderIsModerator() internal view {
+        if (moderatorCount > 0 && !hasRole(MODERATOR_ROLE, _msgSender())) {
+            revert NotModerator(_msgSender());
         }
     }
 

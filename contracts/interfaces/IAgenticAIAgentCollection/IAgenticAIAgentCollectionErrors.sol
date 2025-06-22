@@ -38,6 +38,7 @@ interface IAgenticAIAgentCollectionErrors {
     /// @dev Error when no moderators are set but the action requires moderators.
     error NoModerators();
 
-    /// @dev Error when moderators are set but the action requires no moderators.
-    error ModeratorsExist();
+    /// @dev Error when the caller is not a moderator but moderators are set.
+    /// @param sender The address that attempted the action.
+    error NotModerator(address sender);
 }

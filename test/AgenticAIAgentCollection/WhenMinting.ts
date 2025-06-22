@@ -85,25 +85,66 @@ describe("WhenMinting", function () {
   }
 
   describe("Given a moderator exists", function () {
-    it("Should revert with 'ModeratorsExist' error", async function () {
-      const agentAddresses = [generateRandomAddress()];
-      const signature = await signMintRequest(
-        _signer1,
-        _agenticAIAgentCollection,
-        {
-          to: _otherAccount.address,
-          agentAddresses,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
-          nonce: NONCE_1,
-        }
-      );
+    describe("And caller is not a moderator", function () {
+      it("Should revert with 'NotModerator' error", async function () {
+        const agentAddresses = [generateRandomAddress()];
+        const signature = await signMintRequest(
+          _signer1,
+          _agenticAIAgentCollection,
+          {
+            to: _otherAccount.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role: DEFAULT_ROLE,
+            name: DEFAULT_NAME,
+            images: DEFAULT_IMAGES,
+            mission: DEFAULT_MISSION,
+            nonce: NONCE_1,
+          }
+        );
 
-      await expect(
-        _agenticAIAgentCollection.mint(
+        await expect(
+          _agenticAIAgentCollection
+            .connect(_otherAccount)
+            .mint(
+              _otherAccount.address,
+              agentAddresses,
+              _signer1.address,
+              DEFAULT_ROLE,
+              DEFAULT_NAME,
+              DEFAULT_MISSION,
+              DEFAULT_IMAGES,
+              ethers.id(NONCE_1),
+              signature
+            )
+        ).to.be.revertedWithCustomError(
+          _agenticAIAgentCollection,
+          "NotModerator"
+        );
+      });
+    });
+
+    describe("And caller is a moderator", function () {
+      it("Should allow a moderator to mint directly", async function () {
+        const agentAddresses = [generateRandomAddress()];
+        const signature = await signMintRequest(
+          _signer1,
+          _agenticAIAgentCollection,
+          {
+            to: _otherAccount.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role: DEFAULT_ROLE,
+            name: DEFAULT_NAME,
+            images: DEFAULT_IMAGES,
+            mission: DEFAULT_MISSION,
+            nonce: NONCE_1,
+          }
+        );
+
+        const nextTokenId = await _agenticAIAgentCollection.nextTokenId();
+
+        await _agenticAIAgentCollection.mint(
           _otherAccount.address,
           agentAddresses,
           _signer1.address,
@@ -113,11 +154,12 @@ describe("WhenMinting", function () {
           DEFAULT_IMAGES,
           ethers.id(NONCE_1),
           signature
-        )
-      ).to.be.revertedWithCustomError(
-        _agenticAIAgentCollection,
-        "ModeratorsExist"
-      );
+        );
+
+        expect(await _agenticAIAgentCollection.ownerOf(nextTokenId)).to.equal(
+          _otherAccount.address
+        );
+      });
     });
   });
 
