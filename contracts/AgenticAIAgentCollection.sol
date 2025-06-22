@@ -246,11 +246,6 @@ contract AgenticAIAgentCollection is
         return _mintProposals[proposalIndex];
     }
 
-    /// @dev Get all pending mint proposals.
-    function mintProposals() external view returns (MintProposal[] memory) {
-        return _mintProposals;
-    }
-
     /// @dev Number of pending image proposals.
     function addOrUpdateProposalsLength() external view returns (uint256) {
         return _addOrUpdateImageProposals.length;
@@ -260,11 +255,6 @@ contract AgenticAIAgentCollection is
     /// @param proposalIndex Index of the proposal.
     function addOrUpdateProposal(uint256 proposalIndex) external view returns (AddOrUpdateImageProposal memory) {
         return _addOrUpdateImageProposals[proposalIndex];
-    }
-
-    /// @dev Get all pending image proposals.
-    function addOrUpdateProposals() external view returns (AddOrUpdateImageProposal[] memory) {
-        return _addOrUpdateImageProposals;
     }
 
     /// @dev Update the signer address of an agent.
