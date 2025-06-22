@@ -8,8 +8,11 @@ interface IAgenticAIAgentCollectionCreatorStates {
     function defaultCollectionsDescriptor() external view returns (address);
 
     /// @dev Get the token required to create a collection.
-    function requiredToken() external view returns (address);
+    function authorizedTokensForCreation(uint256 index) external view returns (address);
 
-    /// @dev Get the minimum token balance required to create a collection.
-    function minimumTokenBalance() external view returns (uint256);
+    /// @dev Get if a token is authorized for collection creation.
+    function isAuthorizedTokenForCreation(address token) external view returns (bool);
+
+    /// @dev Get the minimum token balance required to create a collection with a specific token.
+    function minimumTokenBalanceForCreation(address token) external view returns (uint256);
 }

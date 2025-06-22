@@ -2,6 +2,9 @@
 pragma solidity ^0.8.28;
 
 interface IAgenticAIAgentCollectionsManagerErrors {
+    /// @dev Error when collection does not exist.
+    error CollectionDoesNotExist(uint256 collectionId);
+
     /// @dev Error when the collection name already exists.
     error CollectionNameAlreadyExists(string name);
 

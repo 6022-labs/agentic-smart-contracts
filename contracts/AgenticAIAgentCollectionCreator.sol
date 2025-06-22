@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-import {AgenticAIAgentCollection} from "./AgenticAIAgentCollection.sol";
+import {IAgenticAIAgentCollectionInitialize} from "./interfaces/IAgenticAIAgentCollection/IAgenticAIAgentCollectionInitialize.sol";
 import {IAgenticAIAgentCollectionCreator} from "./interfaces/IAgenticAIAgentCollectionCreator/IAgenticAIAgentCollectionCreator.sol";
 import {IAgenticAIAgentCollectionsManagerCollectionCreatorActions} from "./interfaces/IAgenticAIAgentCollectionsManager/IAgenticAIAgentCollectionsManagerCollectionCreatorActions.sol";
 
@@ -14,8 +15,11 @@ contract AgenticAIAgentCollectionCreator is
     AccessControl,
     IAgenticAIAgentCollectionCreator
 {
-    address public requiredToken;
-    uint256 public minimumTokenBalance;
+    address public immutable collectionImplementation;
+
+    address[] public authorizedTokensForCreation;
+    mapping(address => bool) public isAuthorizedTokenForCreation;
+    mapping(address => uint256) public minimumTokenBalanceForCreation;
 
     address public collectionsManager;
     address public defaultCollectionsDescriptor;
@@ -23,24 +27,34 @@ contract AgenticAIAgentCollectionCreator is
     /// @dev Deploy the creator contract.
     /// @param initialCollectionsManager Address of the collections manager.
     /// @param initialDefaultCollectionsDescriptor Default descriptor for new collections.
-    /// @param initialRequiredToken ERC20 token required to create a collection.
-    /// @param initialMinimumTokenBalance Minimum balance of the token required.
     constructor(
         address initialCollectionsManager,
         address initialDefaultCollectionsDescriptor,
-        address initialRequiredToken,
-        uint256 initialMinimumTokenBalance
+        address initialCollectionImplementation
     ) {
-        requiredToken = initialRequiredToken;
-        minimumTokenBalance = initialMinimumTokenBalance;
-
         collectionsManager = initialCollectionsManager;
         defaultCollectionsDescriptor = initialDefaultCollectionsDescriptor;
+
+        collectionImplementation = initialCollectionImplementation;
 
         _grantRole(
             DEFAULT_ADMIN_ROLE,
             msg.sender
         );
+    }
+
+    modifier onlyAuthorizedTokenForCreation(address token) {
+        if (!isAuthorizedTokenForCreation[token]) {
+            revert TokenNotAuthorized(token);
+        }
+        _;
+    }
+
+    modifier onlyNotAuthorizedTokenForCreation(address token) {
+        if (isAuthorizedTokenForCreation[token]) {
+            revert TokenAlreadyAuthorized(token);
+        }
+        _;
     }
 
     /// @dev Update the default collections descriptor.
@@ -54,15 +68,64 @@ contract AgenticAIAgentCollectionCreator is
         emit DefaultCollectionsDescriptorUpdated(oldDescriptor, newDescriptor);
     }
 
-    /// @dev Update the minimum token balance required to create collections.
-    /// @param newMinimum The new minimum amount of tokens required.
-    function updateMinimumTokenBalance(
-        uint256 newMinimum
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        uint256 oldMinimum = minimumTokenBalance;
-        minimumTokenBalance = newMinimum;
+    /// @dev Add a new token that can be used to create collections.
+    /// @param token Address of the token to authorize.
+    /// @param minimumBalance Minimum balance required to create a collection with this token.
+    function addAuthorizedTokenForCreation(
+        address token,
+        uint256 minimumBalance
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) onlyNotAuthorizedTokenForCreation(token) {
+        authorizedTokensForCreation.push(token);
+        isAuthorizedTokenForCreation[token] = true;
 
-        emit MinimumTokenBalanceUpdated(oldMinimum, newMinimum);
+        minimumTokenBalanceForCreation[token] = minimumBalance;
+
+        emit AuthorizedTokenAdded(token);
+        emit MinimumTokenBalanceForCreationUpdated(
+            token,
+            0,
+            minimumBalance
+        );
+    }
+
+    /// @dev Remove a token that can be used to create collections.
+    /// @param token Address of the token to remove.
+    function removeAuthorizedTokenForCreation(
+        address token
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) onlyAuthorizedTokenForCreation(token) {
+        uint256 index;
+        for (uint256 i = 0; i < authorizedTokensForCreation.length; i++) {
+            if (authorizedTokensForCreation[i] == token) {
+                index = i;
+                break;
+            }
+        }
+        if (index < authorizedTokensForCreation.length) {
+            authorizedTokensForCreation[index] = authorizedTokensForCreation[authorizedTokensForCreation.length - 1];
+            authorizedTokensForCreation.pop();
+        }
+
+        delete isAuthorizedTokenForCreation[token];
+        delete minimumTokenBalanceForCreation[token];
+
+        emit AuthorizedTokenRemoved(token);
+    }
+
+    /// @dev Update the minimum token balance required to create a collection with a specific token.
+    /// @param token Address of the token for which to update the minimum balance.
+    /// @param newMinimum New minimum balance required to create a collection with this token.
+    function updateMinimumTokenBalanceForCreation(
+        address token,
+        uint256 newMinimum
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) onlyAuthorizedTokenForCreation(token) {
+        uint256 oldMinimum = minimumTokenBalanceForCreation[token];
+        minimumTokenBalanceForCreation[token] = newMinimum;
+
+        emit MinimumTokenBalanceForCreationUpdated(
+            token,
+            oldMinimum,
+            newMinimum
+        );
     }
 
     /// @dev Create a new agent collection contract.
@@ -79,12 +142,25 @@ contract AgenticAIAgentCollectionCreator is
         address admin,
         address moderator
     ) external override returns (address collectionAddress) {
-        uint256 balance = IERC20(requiredToken).balanceOf(msg.sender);
-        if (balance < minimumTokenBalance) {
-            revert InsufficientTokenBalance(balance, minimumTokenBalance);
+        bool hasMinimumBalanceInOneOfAuthorizedTokens = false;
+
+        for (uint256 i = 0; i < authorizedTokensForCreation.length; i++) {
+            address token = authorizedTokensForCreation[i];
+            uint256 requiredBalance = minimumTokenBalanceForCreation[token];
+
+            if (IERC20(token).balanceOf(msg.sender) >= requiredBalance) {
+                hasMinimumBalanceInOneOfAuthorizedTokens = true;
+                break;
+            }
         }
 
-        AgenticAIAgentCollection newCollection = new AgenticAIAgentCollection(
+        if (!hasMinimumBalanceInOneOfAuthorizedTokens) {
+            revert InsufficientBalanceInAuthorizedTokens();
+        }
+
+        address newCollection = Clones.clone(collectionImplementation);
+
+        IAgenticAIAgentCollectionInitialize(newCollection).initialize(
             name,
             symbol,
             description,

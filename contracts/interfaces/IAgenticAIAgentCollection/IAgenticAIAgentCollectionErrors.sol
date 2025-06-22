@@ -2,6 +2,9 @@
 pragma solidity ^0.8.28;
 
 interface IAgenticAIAgentCollectionErrors {
+    /// @dev Error when the collection is already initialized.
+    error AlreadyInitialized();
+
     /// @dev Error when the nonce has already been used.
     /// @param nonce The nonce that was used.
     error UsedNonce(bytes32 nonce);

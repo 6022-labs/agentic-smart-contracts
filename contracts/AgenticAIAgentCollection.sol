@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import {ENSUtils} from "./libraries/ENSUtils.sol";
 import {AgentImagesLib} from "./libraries/AgentImagesLib.sol";
@@ -37,9 +38,9 @@ struct AddOrUpdateImageProposal {
 /// @title Agentic AI agent NFT collection
 /// @dev ERC721 collection that supports off-chain minting proposals and image management.
 contract AgenticAIAgentCollection is
-    ERC721,
-    EIP712,
-    AccessControl,
+    ERC721Upgradeable,
+    EIP712Upgradeable,
+    AccessControlUpgradeable,
     IAgenticAIAgentCollection
 {
     using ECDSA for bytes32;
@@ -50,6 +51,8 @@ contract AgenticAIAgentCollection is
 
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
+    bool private _isInitialized;
+
     mapping(bytes32 => bool) private _isNonceUsed;
     mapping(string => uint256) private _tokenIdOf;
     mapping(uint256 => AgentInformation) private _agentInformationOf;
@@ -59,19 +62,19 @@ contract AgenticAIAgentCollection is
 
     string public description;
     uint256 public moderatorCount;
-    uint256 public nextTokenId = 1;
+    uint256 public nextTokenId;
 
     address public collectionsManager;
     address public collectionsDescriptor;
 
-    /// @dev Deploy a new agent collection.
+    /// @dev Initialize a new agent collection.
     /// @param name ERC721 name of the collection.
     /// @param symbol ERC721 symbol of the collection.
     /// @param admin Address granted the default admin role.
     /// @param moderator Address granted the moderator role.
     /// @param initialCollectionsManager Address of the collections manager contract.
     /// @param initialCollectionsDescriptor Address of the descriptor contract.
-    constructor(
+    function initialize(
         string memory name,
         string memory symbol,
         string memory initialDescription,
@@ -79,14 +82,23 @@ contract AgenticAIAgentCollection is
         address moderator,
         address initialCollectionsManager,
         address initialCollectionsDescriptor
-    ) ERC721(name, symbol) EIP712(SIGNING_DOMAIN, SIGNATURE_VERSION) {
+    ) external initializer {
+        if (_isInitialized) {
+            revert AlreadyInitialized();
+        }
+        _isInitialized = true;
+
         collectionsManager = initialCollectionsManager;
         collectionsDescriptor = initialCollectionsDescriptor;
 
+        nextTokenId = 1;
         description = initialDescription;
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MODERATOR_ROLE, moderator);
+
+        __ERC721_init(name, symbol);
+        __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
     }
 
     /// @dev See {AccessControl-_grantRole}.
@@ -112,12 +124,12 @@ contract AgenticAIAgentCollection is
         public
         view
         virtual
-        override(ERC721, IERC165, AccessControl)
+        override(ERC721Upgradeable, IERC165, AccessControlUpgradeable)
         returns (bool)
     {
         return
-            ERC721.supportsInterface(interfaceId) ||
-            AccessControl.supportsInterface(interfaceId);
+            ERC721Upgradeable.supportsInterface(interfaceId) ||
+            AccessControlUpgradeable.supportsInterface(interfaceId);
     }
 
     /// @dev Update the descriptor contract used for metadata.
@@ -147,7 +159,7 @@ contract AgenticAIAgentCollection is
     /// @param tokenId The token identifier.
     function tokenURI(
         uint256 tokenId
-    ) public view override(ERC721, IERC721Metadata) returns (string memory) {
+    ) public view override(ERC721Upgradeable, IERC721Metadata) returns (string memory) {
         _requireMinted(tokenId);
 
         return IAgenticAIAgentCollectionsDescriptorActions(collectionsDescriptor).

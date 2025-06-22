@@ -8,5 +8,13 @@ interface IAgenticAIAgentCollectionsManagerStates {
 
     /// @dev Get a collection address by its identifier.
     /// @param collectionId The id of the collection.
-    function collection(uint256 collectionId) external view returns (address);
+    function collections(uint256 collectionId) external view returns (address);
+
+    /// @dev Get a collection id by its name.
+    /// @param name The name of the collection.
+    function collectionIdByName(string memory name) external view returns (uint256);
+
+    /// @dev Get a collection id by its symbol.
+    /// @param symbol The symbol of the collection.
+    function collectionIdBySymbol(string memory symbol) external view returns (uint256);
 }

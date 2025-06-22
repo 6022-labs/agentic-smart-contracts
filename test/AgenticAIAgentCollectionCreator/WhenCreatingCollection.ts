@@ -3,10 +3,11 @@ import { ethers } from "hardhat";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import {
+  TestERC20,
+  AgenticAIAgentCollection,
   AgenticAIAgentCollectionCreator,
   AgenticAIAgentCollectionsManager,
   AgenticAIAgentCollectionsDescriptor,
-  AgenticAIAgentCollection,
 } from "../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -15,11 +16,6 @@ describe("WhenCreatingCollection", function () {
   const name = "AgenticAI";
   const symbol = "AIA";
   const description = "description";
-
-  let _creator: AgenticAIAgentCollectionCreator;
-  let _collectionsManager: AgenticAIAgentCollectionsManager;
-  let _descriptor: AgenticAIAgentCollectionsDescriptor;
-  let _owner: HardhatEthersSigner;
 
   async function deployCreator() {
     await reset();
@@ -39,23 +35,35 @@ describe("WhenCreatingCollection", function () {
       ipfsGateway
     )) as AgenticAIAgentCollectionsDescriptor;
 
-    const TestERC20 = await ethers.getContractFactory("TestERC20");
-    const token = await TestERC20.deploy();
+    const Collection = await ethers.getContractFactory(
+      "AgenticAIAgentCollection"
+    );
+    const collectionImplementation = await Collection.deploy();
 
-    const Creator = await ethers.getContractFactory(
+    const TestErc20 = await ethers.getContractFactory("TestERC20");
+    const testErc20 = await TestErc20.deploy();
+
+    const CollectionCreator = await ethers.getContractFactory(
       "AgenticAIAgentCollectionCreator"
     );
-    const creator = (await Creator.deploy(
+    const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
       await descriptor.getAddress(),
-      await token.getAddress(),
-      0n
-    )) as AgenticAIAgentCollectionCreator;
+      await collectionImplementation.getAddress()
+    );
+
+    await collectionCreator.addAuthorizedTokenForCreation(
+      await testErc20.getAddress(),
+      0n // No minimum balance required
+    );
 
     const creatorRole = await collectionsManager.CREATOR_ROLE();
-    await collectionsManager.grantRole(creatorRole, await creator.getAddress());
+    await collectionsManager.grantRole(
+      creatorRole,
+      await collectionCreator.getAddress()
+    );
 
-    return { owner, creator, collectionsManager, descriptor };
+    return { owner, collectionCreator, collectionsManager, descriptor };
   }
 
   async function deployCreatorWithRequirement() {
@@ -76,49 +84,64 @@ describe("WhenCreatingCollection", function () {
       ipfsGateway
     )) as AgenticAIAgentCollectionsDescriptor;
 
-    const TestERC20 = await ethers.getContractFactory("TestERC20");
-    const token = await TestERC20.deploy();
-    const minimum = ethers.parseEther("1");
-    await token.mint(owner.address, minimum);
+    const Collection = await ethers.getContractFactory(
+      "AgenticAIAgentCollection"
+    );
+    const collectionImplementation = await Collection.deploy();
 
-    const Creator = await ethers.getContractFactory(
+    const TestErc20 = await ethers.getContractFactory("TestERC20");
+    const testErc20 = await TestErc20.deploy();
+
+    const CollectionCreator = await ethers.getContractFactory(
       "AgenticAIAgentCollectionCreator"
     );
-    const creator = (await Creator.deploy(
+    const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
       await descriptor.getAddress(),
-      await token.getAddress(),
-      minimum
-    )) as AgenticAIAgentCollectionCreator;
+      await collectionImplementation.getAddress()
+    );
+
+    const minimumBalance = 1n;
+
+    await collectionCreator.addAuthorizedTokenForCreation(
+      await testErc20.getAddress(),
+      minimumBalance
+    );
 
     const creatorRole = await collectionsManager.CREATOR_ROLE();
-    await collectionsManager.grantRole(creatorRole, await creator.getAddress());
+    await collectionsManager.grantRole(
+      creatorRole,
+      await collectionCreator.getAddress()
+    );
 
     return {
       owner,
       otherAccount,
-      creator,
+      collectionCreator,
       collectionsManager,
       descriptor,
-      token,
-      minimum,
+      testErc20,
+      minimum: minimumBalance,
     };
   }
 
-  beforeEach(async function () {
-    const { owner, creator, collectionsManager, descriptor } =
-      await loadFixture(deployCreator);
-
-    _owner = owner;
-    _creator = creator;
-    _collectionsManager = collectionsManager;
-    _descriptor = descriptor;
-  });
-
   describe("Given valid parameters", function () {
-    it("Should emit CollectionCreated event", async function () {
+    let _collectionCreator: AgenticAIAgentCollectionCreator;
+    let _collectionsManager: AgenticAIAgentCollectionsManager;
+    let _owner: HardhatEthersSigner;
+
+    beforeEach(async function () {
+      const { owner, collectionCreator, collectionsManager } =
+        await loadFixture(deployCreator);
+
+      _owner = owner;
+      _collectionCreator = collectionCreator;
+      _collectionsManager = collectionsManager;
+    });
+
+    it("Should emit 'CollectionCreated' event", async function () {
       await expect(
-        _creator.createCollection(
+        _collectionCreator.createCollection(
           name,
           symbol,
           description,
@@ -131,7 +154,7 @@ describe("WhenCreatingCollection", function () {
     });
 
     it("Should deploy a collection and register it", async function () {
-      await _creator.createCollection(
+      await _collectionCreator.createCollection(
         name,
         symbol,
         description,
@@ -139,7 +162,7 @@ describe("WhenCreatingCollection", function () {
         _owner.address
       );
 
-      const newCollectionAddress = await _collectionsManager.collection(1);
+      const newCollectionAddress = await _collectionsManager.collections(1);
       expect(newCollectionAddress).to.not.equal(ethers.ZeroAddress);
 
       const collection = (await ethers.getContractAt(
@@ -157,53 +180,66 @@ describe("WhenCreatingCollection", function () {
   });
 
   describe("Given a minimum token balance is required", function () {
-    let otherAccount: HardhatEthersSigner;
-    let creatorWithRequirement: AgenticAIAgentCollectionCreator;
-    let collectionsManager: AgenticAIAgentCollectionsManager;
+    let _minimum: bigint;
+    let _testErc20: TestERC20;
+    let _owner: HardhatEthersSigner;
+    let _otherAccount: HardhatEthersSigner;
+    let _creatorWithRequirement: AgenticAIAgentCollectionCreator;
+    let _collectionsManager: AgenticAIAgentCollectionsManager;
 
     beforeEach(async function () {
       const {
         owner,
-        otherAccount: _other,
-        creator,
-        collectionsManager: manager,
+        testErc20,
+        minimum,
+        otherAccount,
+        collectionCreator,
+        collectionsManager,
       } = await loadFixture(deployCreatorWithRequirement);
 
       _owner = owner;
-      otherAccount = _other;
-      creatorWithRequirement = creator;
-      collectionsManager = manager;
+      _minimum = minimum;
+      _testErc20 = testErc20;
+      _otherAccount = otherAccount;
+      _creatorWithRequirement = collectionCreator;
+      _collectionsManager = collectionsManager;
     });
 
-    it("Should revert if caller does not own enough tokens", async function () {
-      await expect(
-        creatorWithRequirement
-          .connect(otherAccount)
-          .createCollection(
+    describe("When caller does not own enough tokens", function () {
+      it("Should revert with 'InsufficientBalanceInAuthorizedTokens' error", async function () {
+        await expect(
+          _creatorWithRequirement
+            .connect(_otherAccount)
+            .createCollection(
+              name,
+              symbol,
+              description,
+              _otherAccount.address,
+              _otherAccount.address
+            )
+        ).to.be.revertedWithCustomError(
+          _creatorWithRequirement,
+          "InsufficientBalanceInAuthorizedTokens"
+        );
+      });
+    });
+
+    describe("When caller owns enough tokens", function () {
+      it("Should allow creation", async function () {
+        await _testErc20.mint(_owner.address, _minimum);
+
+        await expect(
+          _creatorWithRequirement.createCollection(
             name,
             symbol,
             description,
-            otherAccount.address,
-            otherAccount.address
+            _owner.address,
+            _owner.address
           )
-      ).to.be.revertedWithCustomError(
-        creatorWithRequirement,
-        "InsufficientTokenBalance"
-      );
-    });
-
-    it("Should allow creation when caller meets the requirement", async function () {
-      await expect(
-        creatorWithRequirement.createCollection(
-          name,
-          symbol,
-          description,
-          _owner.address,
-          _owner.address
         )
-      )
-        .to.emit(collectionsManager, "CollectionCreated")
-        .withArgs(1n, anyValue, name, symbol);
+          .to.emit(_collectionsManager, "CollectionCreated")
+          .withArgs(1n, anyValue, name, symbol);
+      });
     });
   });
 });

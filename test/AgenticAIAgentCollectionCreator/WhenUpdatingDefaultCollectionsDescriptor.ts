@@ -11,8 +11,8 @@ import {
 describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
-  let _creator: AgenticAIAgentCollectionCreator;
-  let _descriptor: AgenticAIAgentCollectionsDescriptor;
+  let _collectionCreator: AgenticAIAgentCollectionCreator;
+  let _collectionsDescriptor: AgenticAIAgentCollectionsDescriptor;
   let _owner: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
 
@@ -27,40 +27,36 @@ describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
     const collectionsManager =
       (await CollectionsManager.deploy()) as AgenticAIAgentCollectionsManager;
 
-    const Descriptor = await ethers.getContractFactory(
+    const CollectionsDescriptor = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsDescriptor"
     );
-    const descriptor = (await Descriptor.deploy(
+    const collectionsDescriptor = (await CollectionsDescriptor.deploy(
       ipfsGateway
     )) as AgenticAIAgentCollectionsDescriptor;
 
-    const TestERC20 = await ethers.getContractFactory("TestERC20");
-    const token = await TestERC20.deploy();
-    const minimum = 0n;
+    const Collection = await ethers.getContractFactory(
+      "AgenticAIAgentCollection"
+    );
+    const collectionImplementation = await Collection.deploy();
 
-    const Creator = await ethers.getContractFactory(
+    const CollectionCreator = await ethers.getContractFactory(
       "AgenticAIAgentCollectionCreator"
     );
-    const creator = (await Creator.deploy(
+    const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
-      await descriptor.getAddress(),
-      await token.getAddress(),
-      minimum
-    )) as AgenticAIAgentCollectionCreator;
+      await collectionsDescriptor.getAddress(),
+      await collectionImplementation.getAddress()
+    );
 
-    const creatorRole = await collectionsManager.CREATOR_ROLE();
-    await collectionsManager.grantRole(creatorRole, await creator.getAddress());
-
-    return { owner, otherAccount, creator, descriptor };
+    return { owner, otherAccount, collectionCreator, collectionsDescriptor };
   }
 
   beforeEach(async function () {
-    const { owner, otherAccount, creator, descriptor } = await loadFixture(
-      deployCreator
-    );
+    const { owner, otherAccount, collectionCreator, collectionsDescriptor } =
+      await loadFixture(deployCreator);
 
-    _creator = creator;
-    _descriptor = descriptor;
+    _collectionCreator = collectionCreator;
+    _collectionsDescriptor = collectionsDescriptor;
     _owner = owner;
     _otherAccount = otherAccount;
   });
@@ -74,11 +70,11 @@ describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
         ipfsGateway
       )) as AgenticAIAgentCollectionsDescriptor;
 
-      await _creator
+      await _collectionCreator
         .connect(_owner)
         .updateDefaultCollectionsDescriptor(await newDescriptor.getAddress());
 
-      expect(await _creator.defaultCollectionsDescriptor()).to.equal(
+      expect(await _collectionCreator.defaultCollectionsDescriptor()).to.equal(
         await newDescriptor.getAddress()
       );
     });
@@ -92,14 +88,14 @@ describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
       )) as AgenticAIAgentCollectionsDescriptor;
 
       const oldDescriptorAddress =
-        await _creator.defaultCollectionsDescriptor();
+        await _collectionCreator.defaultCollectionsDescriptor();
 
       await expect(
-        _creator
+        _collectionCreator
           .connect(_owner)
           .updateDefaultCollectionsDescriptor(await newDescriptor.getAddress())
       )
-        .to.emit(_creator, "DefaultCollectionsDescriptorUpdated")
+        .to.emit(_collectionCreator, "DefaultCollectionsDescriptorUpdated")
         .withArgs(oldDescriptorAddress, await newDescriptor.getAddress());
     });
   });
@@ -114,11 +110,11 @@ describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
       )) as AgenticAIAgentCollectionsDescriptor;
 
       await expect(
-        _creator
+        _collectionCreator
           .connect(_otherAccount)
           .updateDefaultCollectionsDescriptor(await newDescriptor.getAddress())
       ).to.be.revertedWithCustomError(
-        _creator,
+        _collectionCreator,
         "AccessControlUnauthorizedAccount"
       );
     });

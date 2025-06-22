@@ -2,87 +2,111 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import {
-  AgenticAIAgentCollection,
+  AgenticAIAgentCollectionCreator,
   AgenticAIAgentCollectionsManager,
   AgenticAIAgentCollectionsDescriptor,
 } from "../../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { generateRandomAddress } from "../common";
 
 describe("WhenAddingCollection", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
+  let _collectionCreator: AgenticAIAgentCollectionCreator;
   let _collectionsManager: AgenticAIAgentCollectionsManager;
-  let _descriptor: AgenticAIAgentCollectionsDescriptor;
+  let _collectionsDescriptor: AgenticAIAgentCollectionsDescriptor;
   let _owner: HardhatEthersSigner;
-  let _creator: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
 
   async function deployCollectionsManager() {
     await reset();
 
-    const [owner, creator, otherAccount] = await ethers.getSigners();
+    const [owner, otherAccount] = await ethers.getSigners();
 
     const CollectionsManager = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsManager"
     );
-    const collectionsManager =
-      (await CollectionsManager.deploy()) as AgenticAIAgentCollectionsManager;
+    const collectionsManager = await CollectionsManager.deploy();
 
-    const Descriptor = await ethers.getContractFactory(
+    const CollectionsDescriptor = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsDescriptor"
     );
-    const descriptor = (await Descriptor.deploy(
+    const collectionsDescriptor = await CollectionsDescriptor.deploy(
       ipfsGateway
-    )) as AgenticAIAgentCollectionsDescriptor;
+    );
 
-    const creatorRole = await collectionsManager.CREATOR_ROLE();
-    await collectionsManager.grantRole(creatorRole, creator.address);
-
-    return { owner, creator, otherAccount, collectionsManager, descriptor };
-  }
-
-  beforeEach(async function () {
-    const { owner, creator, otherAccount, collectionsManager, descriptor } =
-      await loadFixture(deployCollectionsManager);
-
-    _owner = owner;
-    _creator = creator;
-    _otherAccount = otherAccount;
-    _collectionsManager = collectionsManager;
-    _descriptor = descriptor;
-  });
-
-  async function deployCollection(name: string, symbol: string) {
     const Collection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
     );
-    const collection = (await Collection.deploy(
-      name,
-      symbol,
-      "description",
-      _owner.address,
-      _owner.address,
-      await _collectionsManager.getAddress(),
-      await _descriptor.getAddress()
-    )) as AgenticAIAgentCollection;
+    const collectionImplementation = await Collection.deploy();
 
-    return collection;
+    const TestErc20 = await ethers.getContractFactory("TestERC20");
+    const testErc20 = await TestErc20.deploy();
+
+    const CollectionCreator = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionCreator"
+    );
+    const collectionCreator = await CollectionCreator.deploy(
+      await collectionsManager.getAddress(),
+      await collectionsDescriptor.getAddress(),
+      await collectionImplementation.getAddress()
+    );
+
+    await collectionCreator.addAuthorizedTokenForCreation(
+      await testErc20.getAddress(),
+      0n // No minimum balance required
+    );
+
+    const creatorRole = await collectionsManager.CREATOR_ROLE();
+    await collectionsManager.grantRole(
+      creatorRole,
+      await collectionCreator.getAddress()
+    );
+
+    return {
+      owner,
+      otherAccount,
+      collectionCreator,
+      collectionsManager,
+      collectionsDescriptor,
+    };
   }
+
+  beforeEach(async function () {
+    const {
+      owner,
+      collectionCreator,
+      otherAccount,
+      collectionsManager,
+      collectionsDescriptor,
+    } = await loadFixture(deployCollectionsManager);
+
+    _owner = owner;
+    _otherAccount = otherAccount;
+    _collectionCreator = collectionCreator;
+    _collectionsManager = collectionsManager;
+    _collectionsDescriptor = collectionsDescriptor;
+  });
 
   describe("Given caller has creator role", function () {
     describe("Given collection with this name already exists", function () {
       it("Should revert", async function () {
-        const collection = await deployCollection("AgenticAI", "AIA");
-        await _collectionsManager
-          .connect(_creator)
-          .addCollection(await collection.getAddress());
-
-        const duplicate = await deployCollection("AgenticAI", "AIB");
+        await _collectionCreator.createCollection(
+          "AgenticAI",
+          "first-symbol",
+          "description",
+          _owner.address,
+          _owner.address
+        );
 
         await expect(
-          _collectionsManager
-            .connect(_creator)
-            .addCollection(await duplicate.getAddress())
+          _collectionCreator.createCollection(
+            "AgenticAI",
+            "second-symbol",
+            "description",
+            _owner.address,
+            _owner.address
+          )
         )
           .to.be.revertedWithCustomError(
             _collectionsManager,
@@ -94,17 +118,22 @@ describe("WhenAddingCollection", function () {
 
     describe("Given collection with this symbol already exists", function () {
       it("Should revert", async function () {
-        const collection = await deployCollection("AgenticAI", "AIA");
-        await _collectionsManager
-          .connect(_creator)
-          .addCollection(await collection.getAddress());
-
-        const duplicate = await deployCollection("Another", "AIA");
+        await _collectionCreator.createCollection(
+          "first-name",
+          "AIA",
+          "description",
+          _owner.address,
+          _owner.address
+        );
 
         await expect(
-          _collectionsManager
-            .connect(_creator)
-            .addCollection(await duplicate.getAddress())
+          _collectionCreator.createCollection(
+            "second-name",
+            "AIA",
+            "description",
+            _owner.address,
+            _owner.address
+          )
         )
           .to.be.revertedWithCustomError(
             _collectionsManager,
@@ -115,32 +144,48 @@ describe("WhenAddingCollection", function () {
     });
 
     describe("Given name and symbol are not already taken", function () {
-      it("Should add a collection and emit event", async function () {
-        const collection = await deployCollection("AgenticAI", "AIA");
-
+      it("Should add emit 'CollectionCreated' event", async function () {
         await expect(
-          _collectionsManager
-            .connect(_creator)
-            .addCollection(await collection.getAddress())
-        )
-          .to.emit(_collectionsManager, "CollectionCreated")
-          .withArgs(1n, await collection.getAddress(), "AgenticAI", "AIA");
+          _collectionCreator.createCollection(
+            "first-name",
+            "AIA",
+            "description",
+            _owner.address,
+            _owner.address
+          )
+        ).to.emit(_collectionsManager, "CollectionCreated");
+      });
 
-        expect(await _collectionsManager.collection(1)).to.equal(
-          await collection.getAddress()
+      it("Should add collection to collections manager", async function () {
+        const nextCollectionId = await _collectionsManager.nextCollectionId();
+        const collectionAddressBefore = await _collectionsManager.collections(
+          nextCollectionId
         );
+        expect(collectionAddressBefore).to.equal(ethers.ZeroAddress);
+
+        await _collectionCreator.createCollection(
+          "first-name",
+          "AIA",
+          "description",
+          _owner.address,
+          _owner.address
+        );
+
+        const collectionAddress = await _collectionsManager.collections(
+          nextCollectionId
+        );
+
+        expect(collectionAddress).to.not.equal(ethers.ZeroAddress);
       });
     });
   });
 
   describe("Given caller does not have creator role", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' error", async function () {
-      const collection = await deployCollection("AgenticAI", "AIA");
+      const randomAddress = generateRandomAddress();
 
       await expect(
-        _collectionsManager
-          .connect(_otherAccount)
-          .addCollection(await collection.getAddress())
+        _collectionsManager.connect(_otherAccount).addCollection(randomAddress)
       ).to.be.revertedWithCustomError(
         _collectionsManager,
         "AccessControlUnauthorizedAccount"

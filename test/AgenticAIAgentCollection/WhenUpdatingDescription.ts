@@ -33,21 +33,49 @@ describe("WhenUpdatingDescription", function () {
     const agenticAIAgentCollectionsDescriptor =
       await AgenticAIAgentCollectionsDescriptor.deploy(ipfsGateway);
 
-    const AgenticAIAgentCollection = await ethers.getContractFactory(
+    const Collection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
     );
-    const agenticAIAgentCollection = await AgenticAIAgentCollection.deploy(
+    const collectionImplementation = await Collection.deploy();
+
+    const TestErc20 = await ethers.getContractFactory("TestERC20");
+    const testErc20 = await TestErc20.deploy();
+
+    const CollectionCreator = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionCreator"
+    );
+    const collectionCreator = await CollectionCreator.deploy(
+      await collectionsManager.getAddress(),
+      await agenticAIAgentCollectionsDescriptor.getAddress(),
+      await collectionImplementation.getAddress()
+    );
+
+    await collectionCreator.addAuthorizedTokenForCreation(
+      await testErc20.getAddress(),
+      0n // No minimum balance required
+    );
+    await collectionsManager.grantRole(
+      await collectionsManager.CREATOR_ROLE(),
+      await collectionCreator.getAddress()
+    );
+
+    await collectionCreator.createCollection(
       "AgenticAI",
       "AIA",
       "initial description",
       owner.address,
-      owner.address,
-      await collectionsManager.getAddress(),
-      await agenticAIAgentCollectionsDescriptor.getAddress()
+      owner.address
     );
 
+    const collectionAddress = await collectionsManager.collections(
+      (await collectionsManager.nextCollectionId()) - BigInt(1)
+    );
+    const collection = Collection.attach(
+      collectionAddress
+    ) as AgenticAIAgentCollection;
+
     return {
-      agenticAIAgentCollection,
+      collection,
       agenticAIAgentCollectionsDescriptor,
       owner,
       otherAccount,
@@ -58,11 +86,11 @@ describe("WhenUpdatingDescription", function () {
     const {
       owner,
       otherAccount,
-      agenticAIAgentCollection,
+      collection,
       agenticAIAgentCollectionsDescriptor,
     } = await loadFixture(deployAgenticAIAgentCollection);
 
-    _agenticAIAgentCollection = agenticAIAgentCollection;
+    _agenticAIAgentCollection = collection;
     _agenticAIAgentCollectionsDescriptor = agenticAIAgentCollectionsDescriptor;
 
     _owner = owner;

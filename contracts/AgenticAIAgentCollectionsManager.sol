@@ -17,21 +17,15 @@ contract AgenticAIAgentCollectionsManager is
 
     address private _collectionCreatorAddress;
 
-    uint256 private _nextCollectionId = 1;
+    uint256 public nextCollectionId = 1;
 
-    mapping(uint256 => address) private _collections;
-    mapping(string => uint256) private _collectionIdByName;
-    mapping(string => uint256) private _collectionIdBySymbol;
+    mapping(uint256 => address) public collections;
+    mapping(string => uint256) public collectionIdByName;
+    mapping(string => uint256) public collectionIdBySymbol;
 
     /// @dev Deploy the manager and set the deployer as admin.
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
-
-    /// @dev Get a collection address by its identifier.
-    /// @param collectionId The id of the collection.
-    function collection(uint256 collectionId) external view returns (address) {
-        return _collections[collectionId];
     }
 
     /// @dev Check if an address has the signer role.
@@ -48,24 +42,24 @@ contract AgenticAIAgentCollectionsManager is
         string memory name = IERC721Metadata(newCollection).name();
         string memory symbol = IERC721Metadata(newCollection).symbol();
 
-        if (_collectionIdByName[name] != 0) {
+        if (collectionIdByName[name] != 0) {
             revert CollectionNameAlreadyExists(name);
         }
-        if (_collectionIdBySymbol[symbol] != 0) {
+        if (collectionIdBySymbol[symbol] != 0) {
             revert CollectionSymbolAlreadyExists(symbol);
         }
 
-        _collections[_nextCollectionId] = address(newCollection);
-        _collectionIdByName[name] = _nextCollectionId;
-        _collectionIdBySymbol[symbol] = _nextCollectionId;
+        collections[nextCollectionId] = address(newCollection);
+        collectionIdByName[name] = nextCollectionId;
+        collectionIdBySymbol[symbol] = nextCollectionId;
 
         emit CollectionCreated(
-            _nextCollectionId,
+            nextCollectionId,
             address(newCollection),
             name,
             symbol
         );
 
-        _nextCollectionId++;
+        nextCollectionId++;
     }
 }

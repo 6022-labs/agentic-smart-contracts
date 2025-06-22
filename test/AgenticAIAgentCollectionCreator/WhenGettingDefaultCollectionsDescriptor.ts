@@ -12,8 +12,8 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 describe("WhenGettingDefaultCollectionsDescriptor", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
-  let _creator: AgenticAIAgentCollectionCreator;
-  let _descriptor: AgenticAIAgentCollectionsDescriptor;
+  let _collectionCreator: AgenticAIAgentCollectionCreator;
+  let _collectionsDescriptor: AgenticAIAgentCollectionsDescriptor;
   let _owner: HardhatEthersSigner;
 
   async function deployCreator() {
@@ -27,44 +27,43 @@ describe("WhenGettingDefaultCollectionsDescriptor", function () {
     const collectionsManager =
       (await CollectionsManager.deploy()) as AgenticAIAgentCollectionsManager;
 
-    const Descriptor = await ethers.getContractFactory(
+    const CollectionsDescriptor = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsDescriptor"
     );
-    const descriptor = (await Descriptor.deploy(
+    const collectionsDescriptor = await CollectionsDescriptor.deploy(
       ipfsGateway
-    )) as AgenticAIAgentCollectionsDescriptor;
+    );
 
-    const TestERC20 = await ethers.getContractFactory("TestERC20");
-    const token = await TestERC20.deploy();
+    const Collection = await ethers.getContractFactory(
+      "AgenticAIAgentCollection"
+    );
+    const collectionImplementation = await Collection.deploy();
 
-    const Creator = await ethers.getContractFactory(
+    const CollectionCreator = await ethers.getContractFactory(
       "AgenticAIAgentCollectionCreator"
     );
-    const creator = (await Creator.deploy(
+    const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
-      await descriptor.getAddress(),
-      await token.getAddress(),
-      0n
-    )) as AgenticAIAgentCollectionCreator;
+      await collectionsDescriptor.getAddress(),
+      await collectionImplementation.getAddress()
+    );
 
-    const creatorRole = await collectionsManager.CREATOR_ROLE();
-    await collectionsManager.grantRole(creatorRole, await creator.getAddress());
-
-    return { owner, creator, descriptor };
+    return { owner, collectionCreator, collectionsDescriptor };
   }
 
   beforeEach(async function () {
-    const { owner, creator, descriptor } = await loadFixture(deployCreator);
+    const { owner, collectionCreator, collectionsDescriptor } =
+      await loadFixture(deployCreator);
 
-    _creator = creator;
-    _descriptor = descriptor;
+    _collectionCreator = collectionCreator;
+    _collectionsDescriptor = collectionsDescriptor;
     _owner = owner;
   });
 
   describe("Given contract is deployed", function () {
     it("Should return the collections descriptor address", async function () {
-      expect(await _creator.defaultCollectionsDescriptor()).to.equal(
-        await _descriptor.getAddress()
+      expect(await _collectionCreator.defaultCollectionsDescriptor()).to.equal(
+        await _collectionsDescriptor.getAddress()
       );
     });
   });

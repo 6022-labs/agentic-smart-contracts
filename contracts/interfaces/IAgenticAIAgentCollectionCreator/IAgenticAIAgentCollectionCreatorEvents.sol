@@ -7,8 +7,15 @@ interface IAgenticAIAgentCollectionCreatorEvents {
     /// @param newDescriptor The address of the new collections descriptor.
     event DefaultCollectionsDescriptorUpdated(address oldDescriptor, address newDescriptor);
 
-    /// @dev Emitted when the minimum token balance is updated.
-    /// @param oldMinimum The previous minimum required token balance.
-    /// @param newMinimum The new minimum required token balance.
-    event MinimumTokenBalanceUpdated(uint256 oldMinimum, uint256 newMinimum);
+    /// @dev Emitted when a new token is authorized for collection creation.
+    event AuthorizedTokenAdded(address token);
+
+    /// @dev Emitted when a token is removed from the list of authorized tokens for collection creation.
+    event AuthorizedTokenRemoved(address token);
+
+    /// @dev Emitted when minimum token balance for collection creation is updated.
+    /// @param token The address of the token for which the minimum balance was updated.
+    /// @param oldMinimumBalance The old minimum balance required for collection creation.
+    /// @param newMinimumBalance The new minimum balance required for collection creation.
+    event MinimumTokenBalanceForCreationUpdated(address token, uint256 oldMinimumBalance, uint256 newMinimumBalance);
 }

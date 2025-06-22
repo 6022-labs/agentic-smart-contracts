@@ -33,6 +33,9 @@ describe("WhenBuildingTokenUri", function () {
     );
     const collectionsManager = await CollectionsManager.deploy();
 
+    const signerRole = await collectionsManager.SIGNER_ROLE();
+    await collectionsManager.grantRole(signerRole, signer.address);
+
     const CollectionsDescriptor = await ethers.getContractFactory(
       "AgenticAIAgentCollectionsDescriptor"
     );
@@ -43,18 +46,43 @@ describe("WhenBuildingTokenUri", function () {
     const Collection = await ethers.getContractFactory(
       "AgenticAIAgentCollection"
     );
-    const collection = await Collection.deploy(
-      "AgenticAI",
-      "AIA",
-      "description",
-      owner.address,
-      owner.address,
+    const collectionImplementation = await Collection.deploy();
+
+    const TestErc20 = await ethers.getContractFactory("TestERC20");
+    const testErc20 = await TestErc20.deploy();
+
+    const CollectionCreator = await ethers.getContractFactory(
+      "AgenticAIAgentCollectionCreator"
+    );
+    const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
-      await collectionsDescriptor.getAddress()
+      await collectionsDescriptor.getAddress(),
+      await collectionImplementation.getAddress()
     );
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
+    await collectionCreator.addAuthorizedTokenForCreation(
+      await testErc20.getAddress(),
+      0n // No minimum balance required
+    );
+    await collectionsManager.grantRole(
+      await collectionsManager.CREATOR_ROLE(),
+      await collectionCreator.getAddress()
+    );
+
+    await collectionCreator.createCollection(
+      "AgenticAI",
+      "AIA",
+      "initial description",
+      owner.address,
+      owner.address
+    );
+
+    const collectionAddress = await collectionsManager.collections(
+      (await collectionsManager.nextCollectionId()) - BigInt(1)
+    );
+    const collection = Collection.attach(
+      collectionAddress
+    ) as AgenticAIAgentCollection;
 
     return {
       owner,

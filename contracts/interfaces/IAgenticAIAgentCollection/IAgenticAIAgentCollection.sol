@@ -7,6 +7,7 @@ import {IAgenticAIAgentCollectionStates} from "./IAgenticAIAgentCollectionStates
 import {IAgenticAIAgentCollectionEvents} from "./IAgenticAIAgentCollectionEvents.sol";
 import {IAgenticAIAgentCollectionErrors} from "./IAgenticAIAgentCollectionErrors.sol";
 import {IAgenticAIAgentCollectionActions} from "./IAgenticAIAgentCollectionActions.sol";
+import {IAgenticAIAgentCollectionInitialize} from "./IAgenticAIAgentCollectionInitialize.sol";
 import {IAgenticAIAgentCollectionModeratorActions} from "./IAgenticAIAgentCollectionModeratorActions.sol";
 
 interface IAgenticAIAgentCollection is
@@ -15,6 +16,7 @@ interface IAgenticAIAgentCollection is
     IAgenticAIAgentCollectionEvents,
     IAgenticAIAgentCollectionErrors,
     IAgenticAIAgentCollectionActions,
+    IAgenticAIAgentCollectionInitialize,
     IAgenticAIAgentCollectionModeratorActions
 {
 
