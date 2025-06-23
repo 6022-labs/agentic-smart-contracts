@@ -15,8 +15,6 @@ contract AgenticAIAgentCollectionsManager is
     bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
 
-    address private _collectionCreatorAddress;
-
     uint256 public nextCollectionId = 1;
 
     mapping(uint256 => address) public collections;
