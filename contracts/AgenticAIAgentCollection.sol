@@ -51,8 +51,6 @@ contract AgenticAIAgentCollection is
 
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
-    bool private _isInitialized;
-
     mapping(bytes32 => bool) private _isNonceUsed;
     mapping(string => uint256) private _tokenIdOf;
     mapping(uint256 => AgentInformation) private _agentInformationOf;
@@ -66,6 +64,10 @@ contract AgenticAIAgentCollection is
 
     address public collectionsManager;
     address public collectionsDescriptor;
+
+    constructor() {
+        _disableInitializers();
+    }
 
     /// @dev Initialize a new agent collection.
     /// @param name ERC721 name of the collection.
@@ -83,11 +85,6 @@ contract AgenticAIAgentCollection is
         address initialCollectionsManager,
         address initialCollectionsDescriptor
     ) external initializer {
-        if (_isInitialized) {
-            revert AlreadyInitialized();
-        }
-        _isInitialized = true;
-
         collectionsManager = initialCollectionsManager;
         collectionsDescriptor = initialCollectionsDescriptor;
 
@@ -99,6 +96,7 @@ contract AgenticAIAgentCollection is
 
         __ERC721_init(name, symbol);
         __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
+        __AccessControl_init();
     }
 
     /// @dev See {AccessControl-_grantRole}.
