@@ -6,12 +6,12 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 const AgenticAIAgentCollectionDescriptorModule = buildModule(
   "AgenticAIAgentCollectionDescriptorModule",
   (m) => {
-    const agenticAIAgentCollectionDescriptor = m.contract(
-      "AgenticAIAgentCollectionDescriptor",
+    const agenticAIAgentCollectionsDescriptor = m.contract(
+      "AgenticAIAgentCollectionsDescriptor",
       ["ipfs://"]
     );
 
-    return { agenticAIAgentCollectionDescriptor };
+    return { agenticAIAgentCollectionsDescriptor };
   }
 );
 
