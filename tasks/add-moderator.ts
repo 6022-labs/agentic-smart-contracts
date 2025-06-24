@@ -6,17 +6,14 @@ export default task("add-moderator")
   .setDescription("Add a moderator to a collection")
   .setAction(async (taskArgs, hre) => {
     const { collectionAddress, moderator } = taskArgs;
-    const agenticAIAgentCollection = await hre.ethers.getContractAt(
-      "AgenticAIAgentCollection",
+    const AgentCollection = await hre.ethers.getContractAt(
+      "AgentCollection",
       collectionAddress
     );
 
-    const moderatorRole = await agenticAIAgentCollection.MODERATOR_ROLE();
+    const moderatorRole = await AgentCollection.MODERATOR_ROLE();
 
-    const tx = await agenticAIAgentCollection.grantRole(
-      moderatorRole,
-      moderator
-    );
+    const tx = await AgentCollection.grantRole(moderatorRole, moderator);
     await tx.wait();
 
     console.log(

@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { AgenticAIAgentCollection } from "../typechain-types";
+import { AgentCollection } from "../typechain-types";
 
 export function generateRandomAddress(): string {
   return ethers.Wallet.createRandom().address;
@@ -8,7 +8,7 @@ export function generateRandomAddress(): string {
 
 export async function signMintRequest(
   signer: HardhatEthersSigner,
-  agenticAIAgentCollection: AgenticAIAgentCollection,
+  AgentCollection: AgentCollection,
   params: {
     to: string;
     agentAddresses: string[];
@@ -20,15 +20,15 @@ export async function signMintRequest(
     nonce: string;
   }
 ) {
-  if (!agenticAIAgentCollection) {
-    throw new Error("AgenticAIAgentCollection instance not set");
+  if (!AgentCollection) {
+    throw new Error("AgentCollection instance not set");
   }
 
   const domain = {
-    name: "AgenticAIAgentCollection",
+    name: "AgentCollection",
     version: "1",
     chainId: (await ethers.provider.getNetwork()).chainId,
-    verifyingContract: await agenticAIAgentCollection.getAddress(),
+    verifyingContract: await AgentCollection.getAddress(),
   };
 
   const types = {
@@ -79,14 +79,14 @@ export function generateRandomNonce(): string {
 
 export async function signUpdateAgentSignerRequest(
   signer: HardhatEthersSigner,
-  agenticAIAgentCollection: AgenticAIAgentCollection,
+  AgentCollection: AgentCollection,
   params: { tokenId: string; newSigner: string; nonce: string }
 ) {
   const domain = {
-    name: "AgenticAIAgentCollection",
+    name: "AgentCollection",
     version: "1",
     chainId: (await ethers.provider.getNetwork()).chainId,
-    verifyingContract: await agenticAIAgentCollection.getAddress(),
+    verifyingContract: await AgentCollection.getAddress(),
   };
 
   const types = {
@@ -108,7 +108,7 @@ export async function signUpdateAgentSignerRequest(
 
 export async function proposeAndMint(
   signer: HardhatEthersSigner,
-  collection: AgenticAIAgentCollection,
+  collection: AgentCollection,
   minter: HardhatEthersSigner,
   params: {
     to: string;
@@ -154,7 +154,7 @@ export async function proposeAndMint(
     mission,
     images,
     ethers.id(nonce),
-    signature,
+    signature
   );
 
   const mintProposalsLength = await collection.mintProposalsLength();
@@ -185,7 +185,7 @@ export async function deployCollectionWithCreator(params: {
 }) {
   const {
     ipfsGateway = "https://ipfs.io/ipfs/",
-    name = "AgenticAI",
+    name = "",
     symbol = "AIA",
     description = "description",
     owner,
@@ -193,25 +193,23 @@ export async function deployCollectionWithCreator(params: {
   } = params;
 
   const CollectionsManager = await ethers.getContractFactory(
-    "AgenticAIAgentCollectionsManager"
+    "AgentCollectionsManager"
   );
   const collectionsManager = await CollectionsManager.deploy();
 
   const CollectionsDescriptor = await ethers.getContractFactory(
-    "AgenticAIAgentCollectionsDescriptor"
+    "AgentCollectionsDescriptor"
   );
   const collectionsDescriptor = await CollectionsDescriptor.deploy(ipfsGateway);
 
-  const Collection = await ethers.getContractFactory(
-    "AgenticAIAgentCollection"
-  );
+  const Collection = await ethers.getContractFactory("AgentCollection");
   const collectionImplementation = await Collection.deploy();
 
   const TestErc20 = await ethers.getContractFactory("TestERC20");
   const testErc20 = await TestErc20.deploy();
 
   const CollectionCreator = await ethers.getContractFactory(
-    "AgenticAIAgentCollectionCreator"
+    "AgentCollectionCreator"
   );
   const collectionCreator = await CollectionCreator.deploy(
     await collectionsManager.getAddress(),
@@ -239,15 +237,12 @@ export async function deployCollectionWithCreator(params: {
   const collectionAddress = await collectionsManager.collections(
     (await collectionsManager.nextCollectionId()) - BigInt(1)
   );
-  const collection = Collection.attach(
-    collectionAddress
-  ) as AgenticAIAgentCollection;
+  const collection = Collection.attach(collectionAddress) as AgentCollection;
 
   return {
     collection,
+    collectionCreator,
     collectionsManager,
     collectionsDescriptor,
-    collectionCreator,
   };
 }
-

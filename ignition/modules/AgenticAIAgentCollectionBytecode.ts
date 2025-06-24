@@ -3,15 +3,13 @@
 
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-const AgenticAIAgentCollectionBytecodeModule = buildModule(
-  "AgenticAIAgentCollectionBytecode",
+const AgentCollectionBytecodeModule = buildModule(
+  "AgentCollectionBytecode",
   (m) => {
-    const agenticAIAgentCollectionBytecode = m.contract(
-      "AgenticAIAgentCollection"
-    );
+    const AgentCollectionBytecode = m.contract("AgentCollection");
 
-    return { agenticAIAgentCollectionBytecode };
+    return { AgentCollectionBytecode };
   }
 );
 
-export default AgenticAIAgentCollectionBytecodeModule;
+export default AgentCollectionBytecodeModule;

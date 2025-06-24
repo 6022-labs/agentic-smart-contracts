@@ -9,17 +9,14 @@ export default task("add-signer")
   .setDescription("Add a signer to a collections manager")
   .setAction(async (taskArgs, hre) => {
     const { collectionsManagerAddress, signer } = taskArgs;
-    const agenticAIAgentCollectionsManager = await hre.ethers.getContractAt(
-      "AgenticAIAgentCollectionsManager",
+    const AgentCollectionsManager = await hre.ethers.getContractAt(
+      "AgentCollectionsManager",
       collectionsManagerAddress
     );
 
-    const signerRole = await agenticAIAgentCollectionsManager.SIGNER_ROLE();
+    const signerRole = await AgentCollectionsManager.SIGNER_ROLE();
 
-    const tx = await agenticAIAgentCollectionsManager.grantRole(
-      signerRole,
-      signer
-    );
+    const tx = await AgentCollectionsManager.grantRole(signerRole, signer);
     await tx.wait();
 
     console.log(

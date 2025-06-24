@@ -2,34 +2,31 @@
 // Learn more about it at https://hardhat.org/ignition
 
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import AgenticAIAgentCollectionBytecodeModule from "./AgenticAIAgentCollectionBytecode";
-import AgenticAIAgentCollectionsDescriptorModule from "./AgenticAIAgentCollectionDescriptor";
-import AgenticAIAgentCollectionsManagerModule from "./AgenticAIAgentCollectionsManager";
+import AgentCollectionBytecodeModule from "./AgentCollectionBytecode";
+import AgentCollectionsDescriptorModule from "./AgentCollectionDescriptor";
+import AgentCollectionsManagerModule from "./AgentCollectionsManager";
 
-const AgenticAIAgentCollectionCreatorModule = buildModule(
-  "AgenticAIAgentCollectionCreator",
+const AgentCollectionCreatorModule = buildModule(
+  "AgentCollectionCreator",
   (m) => {
-    const { agenticAIAgentCollectionBytecode } = m.useModule(
-      AgenticAIAgentCollectionBytecodeModule
+    const { AgentCollectionBytecode } = m.useModule(
+      AgentCollectionBytecodeModule
     );
-    const { agenticAIAgentCollectionsDescriptor } = m.useModule(
-      AgenticAIAgentCollectionsDescriptorModule
+    const { AgentCollectionsDescriptor } = m.useModule(
+      AgentCollectionsDescriptorModule
     );
-    const { agenticAIAgentCollectionsManager } = m.useModule(
-      AgenticAIAgentCollectionsManagerModule
-    );
-
-    const agenticAIAgentCollectionCreator = m.contract(
-      "AgenticAIAgentCollectionCreator",
-      [
-        agenticAIAgentCollectionsManager,
-        agenticAIAgentCollectionsDescriptor,
-        agenticAIAgentCollectionBytecode,
-      ]
+    const { AgentCollectionsManager } = m.useModule(
+      AgentCollectionsManagerModule
     );
 
-    return { agenticAIAgentCollectionCreator };
+    const AgentCollectionCreator = m.contract("AgentCollectionCreator", [
+      AgentCollectionsManager,
+      AgentCollectionsDescriptor,
+      AgentCollectionBytecode,
+    ]);
+
+    return { AgentCollectionCreator };
   }
 );
 
-export default AgenticAIAgentCollectionCreatorModule;
+export default AgentCollectionCreatorModule;

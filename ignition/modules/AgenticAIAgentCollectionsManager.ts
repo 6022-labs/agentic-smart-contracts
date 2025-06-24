@@ -3,15 +3,13 @@
 
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
-const AgenticAIAgentCollectionsManagerModule = buildModule(
-  "AgenticAIAgentCollectionsManager",
+const AgentCollectionsManagerModule = buildModule(
+  "AgentCollectionsManager",
   (m) => {
-    const agenticAIAgentCollectionsManager = m.contract(
-      "AgenticAIAgentCollectionsManager"
-    );
+    const AgentCollectionsManager = m.contract("AgentCollectionsManager");
 
-    return { agenticAIAgentCollectionsManager };
+    return { AgentCollectionsManager };
   }
 );
 
-export default AgenticAIAgentCollectionsManagerModule;
+export default AgentCollectionsManagerModule;
