@@ -1,17 +1,27 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
-import addSigner from "./tasks/add-signer";
+import "hardhat-contract-sizer";
+
+import "./tasks/add-signer";
+import "./tasks/add-moderator";
 
 require("dotenv").config();
-
-addSigner.setDescription("Add a signer to a collection");
 
 const alchemyKey = process?.env?.ALCHEMY_KEY?.trim() ?? "";
 const privateKey = process?.env?.PRIVATE_KEY?.trim() ?? "";
 const polygonScanApiKey = process?.env?.POLYGONSCAN_API_KEY?.trim() ?? "";
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.28",
+  solidity: {
+    version: "0.8.28",
+    settings: {
+      viaIR: true,
+      optimizer: {
+        enabled: true,
+        runs: 1,
+      },
+    },
+  },
   networks: {
     polygon: {
       gas: "auto",
