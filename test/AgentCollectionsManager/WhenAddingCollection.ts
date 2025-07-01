@@ -4,14 +4,14 @@ import { generateRandomAddress } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
-  AgentCollectionCreator,
+  AgentCollectionCreatorV1,
   AgentCollectionsManager,
 } from "../../typechain-types";
 
 describe("WhenAddingCollection", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
-  let _collectionCreator: AgentCollectionCreator;
+  let _collectionCreator: AgentCollectionCreatorV1;
   let _collectionsManager: AgentCollectionsManager;
   let _owner: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
@@ -33,14 +33,14 @@ describe("WhenAddingCollection", function () {
       ipfsGateway
     );
 
-    const Collection = await ethers.getContractFactory("AgentCollection");
+    const Collection = await ethers.getContractFactory("AgentCollectionV1");
     const collectionImplementation = await Collection.deploy();
 
     const TestErc20 = await ethers.getContractFactory("TestERC20");
     const testErc20 = await TestErc20.deploy();
 
     const CollectionCreator = await ethers.getContractFactory(
-      "AgentCollectionCreator"
+      "AgentCollectionCreatorV1"
     );
     const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),

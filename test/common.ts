@@ -202,14 +202,14 @@ export async function deployCollectionWithCreator(params: {
   );
   const collectionsDescriptor = await CollectionsDescriptor.deploy(ipfsGateway);
 
-  const Collection = await ethers.getContractFactory("AgentCollection");
+  const Collection = await ethers.getContractFactory("AgentCollectionV1");
   const collectionImplementation = await Collection.deploy();
 
   const TestErc20 = await ethers.getContractFactory("TestERC20");
   const testErc20 = await TestErc20.deploy();
 
   const CollectionCreator = await ethers.getContractFactory(
-    "AgentCollectionCreator"
+    "AgentCollectionCreatorV1"
   );
   const collectionCreator = await CollectionCreator.deploy(
     await collectionsManager.getAddress(),

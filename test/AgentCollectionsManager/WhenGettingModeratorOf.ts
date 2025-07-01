@@ -4,15 +4,15 @@ import { deployCollectionWithCreator } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
-  AgentCollection,
+  AgentCollectionV1,
   AgentCollectionsManager,
 } from "../../typechain-types";
 
 describe("WhenGettingModeratorOf", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
-  let _collection1: AgentCollection;
-  let _collection2: AgentCollection;
+  let _collection1: AgentCollectionV1;
+  let _collection2: AgentCollectionV1;
   let _collectionsManager: AgentCollectionsManager;
   let _moderator: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
@@ -38,10 +38,10 @@ describe("WhenGettingModeratorOf", function () {
     );
 
     const secondCollectionAddress = await collectionsManager.collections(2n);
-    const Collection = await ethers.getContractFactory("AgentCollection");
+    const Collection = await ethers.getContractFactory("AgentCollectionV1");
     const secondCollection = Collection.attach(
       secondCollectionAddress
-    ) as AgentCollection;
+    ) as AgentCollectionV1;
 
     return {
       owner,

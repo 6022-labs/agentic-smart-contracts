@@ -9,7 +9,7 @@ import {
   deployCollectionWithCreator,
 } from "../common";
 import {
-  AgentCollection,
+  AgentCollectionV1,
   AgentCollectionsManager,
   AgentCollectionsDescriptor,
 } from "../../typechain-types";
@@ -17,7 +17,7 @@ import {
 describe("WhenBuildingTokenUri", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
-  let _collection: AgentCollection;
+  let _collection: AgentCollectionV1;
   let _collectionDescriptor: AgentCollectionsDescriptor;
   let _collectionsManager: AgentCollectionsManager;
 
