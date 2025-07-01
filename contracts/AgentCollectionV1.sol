@@ -687,23 +687,4 @@ contract AgentCollectionV1 is
         }
         return _ownerOf(tokenId);
     }
-
-    struct RecoverMintSignerParams {
-        address to;
-        address[] agentAddresses;
-        address signer;
-        string role;
-        string name;
-        KeyValue[] images;
-        string mission;
-        bytes32 nonce;
-        bytes signature;
-    }
-
-    struct RecoverUpdateAgentSignerParams {
-        uint256 tokenId;
-        address newSigner;
-        bytes32 nonce;
-        bytes signature;
-    }
 }
