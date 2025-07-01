@@ -20,6 +20,7 @@ import {IAgentCollectionsManagerStates} from "./interfaces/IAgentCollectionsMana
 import {IAgentCollectionsDescriptorActions} from "./interfaces/IAgentCollectionsDescriptor/IAgentCollectionsDescriptorActions.sol";
 
 struct MintProposal {
+    uint256 id;
     string name;
     string role;
     address owner;
@@ -31,6 +32,7 @@ struct MintProposal {
 }
 
 struct AddOrUpdateImageProposal {
+    uint256 id;
     uint256 tokenId;
     KeyValue image;
 }
@@ -55,8 +57,13 @@ contract AgentCollectionV1 is
     mapping(string => uint256) private _tokenIdOf;
     mapping(uint256 => AgentInformation) private _agentInformationOf;
 
+    uint256 private _nextProposalId;
+
     MintProposal[] private _mintProposals;
+    mapping(uint256 => uint256) private _mintProposalIndexById;
+
     AddOrUpdateImageProposal[] private _addOrUpdateImageProposals;
+    mapping(uint256 => uint256) private _addOrUpdateImageProposalIndexById;
 
     string public description;
     uint256 public moderatorCount;
@@ -90,6 +97,8 @@ contract AgentCollectionV1 is
 
         nextTokenId = 1;
         description = initialDescription;
+
+        _nextProposalId = 1;
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MODERATOR_ROLE, moderator);
@@ -361,15 +370,20 @@ contract AgentCollectionV1 is
 
         if (!isProposalAlreadyExistForThisAgentAndKey) {
             _addOrUpdateImageProposals.push(AddOrUpdateImageProposal({
+                id: _nextProposalId,
                 tokenId: tokenId,
                 image: image
             }));
 
+            _addOrUpdateImageProposalIndexById[_nextProposalId] = _addOrUpdateImageProposals.length - 1;
+
             emit AgentImageProposalCreated(
                 tokenId,
                 image.key,
-                _addOrUpdateImageProposals.length - 1
+                _nextProposalId
             );
+
+            _nextProposalId++;
         }
     }
 
@@ -394,10 +408,11 @@ contract AgentCollectionV1 is
     }
 
     /// @dev Apply an image proposal.
-    /// @param proposalIndex The index of the proposal to apply.
+    /// @param proposalId The id of the proposal to apply.
     function addOrUpdateImageFromProposal(
-        uint256 proposalIndex
+        uint256 proposalId
     ) external onlyRole(MODERATOR_ROLE) {
+        uint256 proposalIndex = _addOrUpdateImageProposalIndexById[proposalId];
         AddOrUpdateImageProposal memory proposalInfo = _addOrUpdateImageProposals[proposalIndex];
 
         _addOrUpdateImage(
@@ -425,11 +440,11 @@ contract AgentCollectionV1 is
     }
 
     /// @dev Refuse an image proposal.
-    /// @param proposalIndex The index of the proposal to refuse.
+    /// @param proposalId The id of the proposal to refuse.
     function refuseAddOrUpdateImageProposal(
-        uint256 proposalIndex
+        uint256 proposalId
     ) external onlyRole(MODERATOR_ROLE) {
-        _popAddOrUpdateImageProposalAt(proposalIndex);
+        _popAddOrUpdateImageProposalAt(proposalId);
     }
 
     /// @dev Remove an image from a token.
@@ -478,6 +493,7 @@ contract AgentCollectionV1 is
 
         _isNonceUsed[nonce] = true;
         _mintProposals.push(MintProposal({
+            id: _nextProposalId,
             name: name,
             role: role,
             owner: to,
@@ -488,7 +504,11 @@ contract AgentCollectionV1 is
             wallets: agentAddresses
         }));
 
-        emit MintProposalCreated(to, signer, _mintProposals.length - 1);
+        _mintProposalIndexById[_nextProposalId] = _mintProposals.length - 1;
+
+        emit MintProposalCreated(to, signer, _nextProposalId);
+
+        _nextProposalId++;
     }
 
     /// @dev Mint a new agent token. (allowed when no moderators are setup or
@@ -520,10 +540,11 @@ contract AgentCollectionV1 is
     }
 
     /// @dev Mint an agent from an approved proposal.
-    /// @param proposalIndex The index of the mint proposal to execute.
+    /// @param proposalId The id of the mint proposal to execute.
     function mintFromProposal(
-        uint256 proposalIndex
+        uint256 proposalId
     ) external onlyRole(MODERATOR_ROLE) {
+        uint256 proposalIndex = _mintProposalIndexById[proposalId];
         MintProposal memory proposalInfo = _mintProposals[proposalIndex];
         if (_tokenIdOf[proposalInfo.name] != 0) {
             revert UsedName(proposalInfo.name);
@@ -612,11 +633,11 @@ contract AgentCollectionV1 is
     }
 
     /// @dev Refuse a mint proposal.
-    /// @param proposalIndex The index of the proposal to refuse.
+    /// @param proposalId The id of the proposal to refuse.
     function refuseMintProposal(
-        uint256 proposalIndex
+        uint256 proposalId
     ) external onlyRole(MODERATOR_ROLE) {
-        _popMintProposalAt(proposalIndex);
+        _popMintProposalAt(proposalId);
     }
 
     /// @dev Recover the signer used for an update agent signer request.
@@ -639,13 +660,17 @@ contract AgentCollectionV1 is
         return ECDSA.recover(digest, signature);
     }
 
-    function _popAddOrUpdateImageProposalAt(uint256 index) private {
+    function _popAddOrUpdateImageProposalAt(uint256 proposalId) private {
+        uint256 index = _addOrUpdateImageProposalIndexById[proposalId];
+
         AddOrUpdateImageProposal memory proposal = _addOrUpdateImageProposals[index];
         uint256 lastIndex = _addOrUpdateImageProposals.length - 1;
         if (index != lastIndex) {
             _addOrUpdateImageProposals[index] = _addOrUpdateImageProposals[lastIndex];
+            _addOrUpdateImageProposalIndexById[_addOrUpdateImageProposals[index].id] = index;
         }
         _addOrUpdateImageProposals.pop();
+        delete _addOrUpdateImageProposalIndexById[proposalId];
 
         emit AgentImageProposalRemoved(
             proposal.tokenId,
@@ -654,13 +679,17 @@ contract AgentCollectionV1 is
         );
     }
 
-    function _popMintProposalAt(uint256 index) private {
+    function _popMintProposalAt(uint256 proposalId) private {
+        uint256 index = _mintProposalIndexById[proposalId];
+
         MintProposal memory proposal = _mintProposals[index];
         uint256 lastIndex = _mintProposals.length - 1;
         if (index != lastIndex) {
             _mintProposals[index] = _mintProposals[lastIndex];
+            _mintProposalIndexById[_mintProposals[index].id] = index;
         }
         _mintProposals.pop();
+        delete _mintProposalIndexById[proposalId];
 
         emit MintProposalRemoved(proposal.owner, proposal.signer, index);
     }

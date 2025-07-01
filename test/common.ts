@@ -158,11 +158,11 @@ export async function proposeAndMint(
   );
 
   const mintProposalsLength = await collection.mintProposalsLength();
+  const proposalIndex = mintProposalsLength - BigInt(1);
+  const { id: proposalId } = await collection.mintProposal(proposalIndex);
   const tokenId = await collection.nextTokenId();
 
-  await collection
-    .connect(minter)
-    .mintFromProposal(mintProposalsLength - BigInt(1));
+  await collection.connect(minter).mintFromProposal(proposalId);
 
   return tokenId;
 }

@@ -86,8 +86,10 @@ describe("WhenRefusingMintProposals", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' when caller is not moderator", async function () {
       await createMintProposal("agent1", "1");
 
+      const { id: proposalId } = await _collection.mintProposal(0);
+
       await expect(
-        _collection.refuseMintProposal(0)
+        _collection.refuseMintProposal(proposalId)
       ).to.be.revertedWithCustomError(
         _collection,
         "AccessControlUnauthorizedAccount"
@@ -105,7 +107,9 @@ describe("WhenRefusingMintProposals", function () {
 
       expect(await _collection.mintProposalsLength()).to.eq(2n);
 
-      await _collection.connect(_moderator).refuseMintProposal(0);
+      const { id: proposalId } = await _collection.mintProposal(0);
+
+      await _collection.connect(_moderator).refuseMintProposal(proposalId);
 
       expect(await _collection.mintProposalsLength()).to.eq(1n);
 
@@ -116,7 +120,11 @@ describe("WhenRefusingMintProposals", function () {
     it("Should emit a MintProposalRemoved event", async function () {
       await createMintProposal("agent1", "1");
 
-      await expect(_collection.connect(_moderator).refuseMintProposal(0))
+      const { id: proposalId } = await _collection.mintProposal(0);
+
+      await expect(
+        _collection.connect(_moderator).refuseMintProposal(proposalId)
+      )
         .to.emit(_collection, "MintProposalRemoved")
         .withArgs(_otherAccount.address, _signer.address, 0n);
     });
