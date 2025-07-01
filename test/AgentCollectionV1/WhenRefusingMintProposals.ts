@@ -120,9 +120,11 @@ describe("WhenRefusingMintProposals", function () {
     it("Should emit a MintProposalRemoved event", async function () {
       await createMintProposal("agent1", "1");
 
-      const { id: proposalIdRemoved } = await _collection.mintProposal(0);
+      const { id: proposalId } = await _collection.mintProposal(0);
 
-      await expect(_collection.connect(_moderator).refuseMintProposal(proposalIdRemoved))
+      await expect(
+        _collection.connect(_moderator).refuseMintProposal(proposalId)
+      )
         .to.emit(_collection, "MintProposalRemoved")
         .withArgs(_otherAccount.address, _signer.address, 0n);
     });
