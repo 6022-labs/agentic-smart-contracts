@@ -37,23 +37,21 @@ contract AgentCollectionsManager is
         uint256 numberOfModeratorCollections = 0;
 
         // Count the number of collections where the account is a moderator
-        for (uint256 i = 0; i < nextCollectionId; i++) {
-            address collection = collections[i];
-            if (collection != address(0)) {
-                if (IAgentCollectionStates(collection).isModerator(account)) {
-                    numberOfModeratorCollections++;
-                }
+        for (uint256 collectionIndex = 1; collectionIndex < nextCollectionId; collectionIndex++) {
+            IAgentCollectionStates collection = IAgentCollectionStates(collections[collectionIndex]);
+            if (collection.isModerator(account)) {
+                numberOfModeratorCollections++;
             }
         }
 
+        // Fill the array with the addresses of the collections where the account is a moderator
         address[] memory moderatorCollections = new address[](numberOfModeratorCollections);
-
-        for (uint256 i = 0; i < numberOfModeratorCollections; i++) {
-            address collection = collections[i];
-            if (collection != address(0)) {
-                if (IAgentCollectionStates(collection).isModerator(account)) {
-                    moderatorCollections[i] = collection;
-                }
+        uint256 insertIndex = 0;
+        for (uint256 collectionIndex = 1; collectionIndex < nextCollectionId; collectionIndex++) {
+            address collection = collections[collectionIndex];
+            if (IAgentCollectionStates(collection).isModerator(account)) {
+                moderatorCollections[insertIndex] = collection;
+                insertIndex++;
             }
         }
 
