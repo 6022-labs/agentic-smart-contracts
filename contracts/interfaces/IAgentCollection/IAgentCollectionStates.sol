@@ -14,6 +14,9 @@ interface IAgentCollectionStates {
     /// @dev Description of the collection.
     function description() external view returns (string memory);
 
+    /// @dev Get the fact that a account is a moderator or not.
+    function isModerator(address account) external view returns (bool);
+
     /// @dev Get all stored information for an agent.
     /// @param tokenId The token identifier.
     /// @return The agent information structure.

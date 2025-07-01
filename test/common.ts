@@ -8,7 +8,7 @@ export function generateRandomAddress(): string {
 
 export async function signMintRequest(
   signer: HardhatEthersSigner,
-  AgentCollection: AgentCollection,
+  agentCollection: AgentCollection,
   params: {
     to: string;
     agentAddresses: string[];
@@ -20,7 +20,7 @@ export async function signMintRequest(
     nonce: string;
   }
 ) {
-  if (!AgentCollection) {
+  if (!agentCollection) {
     throw new Error("AgentCollection instance not set");
   }
 
@@ -28,7 +28,7 @@ export async function signMintRequest(
     name: "AgentCollection",
     version: "1",
     chainId: (await ethers.provider.getNetwork()).chainId,
-    verifyingContract: await AgentCollection.getAddress(),
+    verifyingContract: await agentCollection.getAddress(),
   };
 
   const types = {

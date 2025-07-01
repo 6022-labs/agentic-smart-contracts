@@ -115,6 +115,11 @@ contract AgentCollection is
         return super._revokeRole(role, account);
     }
 
+    /// @dev Get the fact that a account is a moderator or not.
+    function isModerator(address account) external view returns (bool) {
+        return hasRole(MODERATOR_ROLE, account);
+    }
+
     /// @dev See {IERC165-supportsInterface}.
     function supportsInterface(
         bytes4 interfaceId

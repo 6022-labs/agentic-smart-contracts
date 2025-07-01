@@ -4,6 +4,7 @@ pragma solidity ^0.8.28;
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
+import {IAgentCollectionStates} from "./interfaces/IAgentCollection/IAgentCollectionStates.sol";
 import {IAgentCollectionsManager} from "./interfaces/IAgentCollectionsManager/IAgentCollectionsManager.sol";
 
 /// @title Agentic AI collections manager
@@ -30,6 +31,33 @@ contract AgentCollectionsManager is
     /// @param signer The address to check.
     function isSigner(address signer) external view returns (bool) {
         return hasRole(SIGNER_ROLE, signer);
+    }
+
+    function moderatorOf(address account) external view returns (address[] memory) {
+        uint256 numberOfModeratorCollections = 0;
+
+        // Count the number of collections where the account is a moderator
+        for (uint256 i = 0; i < nextCollectionId; i++) {
+            address collection = collections[i];
+            if (collection != address(0)) {
+                if (IAgentCollectionStates(collection).isModerator(account)) {
+                    numberOfModeratorCollections++;
+                }
+            }
+        }
+
+        address[] memory moderatorCollections = new address[](numberOfModeratorCollections);
+
+        for (uint256 i = 0; i < numberOfModeratorCollections; i++) {
+            address collection = collections[i];
+            if (collection != address(0)) {
+                if (IAgentCollectionStates(collection).isModerator(account)) {
+                    moderatorCollections[i] = collection;
+                }
+            }
+        }
+
+        return moderatorCollections;
     }
 
     /// @dev Add a new collection.
