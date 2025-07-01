@@ -337,7 +337,7 @@ describe("WhenCreatingMintingProposal", function () {
           )
         )
           .to.emit(_collection, "MintProposalCreated")
-          .withArgs(_owner.address, _signer1.address, 0n);
+          .withArgs(_owner.address, _signer1.address, 1n);
       });
     });
   });

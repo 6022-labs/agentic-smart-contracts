@@ -90,11 +90,12 @@ describe("WhenMintingFromProposal", function () {
       );
 
       const mintProposalsLength = await _collection.mintProposalsLength();
+      const { id: proposalId } = await _collection.mintProposal(
+        mintProposalsLength - BigInt(1)
+      );
 
       await expect(
-        _collection
-          .connect(_otherAccount)
-          .mintFromProposal(mintProposalsLength - BigInt(1))
+        _collection.connect(_otherAccount).mintFromProposal(proposalId)
       ).to.be.revertedWithCustomError(
         _collection,
         "AccessControlUnauthorizedAccount"
@@ -164,9 +165,11 @@ describe("WhenMintingFromProposal", function () {
         sig2
       );
 
-      await _collection.connect(_owner).mintFromProposal(0);
+      const { id: proposalId } = await _collection.mintProposal(0);
 
-      await expect(_collection.connect(_owner).mintFromProposal(0))
+      await _collection.connect(_owner).mintFromProposal(proposalId);
+
+      await expect(_collection.connect(_owner).mintFromProposal(proposalId))
         .to.be.revertedWithCustomError(_collection, "UsedName")
         .withArgs(DEFAULT_NAME);
     });
@@ -408,11 +411,12 @@ describe("WhenMintingFromProposal", function () {
       );
 
       const mintProposalsLength = await _collection.mintProposalsLength();
+      const { id: proposalId } = await _collection.mintProposal(
+        mintProposalsLength - BigInt(1)
+      );
 
       await expect(
-        _collection
-          .connect(_owner)
-          .mintFromProposal(mintProposalsLength - BigInt(1))
+        _collection.connect(_owner).mintFromProposal(proposalId)
       )
         .to.emit(_collection, "Minted")
         .withArgs(_otherAccount.address, _signer.address, tokenId);
@@ -447,11 +451,12 @@ describe("WhenMintingFromProposal", function () {
       );
 
       const mintProposalsLength = await _collection.mintProposalsLength();
+      const { id: proposalId } = await _collection.mintProposal(
+        mintProposalsLength - BigInt(1)
+      );
 
       await expect(
-        _collection
-          .connect(_owner)
-          .mintFromProposal(mintProposalsLength - BigInt(1))
+        _collection.connect(_owner).mintFromProposal(proposalId)
       )
         .to.emit(_collection, "AgentSignerUpdated")
         .withArgs(tokenId, ethers.ZeroAddress, _signer.address);
@@ -484,11 +489,12 @@ describe("WhenMintingFromProposal", function () {
       );
 
       const mintProposalsLength = await _collection.mintProposalsLength();
+      const { id: proposalId } = await _collection.mintProposal(
+        mintProposalsLength - BigInt(1)
+      );
 
       await expect(
-        _collection
-          .connect(_owner)
-          .mintFromProposal(mintProposalsLength - BigInt(1))
+        _collection.connect(_owner).mintFromProposal(proposalId)
       )
         .to.emit(_collection, "MintProposalRemoved")
         .withArgs(
@@ -525,10 +531,11 @@ describe("WhenMintingFromProposal", function () {
       );
 
       const lengthBefore = await _collection.mintProposalsLength();
+      const { id: proposalId } = await _collection.mintProposal(
+        lengthBefore - BigInt(1)
+      );
 
-      await _collection
-        .connect(_owner)
-        .mintFromProposal(lengthBefore - BigInt(1));
+      await _collection.connect(_owner).mintFromProposal(proposalId);
 
       expect(await _collection.mintProposalsLength()).to.eq(
         lengthBefore - BigInt(1)
@@ -586,7 +593,9 @@ describe("WhenMintingFromProposal", function () {
 
       expect(await _collection.mintProposalsLength()).to.eq(2n);
 
-      await _collection.connect(_owner).mintFromProposal(0);
+      const { id: proposalId } = await _collection.mintProposal(0);
+
+      await _collection.connect(_owner).mintFromProposal(proposalId);
 
       expect(await _collection.mintProposalsLength()).to.eq(1n);
 

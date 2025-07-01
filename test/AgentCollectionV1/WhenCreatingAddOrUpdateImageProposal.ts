@@ -130,7 +130,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           })
         )
           .to.emit(_collection, "AgentImageProposalCreated")
-          .withArgs(tokenId, "profile", 0n);
+          .withArgs(tokenId, "profile", 2n);
       });
     });
 
@@ -199,7 +199,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
             })
         )
           .to.emit(_collection, "AgentImageProposalCreated")
-          .withArgs(tokenId, "profile", 0n);
+          .withArgs(tokenId, "profile", 2n);
       });
     });
 

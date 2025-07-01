@@ -54,8 +54,10 @@ describe("WhenAddingOrUpdatingImage", function () {
         value: "cid1",
       });
 
+      const { id: proposalId } = await _collection.addOrUpdateProposal(0);
+
       await expect(
-        _collection.connect(_owner).addOrUpdateImageFromProposal(0)
+        _collection.connect(_owner).addOrUpdateImageFromProposal(proposalId)
       ).to.be.revertedWithCustomError(
         _collection,
         "AccessControlUnauthorizedAccount"
@@ -87,7 +89,9 @@ describe("WhenAddingOrUpdatingImage", function () {
           value: "cid1",
         });
 
-        await _collection.connect(_moderator).addOrUpdateImageFromProposal(0);
+        const { id: proposalId } = await _collection.addOrUpdateProposal(0);
+
+        await _collection.connect(_moderator).addOrUpdateImageFromProposal(proposalId);
 
         const images = await _collection.imagesOf(tokenId);
         expect(images.length).to.equal(2);
@@ -105,8 +109,10 @@ describe("WhenAddingOrUpdatingImage", function () {
           value: "cid1",
         });
 
+        const { id: proposalId2 } = await _collection.addOrUpdateProposal(0);
+
         await expect(
-          _collection.connect(_moderator).addOrUpdateImageFromProposal(0)
+          _collection.connect(_moderator).addOrUpdateImageFromProposal(proposalId2)
         )
           .to.emit(_collection, "AgentImageUpdated")
           .withArgs(tokenId, "profile", "", "cid1");
@@ -122,8 +128,10 @@ describe("WhenAddingOrUpdatingImage", function () {
           value: "cid1",
         });
 
+        const { id: proposalId3 } = await _collection.addOrUpdateProposal(0);
+
         await expect(
-          _collection.connect(_moderator).addOrUpdateImageFromProposal(0)
+          _collection.connect(_moderator).addOrUpdateImageFromProposal(proposalId3)
         )
           .to.emit(_collection, "AgentImageProposalRemoved")
           .withArgs(tokenId, "profile", 0n);
@@ -140,7 +148,10 @@ describe("WhenAddingOrUpdatingImage", function () {
           key: "profile",
           value: "cid1",
         });
-        await _collection.connect(_moderator).addOrUpdateImageFromProposal(0);
+        const { id: firstProposalId } = await _collection.addOrUpdateProposal(0);
+        await _collection
+          .connect(_moderator)
+          .addOrUpdateImageFromProposal(firstProposalId);
 
         await _collection.createAddOrUpdateImageProposal(tokenId, {
           key: "profile",
@@ -149,10 +160,13 @@ describe("WhenAddingOrUpdatingImage", function () {
 
         const proposalIndex =
           (await _collection.addOrUpdateProposalsLength()) - BigInt(1);
+        const { id: proposalId } = await _collection.addOrUpdateProposal(
+          proposalIndex
+        );
 
         await _collection
           .connect(_moderator)
-          .addOrUpdateImageFromProposal(proposalIndex);
+          .addOrUpdateImageFromProposal(proposalId);
 
         const images = await _collection.imagesOf(tokenId);
         expect(images.length).to.equal(2);
@@ -169,7 +183,10 @@ describe("WhenAddingOrUpdatingImage", function () {
           key: "profile",
           value: "cid1",
         });
-        await _collection.connect(_moderator).addOrUpdateImageFromProposal(0);
+        const { id: firstProposalId2 } = await _collection.addOrUpdateProposal(0);
+        await _collection
+          .connect(_moderator)
+          .addOrUpdateImageFromProposal(firstProposalId2);
 
         await _collection.createAddOrUpdateImageProposal(tokenId, {
           key: "profile",
@@ -178,11 +195,12 @@ describe("WhenAddingOrUpdatingImage", function () {
 
         const proposalIndex =
           (await _collection.addOrUpdateProposalsLength()) - BigInt(1);
+        const { id: proposalId2 } = await _collection.addOrUpdateProposal(
+          proposalIndex
+        );
 
         await expect(
-          _collection
-            .connect(_moderator)
-            .addOrUpdateImageFromProposal(proposalIndex)
+          _collection.connect(_moderator).addOrUpdateImageFromProposal(proposalId2)
         )
           .to.emit(_collection, "AgentImageUpdated")
           .withArgs(tokenId, "profile", "cid1", "cid2");
@@ -197,7 +215,10 @@ describe("WhenAddingOrUpdatingImage", function () {
           key: "profile",
           value: "cid1",
         });
-        await _collection.connect(_moderator).addOrUpdateImageFromProposal(0);
+        const { id: firstProposalId3 } = await _collection.addOrUpdateProposal(0);
+        await _collection
+          .connect(_moderator)
+          .addOrUpdateImageFromProposal(firstProposalId3);
 
         await _collection.createAddOrUpdateImageProposal(tokenId, {
           key: "profile",
@@ -206,11 +227,12 @@ describe("WhenAddingOrUpdatingImage", function () {
 
         const proposalIndex =
           (await _collection.addOrUpdateProposalsLength()) - BigInt(1);
+        const { id: proposalId3 } = await _collection.addOrUpdateProposal(
+          proposalIndex
+        );
 
         await expect(
-          _collection
-            .connect(_moderator)
-            .addOrUpdateImageFromProposal(proposalIndex)
+          _collection.connect(_moderator).addOrUpdateImageFromProposal(proposalId3)
         )
           .to.emit(_collection, "AgentImageProposalRemoved")
           .withArgs(tokenId, "profile", proposalIndex);
@@ -230,17 +252,18 @@ describe("WhenAddingOrUpdatingImage", function () {
 
         const proposalIndex =
           (await _collection.addOrUpdateProposalsLength()) - BigInt(1);
+        const { id: proposalId } = await _collection.addOrUpdateProposal(
+          proposalIndex
+        );
 
         await _collection
           .connect(_moderator)
-          .addOrUpdateImageFromProposal(proposalIndex);
+          .addOrUpdateImageFromProposal(proposalId);
 
         expect(await _collection.addOrUpdateProposalsLength()).to.eq(0n);
 
         await expect(
-          _collection
-            .connect(_moderator)
-            .addOrUpdateImageFromProposal(proposalIndex)
+          _collection.connect(_moderator).addOrUpdateImageFromProposal(proposalId)
         ).to.be.reverted;
       });
 
@@ -261,7 +284,11 @@ describe("WhenAddingOrUpdatingImage", function () {
 
         expect(await _collection.addOrUpdateProposalsLength()).to.eq(2n);
 
-        await _collection.connect(_moderator).addOrUpdateImageFromProposal(0);
+        const { id: firstProposalId } = await _collection.addOrUpdateProposal(0);
+
+        await _collection
+          .connect(_moderator)
+          .addOrUpdateImageFromProposal(firstProposalId);
 
         expect(await _collection.addOrUpdateProposalsLength()).to.eq(1n);
 

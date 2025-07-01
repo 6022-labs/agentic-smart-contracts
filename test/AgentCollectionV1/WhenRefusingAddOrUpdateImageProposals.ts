@@ -54,8 +54,10 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
         value: "cid1",
       });
 
+      const { id: proposalId } = await _collection.addOrUpdateProposal(0);
+
       await expect(
-        _collection.refuseAddOrUpdateImageProposal(0)
+        _collection.refuseAddOrUpdateImageProposal(proposalId)
       ).to.be.revertedWithCustomError(
         _collection,
         "AccessControlUnauthorizedAccount"
@@ -89,7 +91,9 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
 
       expect(await _collection.addOrUpdateProposalsLength()).to.eq(2n);
 
-      await _collection.connect(_moderator).refuseAddOrUpdateImageProposal(0);
+      const { id: proposalId } = await _collection.addOrUpdateProposal(0);
+
+      await _collection.connect(_moderator).refuseAddOrUpdateImageProposal(proposalId);
 
       expect(await _collection.addOrUpdateProposalsLength()).to.eq(1n);
 
@@ -107,8 +111,10 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
         value: "cid1",
       });
 
+      const { id: proposalIdRemoved } = await _collection.addOrUpdateProposal(0);
+
       await expect(
-        _collection.connect(_moderator).refuseAddOrUpdateImageProposal(0)
+        _collection.connect(_moderator).refuseAddOrUpdateImageProposal(proposalIdRemoved)
       )
         .to.emit(_collection, "AgentImageProposalRemoved")
         .withArgs(tokenId, "profile", 0n);
