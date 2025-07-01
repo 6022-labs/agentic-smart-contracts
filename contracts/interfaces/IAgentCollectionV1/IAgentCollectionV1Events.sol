@@ -47,41 +47,41 @@ interface IAgentCollectionV1Events {
     /// @dev Emitted when an image proposal is created.
     /// @param tokenId The ID of the token whose image is proposed.
     /// @param key The key of the image proposal.
-    /// @param proposalIndex The index of the created proposal.
+    /// @param proposalId The id of the created proposal.
     event AgentImageProposalCreated(
         uint256 indexed tokenId,
         string indexed key,
-        uint256 proposalIndex
+        uint256 proposalId
     );
 
     /// @dev Emitted when an image proposal is removed.
     /// @param tokenId The ID of the token whose proposal was removed.
     /// @param key The key of the image proposal.
-    /// @param proposalIndex The index of the removed proposal.
+    /// @param proposalId The id of the removed proposal.
     event AgentImageProposalRemoved(
         uint256 indexed tokenId,
         string indexed key,
-        uint256 proposalIndex
+        uint256 proposalId
     );
 
     /// @dev Emitted when a mint proposal is created.
     /// @param from The address that initiated the proposal.
     /// @param signer The signer address associated with the agent.
-    /// @param proposalIndex The index of the created proposal.
+    /// @param proposalId The id of the created proposal.
     event MintProposalCreated(
         address indexed from,
         address indexed signer,
-        uint256 proposalIndex
+        uint256 proposalId
     );
 
     /// @dev Emitted when a mint proposal is removed.
     /// @param owner The address that was set to receive the token.
     /// @param signer The signer address associated with the proposal.
-    /// @param proposalIndex The index of the removed proposal.
+    /// @param proposalId The id of the removed proposal.
     event MintProposalRemoved(
         address indexed owner,
         address indexed signer,
-        uint256 proposalIndex
+        uint256 proposalId
     );
 
     /// @dev Emitted when the collections descriptor is updated.

@@ -13,26 +13,26 @@ interface IAgentCollectionV1ModeratorActions {
     ) external;
 
     /// @dev Apply an image proposal.
-    /// @param proposalIndex The index of the proposal to apply.
+    /// @param proposalId The id of the proposal to apply.
     function addOrUpdateImageFromProposal(
-        uint256 proposalIndex
+        uint256 proposalId
     ) external;
 
     /// @dev Refuse an image proposal.
-    /// @param proposalIndex The index of the proposal to refuse.
+    /// @param proposalId The id of the proposal to refuse.
     function refuseAddOrUpdateImageProposal(
-        uint256 proposalIndex
+        uint256 proposalId
     ) external;
 
     /// @dev Mint an agent from an approved proposal.
-    /// @param proposalIndex The index of the mint proposal to execute.
+    /// @param proposalId The id of the mint proposal to execute.
     function mintFromProposal(
-        uint256 proposalIndex
+        uint256 proposalId
     ) external;
 
     /// @dev Refuse a mint proposal.
-    /// @param proposalIndex The index of the proposal to refuse.
+    /// @param proposalId The id of the proposal to refuse.
     function refuseMintProposal(
-        uint256 proposalIndex
+        uint256 proposalId
     ) external;
 }
