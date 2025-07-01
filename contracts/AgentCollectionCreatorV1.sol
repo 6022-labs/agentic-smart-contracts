@@ -57,6 +57,25 @@ contract AgentCollectionCreatorV1 is
         _;
     }
 
+    /// @dev Check if the account can create a collection based on its token balances.
+    /// @param account Address of the account to check.
+    /// @return True if the account can create a collection, false otherwise.
+    function canCreateCollection(address account) public view returns (bool) {
+        bool hasMinimumBalanceInOneOfAuthorizedTokens = false;
+
+        for (uint256 i = 0; i < authorizedTokensForCreation.length; i++) {
+            address token = authorizedTokensForCreation[i];
+            uint256 requiredBalance = minimumTokenBalanceForCreation[token];
+
+            if (IERC20(token).balanceOf(account) >= requiredBalance) {
+                hasMinimumBalanceInOneOfAuthorizedTokens = true;
+                break;
+            }
+        }
+
+        return hasMinimumBalanceInOneOfAuthorizedTokens;
+    }
+
     /// @dev Update the default collections descriptor.
     /// @param newDescriptor The new default descriptor for the new collections.
     function updateDefaultCollectionsDescriptor(
@@ -142,19 +161,7 @@ contract AgentCollectionCreatorV1 is
         address admin,
         address moderator
     ) external override returns (address collectionAddress) {
-        bool hasMinimumBalanceInOneOfAuthorizedTokens = false;
-
-        for (uint256 i = 0; i < authorizedTokensForCreation.length; i++) {
-            address token = authorizedTokensForCreation[i];
-            uint256 requiredBalance = minimumTokenBalanceForCreation[token];
-
-            if (IERC20(token).balanceOf(msg.sender) >= requiredBalance) {
-                hasMinimumBalanceInOneOfAuthorizedTokens = true;
-                break;
-            }
-        }
-
-        if (!hasMinimumBalanceInOneOfAuthorizedTokens) {
+        if (!canCreateCollection(msg.sender)) {
             revert InsufficientBalanceInAuthorizedTokens();
         }
 
