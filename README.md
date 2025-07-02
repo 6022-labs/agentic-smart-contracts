@@ -9,5 +9,5 @@ npx hardhat help
 npx hardhat test
 REPORT_GAS=true npx hardhat test
 npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/AgentCollectionCreatorV1.ts
+npx hardhat ignition deploy ./ignition/modules/AgentCollectionCreatorV1.ts --network <MY_NETWORK> --parameters ignition/parameters/<MY_NETWORK>/AgentCollectionCreatorV1.json
 ```
