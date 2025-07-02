@@ -9,7 +9,7 @@ interface IAgentCollectionCreatorV1States {
 
     /// @dev Get the default collections descriptor.
     /// @return Address of the default collections descriptor.
-    function defaultCollectionsDescriptor() external view returns (address);
+    function collectionsDescriptor() external view returns (address);
 
     /// @dev Get the token required to create a collection.
     /// @param index Index of the token in the authorized tokens list.

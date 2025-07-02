@@ -9,6 +9,9 @@ import {IAgentCollectionV1Initialize} from "./interfaces/IAgentCollectionV1/IAge
 import {IAgentCollectionCreatorV1} from "./interfaces/IAgentCollectionCreatorV1/IAgentCollectionCreatorV1.sol";
 import {IAgentCollectionsManagerCollectionCreatorActions} from "./interfaces/IAgentCollectionsManager/IAgentCollectionsManagerCollectionCreatorActions.sol";
 
+import {ICollateralVault6022} from "./interfaces/ICollateralVault6022.sol";
+import {ICollateralController6022} from "./interfaces/ICollateralController6022.sol";
+
 /// @title Factory for Agentic AI agent collections
 /// @dev Allows creation of new agent collections if the caller holds enough tokens.
 contract AgentCollectionCreatorV1 is
@@ -22,20 +25,24 @@ contract AgentCollectionCreatorV1 is
     mapping(address => uint256) public minimumTokenBalanceForCreation;
 
     address public collectionsManager;
-    address public defaultCollectionsDescriptor;
+    address public collectionsDescriptor;
+    address public collateralController6022;
 
     /// @dev Deploy the creator contract.
     /// @param initialCollectionsManager Address of the collections manager.
-    /// @param initialDefaultCollectionsDescriptor Default descriptor for new collections.
+    /// @param initialCollectionsDescriptor Address of the descriptor for new collections.
+    /// @param initialCollectionImplementation Address of the implementation for new collections.
+    /// @param initialCollateralController6022 Address of the collateral controller.
     constructor(
         address initialCollectionsManager,
-        address initialDefaultCollectionsDescriptor,
-        address initialCollectionImplementation
+        address initialCollectionsDescriptor,
+        address initialCollectionImplementation,
+        address initialCollateralController6022
     ) {
         collectionsManager = initialCollectionsManager;
-        defaultCollectionsDescriptor = initialDefaultCollectionsDescriptor;
-
+        collectionsDescriptor = initialCollectionsDescriptor;
         collectionImplementation = initialCollectionImplementation;
+        collateralController6022 = initialCollateralController6022;
 
         _grantRole(
             DEFAULT_ADMIN_ROLE,
@@ -61,28 +68,68 @@ contract AgentCollectionCreatorV1 is
     /// @param account Address of the account to check.
     /// @return True if the account can create a collection, false otherwise.
     function canCreateCollection(address account) public view returns (bool) {
-        bool hasMinimumBalanceInOneOfAuthorizedTokens = false;
+        return hasMinimumTokenBalanceForCreation(account) ||
+            hasMinimumCollateralLockedForCreation(account);
+    }
 
+    /// @dev Check if the account has a minimum balance in any of the authorized tokens for creation.
+    /// @param account Address of the account to check.
+    /// @return True if the account has a minimum balance in any authorized token, false otherwise
+    function hasMinimumTokenBalanceForCreation(
+        address account
+    ) public view returns (bool) {
         for (uint256 i = 0; i < authorizedTokensForCreation.length; i++) {
             address token = authorizedTokensForCreation[i];
             uint256 requiredBalance = minimumTokenBalanceForCreation[token];
 
             if (IERC20(token).balanceOf(account) >= requiredBalance) {
-                hasMinimumBalanceInOneOfAuthorizedTokens = true;
-                break;
+                return true;
             }
         }
 
-        return hasMinimumBalanceInOneOfAuthorizedTokens;
+        return false;
+    }
+
+    /// @dev Check if the account has a minimum collateral locked in any of the authorized tokens for creation.
+    /// @param account Address of the account to check.
+    /// @return True if the account has a minimum collateral locked in any authorized token, false
+    function hasMinimumCollateralLockedForCreation(
+        address account
+    ) public view returns (bool) {
+        address[] memory vaults = ICollateralController6022(collateralController6022)
+            .getVaultsByOwner(account);
+
+        uint256[] memory collateralLockedByToken = new uint256[](authorizedTokensForCreation.length);
+
+        for (uint256 i = 0; i < vaults.length; i++) {
+            ICollateralVault6022 vault = ICollateralVault6022(vaults[i]);
+            if (vault.isDeposited() && !vault.isWithdrawn()) {
+                address wantedTokenAddress = vault.wantedTokenAddress();
+                for (uint256 j = 0; j < authorizedTokensForCreation.length; j++) {
+                    if (authorizedTokensForCreation[j] == wantedTokenAddress) {
+                        collateralLockedByToken[j] += vault.wantedAmount();
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (uint256 i = 0; i < authorizedTokensForCreation.length; i++) {
+            if (collateralLockedByToken[i] >= minimumTokenBalanceForCreation[authorizedTokensForCreation[i]]) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// @dev Update the default collections descriptor.
     /// @param newDescriptor The new default descriptor for the new collections.
-    function updateDefaultCollectionsDescriptor(
+    function updateCollectionsDescriptor(
         address newDescriptor
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        address oldDescriptor = defaultCollectionsDescriptor;
-        defaultCollectionsDescriptor = newDescriptor;
+        address oldDescriptor = collectionsDescriptor;
+        collectionsDescriptor = newDescriptor;
 
         emit DefaultCollectionsDescriptorUpdated(oldDescriptor, newDescriptor);
     }
@@ -174,7 +221,7 @@ contract AgentCollectionCreatorV1 is
             admin,
             moderator,
             collectionsManager,
-            defaultCollectionsDescriptor
+            collectionsDescriptor
         );
 
         address newCollectionAddress = address(newCollection);

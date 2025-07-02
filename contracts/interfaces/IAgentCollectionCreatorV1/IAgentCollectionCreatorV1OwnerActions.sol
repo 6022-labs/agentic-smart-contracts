@@ -4,7 +4,7 @@ pragma solidity ^0.8.28;
 interface IAgentCollectionCreatorV1OwnerActions {
     /// @dev Update the default collections descriptor.
     /// @param newDescriptor The new default descriptor for the new collections.
-    function updateDefaultCollectionsDescriptor(address newDescriptor) external;
+    function updateCollectionsDescriptor(address newDescriptor) external;
 
     /// @dev Add a new token that can be used to create collections.
     /// @param token Address of the token to authorize.

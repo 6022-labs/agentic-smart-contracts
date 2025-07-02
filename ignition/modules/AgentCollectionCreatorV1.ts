@@ -19,7 +19,7 @@ const AgentCollectionCreatorV1Module = buildModule(
       AgentCollectionsManagerModule
     );
 
-    const AgentCollectionV1Creator = m.contract("AgentCollectionCreator", [
+    const AgentCollectionV1Creator = m.contract("AgentCollectionCreatorV1", [
       AgentCollectionsManager,
       AgentCollectionsDescriptor,
       AgentCollectionV1Bytecode,
