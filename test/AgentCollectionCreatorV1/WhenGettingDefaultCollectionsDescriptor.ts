@@ -37,13 +37,19 @@ describe("WhenGettingDefaultCollectionsDescriptor", function () {
     const Collection = await ethers.getContractFactory("AgentCollectionV1");
     const collectionImplementation = await Collection.deploy();
 
+    const CollateralController = await ethers.getContractFactory(
+      "TestCollateralController6022"
+    );
+    const collateralController = await CollateralController.deploy();
+
     const CollectionCreator = await ethers.getContractFactory(
       "AgentCollectionCreatorV1"
     );
     const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
       await collectionsDescriptor.getAddress(),
-      await collectionImplementation.getAddress()
+      await collectionImplementation.getAddress(),
+      await collateralController.getAddress()
     );
 
     return { owner, collectionCreator, collectionsDescriptor };
@@ -60,7 +66,7 @@ describe("WhenGettingDefaultCollectionsDescriptor", function () {
 
   describe("Given contract is deployed", function () {
     it("Should return the collections descriptor address", async function () {
-      expect(await _collectionCreator.defaultCollectionsDescriptor()).to.equal(
+      expect(await _collectionCreator.collectionsDescriptor()).to.equal(
         await _collectionsDescriptor.getAddress()
       );
     });

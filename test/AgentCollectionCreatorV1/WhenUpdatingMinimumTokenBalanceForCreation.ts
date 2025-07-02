@@ -33,13 +33,19 @@ describe("WhenUpdatingMinimumTokenBalanceForCreation", function () {
     const TestErc20 = await ethers.getContractFactory("TestERC20");
     const testErc20 = await TestErc20.deploy();
 
+    const CollateralController = await ethers.getContractFactory(
+      "TestCollateralController6022"
+    );
+    const collateralController = await CollateralController.deploy();
+
     const CollectionCreator = await ethers.getContractFactory(
       "AgentCollectionCreatorV1"
     );
     const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
       await descriptor.getAddress(),
-      await collectionImplementation.getAddress()
+      await collectionImplementation.getAddress(),
+      await collateralController.getAddress()
     );
 
     await collectionCreator.addAuthorizedTokenForCreation(

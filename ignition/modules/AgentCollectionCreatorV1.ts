@@ -23,6 +23,7 @@ const AgentCollectionCreatorV1Module = buildModule(
       AgentCollectionsManager,
       AgentCollectionsDescriptor,
       AgentCollectionV1Bytecode,
+      m.getParameter("collateralController6022"),
     ]);
 
     return { AgentCollectionV1Creator };

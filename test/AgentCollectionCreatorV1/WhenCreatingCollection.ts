@@ -41,13 +41,19 @@ describe("WhenCreatingCollection", function () {
     const TestErc20 = await ethers.getContractFactory("TestERC20");
     const testErc20 = await TestErc20.deploy();
 
+    const CollateralController = await ethers.getContractFactory(
+      "TestCollateralController6022"
+    );
+    const collateralController = await CollateralController.deploy();
+
     const CollectionCreator = await ethers.getContractFactory(
       "AgentCollectionCreatorV1"
     );
     const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
       await descriptor.getAddress(),
-      await collectionImplementation.getAddress()
+      await collectionImplementation.getAddress(),
+      await collateralController.getAddress()
     );
 
     await collectionCreator.addAuthorizedTokenForCreation(
@@ -61,7 +67,13 @@ describe("WhenCreatingCollection", function () {
       await collectionCreator.getAddress()
     );
 
-    return { owner, collectionCreator, collectionsManager, descriptor };
+    return {
+      owner,
+      collectionCreator,
+      collectionsManager,
+      descriptor,
+      collateralController,
+    };
   }
 
   async function deployCreatorWithRequirement() {
@@ -88,13 +100,19 @@ describe("WhenCreatingCollection", function () {
     const TestErc20 = await ethers.getContractFactory("TestERC20");
     const testErc20 = await TestErc20.deploy();
 
+    const CollateralController = await ethers.getContractFactory(
+      "TestCollateralController6022"
+    );
+    const collateralController = await CollateralController.deploy();
+
     const CollectionCreator = await ethers.getContractFactory(
       "AgentCollectionCreatorV1"
     );
     const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
       await descriptor.getAddress(),
-      await collectionImplementation.getAddress()
+      await collectionImplementation.getAddress(),
+      await collateralController.getAddress()
     );
 
     const minimumBalance = 1n;
@@ -118,6 +136,7 @@ describe("WhenCreatingCollection", function () {
       descriptor,
       testErc20,
       minimum: minimumBalance,
+      collateralController,
     };
   }
 
@@ -182,6 +201,7 @@ describe("WhenCreatingCollection", function () {
     let _otherAccount: HardhatEthersSigner;
     let _creatorWithRequirement: AgentCollectionCreatorV1;
     let _collectionsManager: AgentCollectionsManager;
+    let _collateralController: any;
 
     beforeEach(async function () {
       const {
@@ -191,6 +211,7 @@ describe("WhenCreatingCollection", function () {
         otherAccount,
         collectionCreator,
         collectionsManager,
+        collateralController,
       } = await loadFixture(deployCreatorWithRequirement);
 
       _owner = owner;
@@ -199,6 +220,7 @@ describe("WhenCreatingCollection", function () {
       _otherAccount = otherAccount;
       _creatorWithRequirement = collectionCreator;
       _collectionsManager = collectionsManager;
+      _collateralController = collateralController;
     });
 
     describe("When caller does not own enough tokens", function () {
@@ -223,6 +245,37 @@ describe("WhenCreatingCollection", function () {
     describe("When caller owns enough tokens", function () {
       it("Should allow creation", async function () {
         await _testErc20.mint(_owner.address, _minimum);
+
+        await expect(
+          _creatorWithRequirement.createCollection(
+            name,
+            symbol,
+            description,
+            _owner.address,
+            _owner.address
+          )
+        )
+          .to.emit(_collectionsManager, "CollectionCreated")
+          .withArgs(1n, anyValue, name, symbol);
+      });
+    });
+
+    describe("When caller has enough collateral locked", function () {
+      it("Should allow creation", async function () {
+        const Vault = await ethers.getContractFactory(
+          "TestCollateralVault6022"
+        );
+        const vault = await Vault.deploy(
+          true,
+          false,
+          _minimum,
+          await _testErc20.getAddress()
+        );
+
+        await _collateralController.addVault(
+          _owner.address,
+          await vault.getAddress()
+        );
 
         await expect(
           _creatorWithRequirement.createCollection(

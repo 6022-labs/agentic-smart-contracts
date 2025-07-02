@@ -37,13 +37,19 @@ describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
     const Collection = await ethers.getContractFactory("AgentCollectionV1");
     const collectionImplementation = await Collection.deploy();
 
+    const CollateralController = await ethers.getContractFactory(
+      "TestCollateralController6022"
+    );
+    const collateralController = await CollateralController.deploy();
+
     const CollectionCreator = await ethers.getContractFactory(
       "AgentCollectionCreatorV1"
     );
     const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
       await collectionsDescriptor.getAddress(),
-      await collectionImplementation.getAddress()
+      await collectionImplementation.getAddress(),
+      await collateralController.getAddress()
     );
 
     return { owner, otherAccount, collectionCreator, collectionsDescriptor };
@@ -70,9 +76,9 @@ describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
 
       await _collectionCreator
         .connect(_owner)
-        .updateDefaultCollectionsDescriptor(await newDescriptor.getAddress());
+        .updateCollectionsDescriptor(await newDescriptor.getAddress());
 
-      expect(await _collectionCreator.defaultCollectionsDescriptor()).to.equal(
+      expect(await _collectionCreator.collectionsDescriptor()).to.equal(
         await newDescriptor.getAddress()
       );
     });
@@ -86,12 +92,12 @@ describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
       )) as AgentCollectionsDescriptor;
 
       const oldDescriptorAddress =
-        await _collectionCreator.defaultCollectionsDescriptor();
+        await _collectionCreator.collectionsDescriptor();
 
       await expect(
         _collectionCreator
           .connect(_owner)
-          .updateDefaultCollectionsDescriptor(await newDescriptor.getAddress())
+          .updateCollectionsDescriptor(await newDescriptor.getAddress())
       )
         .to.emit(_collectionCreator, "DefaultCollectionsDescriptorUpdated")
         .withArgs(oldDescriptorAddress, await newDescriptor.getAddress());
@@ -110,7 +116,7 @@ describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
       await expect(
         _collectionCreator
           .connect(_otherAccount)
-          .updateDefaultCollectionsDescriptor(await newDescriptor.getAddress())
+          .updateCollectionsDescriptor(await newDescriptor.getAddress())
       ).to.be.revertedWithCustomError(
         _collectionCreator,
         "AccessControlUnauthorizedAccount"

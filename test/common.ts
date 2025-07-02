@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
+import { AgentCollectionV1 } from "../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { AgentCollection } from "../typechain-types";
 
 export function generateRandomAddress(): string {
   return ethers.Wallet.createRandom().address;
@@ -8,7 +8,7 @@ export function generateRandomAddress(): string {
 
 export async function signMintRequest(
   signer: HardhatEthersSigner,
-  agentCollection: AgentCollection,
+  agentCollection: AgentCollectionV1,
   params: {
     to: string;
     agentAddresses: string[];
@@ -79,14 +79,14 @@ export function generateRandomNonce(): string {
 
 export async function signUpdateAgentSignerRequest(
   signer: HardhatEthersSigner,
-  AgentCollection: AgentCollection,
+  agentCollection: AgentCollectionV1,
   params: { tokenId: string; newSigner: string; nonce: string }
 ) {
   const domain = {
     name: "AgentCollection",
     version: "1",
     chainId: (await ethers.provider.getNetwork()).chainId,
-    verifyingContract: await AgentCollection.getAddress(),
+    verifyingContract: await agentCollection.getAddress(),
   };
 
   const types = {
@@ -108,7 +108,7 @@ export async function signUpdateAgentSignerRequest(
 
 export async function proposeAndMint(
   signer: HardhatEthersSigner,
-  collection: AgentCollection,
+  collection: AgentCollectionV1,
   minter: HardhatEthersSigner,
   params: {
     to: string;
@@ -208,13 +208,19 @@ export async function deployCollectionWithCreator(params: {
   const TestErc20 = await ethers.getContractFactory("TestERC20");
   const testErc20 = await TestErc20.deploy();
 
+  const CollateralController = await ethers.getContractFactory(
+    "TestCollateralController6022"
+  );
+  const collateralController = await CollateralController.deploy();
+
   const CollectionCreator = await ethers.getContractFactory(
     "AgentCollectionCreatorV1"
   );
   const collectionCreator = await CollectionCreator.deploy(
     await collectionsManager.getAddress(),
     await collectionsDescriptor.getAddress(),
-    await collectionImplementation.getAddress()
+    await collectionImplementation.getAddress(),
+    await collateralController.getAddress()
   );
 
   await collectionCreator.addAuthorizedTokenForCreation(
@@ -237,12 +243,13 @@ export async function deployCollectionWithCreator(params: {
   const collectionAddress = await collectionsManager.collections(
     (await collectionsManager.nextCollectionId()) - BigInt(1)
   );
-  const collection = Collection.attach(collectionAddress) as AgentCollection;
+  const collection = Collection.attach(collectionAddress) as AgentCollectionV1;
 
   return {
     collection,
     collectionCreator,
     collectionsManager,
+    collateralController,
     collectionsDescriptor,
   };
 }
