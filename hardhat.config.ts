@@ -2,8 +2,11 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
 
-import "./tasks/add-signer";
-import "./tasks/add-moderator";
+import "./tasks/create-collection";
+import "./tasks/add-signer-to-manager";
+import "./tasks/add-creator-to-manager";
+import "./tasks/add-moderator-to-collection";
+import "./tasks/add-authorized-token-for-creation";
 
 require("dotenv").config();
 

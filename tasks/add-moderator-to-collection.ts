@@ -1,6 +1,6 @@
 import { task } from "hardhat/config";
 
-export default task("add-moderator")
+export default task("add-moderator-to-collection")
   .addParam("collectionAddress", "The address of the collection")
   .addParam("moderator", "The address of the new moderators")
   .setDescription("Add a moderator to a collection")

@@ -1,6 +1,7 @@
 import { task } from "hardhat/config";
+import { AgentCollectionsManager } from "../typechain-types";
 
-export default task("add-signer")
+export default task("add-signer-to-manager")
   .addParam(
     "collectionsManagerAddress",
     "The address of the collections manager"
@@ -9,10 +10,10 @@ export default task("add-signer")
   .setDescription("Add a signer to a collections manager")
   .setAction(async (taskArgs, hre) => {
     const { collectionsManagerAddress, signer } = taskArgs;
-    const AgentCollectionsManager = await hre.ethers.getContractAt(
+    const AgentCollectionsManager = (await hre.ethers.getContractAt(
       "AgentCollectionsManager",
       collectionsManagerAddress
-    );
+    )) as unknown as AgentCollectionsManager;
 
     const signerRole = await AgentCollectionsManager.SIGNER_ROLE();
 
