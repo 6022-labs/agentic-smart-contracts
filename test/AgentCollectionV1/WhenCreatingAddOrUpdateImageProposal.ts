@@ -103,16 +103,16 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           to: await _owner.getAddress(),
         });
 
-        expect(await _collection.addOrUpdateProposalsLength()).to.eq(0n);
+        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(0n);
 
         await _collection.createAddOrUpdateImageProposal(tokenId, {
           key: "profile",
           value: "cid1",
         });
 
-        expect(await _collection.addOrUpdateProposalsLength()).to.eq(1n);
+        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
 
-        const proposal = await _collection.addOrUpdateProposal(0);
+        const proposal = await _collection.addOrUpdateImageProposal(0);
         expect(proposal.tokenId).to.equal(tokenId);
         expect(proposal.image.key).to.equal("profile");
         expect(proposal.image.value).to.equal("cid1");
@@ -145,16 +145,16 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           value: "cid1",
         });
 
-        expect(await _collection.addOrUpdateProposalsLength()).to.eq(1n);
+        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
 
         await _collection.createAddOrUpdateImageProposal(tokenId, {
           key: "profile",
           value: "cid2",
         });
 
-        expect(await _collection.addOrUpdateProposalsLength()).to.eq(1n);
+        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
 
-        const proposal = await _collection.addOrUpdateProposal(0);
+        const proposal = await _collection.addOrUpdateImageProposal(0);
         expect(proposal.tokenId).to.equal(tokenId);
         expect(proposal.image.value).to.equal("cid2");
       });
@@ -168,7 +168,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           to: await _owner.getAddress(),
         });
 
-        expect(await _collection.addOrUpdateProposalsLength()).to.eq(0n);
+        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(0n);
 
         await _collection
           .connect(_moderator)
@@ -177,9 +177,9 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
             value: "cid1",
           });
 
-        expect(await _collection.addOrUpdateProposalsLength()).to.eq(1n);
+        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
 
-        const proposal = await _collection.addOrUpdateProposal(0);
+        const proposal = await _collection.addOrUpdateImageProposal(0);
         expect(proposal.tokenId).to.equal(tokenId);
         expect(proposal.image.key).to.equal("profile");
         expect(proposal.image.value).to.equal("cid1");
@@ -209,7 +209,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           to: await _owner.getAddress(),
         });
 
-        expect(await _collection.addOrUpdateProposalsLength()).to.eq(0n);
+        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(0n);
 
         await _collection
           .connect(_moderator)
@@ -218,9 +218,9 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
             value: "cid1",
           });
 
-        expect(await _collection.addOrUpdateProposalsLength()).to.eq(1n);
+        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
 
-        const proposal = await _collection.addOrUpdateProposal(0);
+        const proposal = await _collection.addOrUpdateImageProposal(0);
         expect(proposal.tokenId).to.equal(tokenId);
         expect(proposal.image.key).to.equal("profile");
         expect(proposal.image.value).to.equal("cid1");

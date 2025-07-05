@@ -54,7 +54,7 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
         value: "cid1",
       });
 
-      const { id: proposalId } = await _collection.addOrUpdateProposal(0);
+      const { id: proposalId } = await _collection.addOrUpdateImageProposal(0);
 
       await expect(
         _collection.refuseAddOrUpdateImageProposal(proposalId)
@@ -89,17 +89,17 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
         value: "cid2",
       });
 
-      expect(await _collection.addOrUpdateProposalsLength()).to.eq(2n);
+      expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(2n);
 
-      const { id: proposalId } = await _collection.addOrUpdateProposal(0);
+      const { id: proposalId } = await _collection.addOrUpdateImageProposal(0);
 
       await _collection
         .connect(_moderator)
         .refuseAddOrUpdateImageProposal(proposalId);
 
-      expect(await _collection.addOrUpdateProposalsLength()).to.eq(1n);
+      expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
 
-      const proposal = await _collection.addOrUpdateProposal(0);
+      const proposal = await _collection.addOrUpdateImageProposal(0);
       expect(proposal.image.key).to.equal("profile2");
     });
 
@@ -113,7 +113,7 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
         value: "cid1",
       });
 
-      const { id: proposalId } = await _collection.addOrUpdateProposal(0);
+      const { id: proposalId } = await _collection.addOrUpdateImageProposal(0);
 
       await expect(
         _collection

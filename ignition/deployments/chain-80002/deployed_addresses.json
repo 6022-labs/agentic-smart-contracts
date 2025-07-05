@@ -1,6 +1,6 @@
 {
-  "AgentCollectionDescriptorModule#AgentCollectionsDescriptor": "0x41e733ea8aF9AFD7cC33Ec1D1BEB0FE74f88d832",
-  "AgentCollectionV1Bytecode#AgentCollectionV1": "0xb61234d113B11Fa032437Fed3eDFA481CF2655E1",
-  "AgentCollectionsManager#AgentCollectionsManager": "0xcf101f887c3194F7b3899311921BCc57594ECD0D",
-  "AgentCollectionCreatorV1#AgentCollectionCreatorV1": "0x049734d21839306BEcA9E4bA500091D0abD60bac"
+  "AgentCollectionDescriptorModule#AgentCollectionsDescriptor": "0x4ef8F6aF1EA0474AaA319108FecCBdD5c929f1B1",
+  "AgentCollectionV1Bytecode#AgentCollectionV1": "0xeA8c28a7a299774e06eeE5F4c96006acAa334878",
+  "AgentCollectionsManager#AgentCollectionsManager": "0xCAFB7Ca99a9cE884f92Ea43b6D873EE689e43964",
+  "AgentCollectionCreatorV1#AgentCollectionCreatorV1": "0x3e80611BB1D42dDb0bb6904F78af2fc5129D2003"
 }

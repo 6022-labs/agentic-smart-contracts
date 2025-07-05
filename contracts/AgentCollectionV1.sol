@@ -271,13 +271,13 @@ contract AgentCollectionV1 is
     }
 
     /// @dev Number of pending image proposals.
-    function addOrUpdateProposalsLength() external view returns (uint256) {
+    function addOrUpdateImageProposalsLength() external view returns (uint256) {
         return _addOrUpdateImageProposals.length;
     }
 
     /// @dev Get an image proposal by index.
     /// @param proposalIndex Index of the proposal.
-    function addOrUpdateProposal(uint256 proposalIndex) external view returns (AddOrUpdateImageProposal memory) {
+    function addOrUpdateImageProposal(uint256 proposalIndex) external view returns (AddOrUpdateImageProposal memory) {
         return _addOrUpdateImageProposals[proposalIndex];
     }
 
