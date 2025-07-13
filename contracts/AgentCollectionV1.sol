@@ -675,7 +675,7 @@ contract AgentCollectionV1 is
         emit AgentImageProposalRemoved(
             proposal.tokenId,
             proposal.image.key,
-            index
+            proposalId
         );
     }
 
@@ -691,7 +691,7 @@ contract AgentCollectionV1 is
         _mintProposals.pop();
         delete _mintProposalIndexById[proposalId];
 
-        emit MintProposalRemoved(proposal.owner, proposal.signer, index);
+        emit MintProposalRemoved(proposal.owner, proposal.signer, proposalId);
     }
 
     /// @dev Reverts if there is a moderator set and the caller is not one.

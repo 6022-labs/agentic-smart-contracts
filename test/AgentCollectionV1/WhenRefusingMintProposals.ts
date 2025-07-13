@@ -126,7 +126,7 @@ describe("WhenRefusingMintProposals", function () {
         _collection.connect(_moderator).refuseMintProposal(proposalId)
       )
         .to.emit(_collection, "MintProposalRemoved")
-        .withArgs(_otherAccount.address, _signer.address, 0n);
+        .withArgs(_otherAccount.address, _signer.address, 1n);
     });
   });
 });
