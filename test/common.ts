@@ -187,7 +187,7 @@ export async function deployCollectionWithCreator(params: {
     ipfsGateway = "https://ipfs.io/ipfs/",
     name = "",
     symbol = "AIA",
-    description = "description",
+    description = `very long "description" with some 'quotes' that is only used for testing purposes............................................................................................................`,
     owner,
     moderator,
   } = params;

@@ -76,30 +76,30 @@ contract AgentCollectionsDescriptor is
     }
 
     function _escapeQuotes(
-        string memory name
+        string memory value
     ) internal pure returns (string memory) {
-        bytes memory nameBytes = bytes(name);
-        uint8 quotesCount = 0;
-        for (uint8 i = 0; i < nameBytes.length; i++) {
-            if (nameBytes[i] == '"') {
+        bytes memory valueBytes = bytes(value);
+        uint256 quotesCount = 0;
+        for (uint256 i = 0; i < valueBytes.length; i++) {
+            if (valueBytes[i] == '"') {
                 quotesCount++;
             }
         }
         if (quotesCount > 0) {
             bytes memory escapedBytes = new bytes(
-                nameBytes.length + (quotesCount)
+                valueBytes.length + (quotesCount)
             );
             uint256 index;
-            for (uint8 i = 0; i < nameBytes.length; i++) {
-                if (nameBytes[i] == '"') {
+            for (uint256 i = 0; i < valueBytes.length; i++) {
+                if (valueBytes[i] == '"') {
                     escapedBytes[index++] = "\\";
                 }
-                escapedBytes[index++] = nameBytes[i];
+                escapedBytes[index++] = valueBytes[i];
             }
             return string(escapedBytes);
         }
 
-        return name;
+        return value;
     }
 
     /// @dev Retrieve the default image from the image list.

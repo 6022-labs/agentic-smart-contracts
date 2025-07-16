@@ -81,15 +81,14 @@ describe("WhenBuildingTokenUri", function () {
 
   describe("Given token id exists", function () {
     let _tokenId: bigint;
-    let _name = "agent";
-    let _images = [
+    const _name = "agent";
+    const _role = "facilitator";
+    const _images = [
       {
         key: "default",
         value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
       },
     ];
-
-    const _role = "facilitator";
 
     beforeEach(async function () {
       const nonce = "1";
