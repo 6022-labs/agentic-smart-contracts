@@ -2,9 +2,15 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
 
+import "./tasks/get-name-of";
+import "./tasks/get-owner-of";
+import "./tasks/build-token-uri";
+import "./tasks/get-agent-images";
 import "./tasks/create-collection";
 import "./tasks/add-signer-to-manager";
+import "./tasks/get-agent-description";
 import "./tasks/add-creator-to-manager";
+import "./tasks/get-collection-description";
 import "./tasks/add-moderator-to-collection";
 import "./tasks/add-authorized-token-for-creation";
 
