@@ -18,7 +18,7 @@ require("dotenv").config();
 
 const alchemyKey = process?.env?.ALCHEMY_KEY?.trim() ?? "";
 const privateKey = process?.env?.PRIVATE_KEY?.trim() ?? "";
-const polygonScanApiKey = process?.env?.POLYGONSCAN_API_KEY?.trim() ?? "";
+const scanApiKey = process?.env?.SCAN_API_KEY?.trim() ?? "";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -55,8 +55,8 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      polygon: polygonScanApiKey,
-      polygonAmoy: polygonScanApiKey,
+      polygon: scanApiKey,
+      polygonAmoy: scanApiKey,
     },
   },
 };
