@@ -12,18 +12,22 @@ const AgentCollectionCreatorV1Module = buildModule(
     const { AgentCollectionV1Bytecode } = m.useModule(
       AgentCollectionBytecodeModule
     );
+
     const { AgentCollectionsDescriptor } = m.useModule(
       AgentCollectionsDescriptorModule
     );
+
     const { AgentCollectionsManager } = m.useModule(
       AgentCollectionsManagerModule
     );
+
+    const collateralController6022 = m.getParameter("collateralController6022");
 
     const AgentCollectionV1Creator = m.contract("AgentCollectionCreatorV1", [
       AgentCollectionsManager,
       AgentCollectionsDescriptor,
       AgentCollectionV1Bytecode,
-      m.getParameter("collateralController6022"),
+      collateralController6022,
     ]);
 
     return { AgentCollectionV1Creator };

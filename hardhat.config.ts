@@ -52,6 +52,16 @@ const config: HardhatUserConfig = {
       allowUnlimitedContractSize: true,
       url: "https://polygon-amoy.g.alchemy.com/v2/" + alchemyKey,
     },
+    citreaTestnet: {
+      gas: "auto",
+      chainId: 5115,
+      gasMultiplier: 2,
+      accounts: [privateKey],
+      throwOnCallFailures: true,
+      throwOnTransactionFailures: true,
+      allowUnlimitedContractSize: true,
+      url: "https://rpc.testnet.citrea.xyz",
+    },
   },
   etherscan: {
     apiKey: {
