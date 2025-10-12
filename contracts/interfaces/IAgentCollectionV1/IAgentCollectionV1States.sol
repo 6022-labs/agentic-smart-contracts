@@ -31,10 +31,6 @@ interface IAgentCollectionV1States is IAgentCollectionStates {
     /// @param tokenId The token identifier.
     function roleOf(uint256 tokenId) external view returns (string memory);
 
-    /// @dev Get the mission of an agent.
-    /// @param tokenId The token identifier.
-    function missionOf(uint256 tokenId) external view returns (string memory);
-
     /// @dev Get the list of agent wallets of an agent.
     /// @param tokenId The token identifier.
     function walletsOf(uint256 tokenId) external view returns (address[] memory);

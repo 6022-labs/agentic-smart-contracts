@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
 import {
   signMintRequest,
   generateRandomNonce,
@@ -55,7 +56,7 @@ describe("WhenRemovingImage", function () {
   ) {
     const name = "test-agent";
     const role = "facilitator";
-    const mission = "";
+    const cloneOf: NullableUint256Struct = { isSet: false, value: 0n };
 
     const nonce = generateRandomNonce();
     const agentAddresses = [generateRandomAddress()];
@@ -67,7 +68,7 @@ describe("WhenRemovingImage", function () {
       role,
       name,
       images,
-      mission,
+      cloneOf,
       nonce,
     });
 
@@ -77,8 +78,8 @@ describe("WhenRemovingImage", function () {
       _signer.address,
       role,
       name,
-      mission,
       images,
+      cloneOf,
       ethers.id(nonce),
       signature
     );

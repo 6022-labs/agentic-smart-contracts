@@ -19,6 +19,10 @@ interface IAgentCollectionV1Errors {
     /// @param name The name that is not valid.
     error InvalidName(string name);
 
+    /// @dev Error when the cloneOf is invalid.
+    /// @param cloneOf The cloneOf that is not valid.
+    error InvalidCloneOf(uint256 cloneOf);
+
     /// @dev Error when the address is not a signer.
     /// @param signer The address that is not a signer.
     error NotSigner(address signer);

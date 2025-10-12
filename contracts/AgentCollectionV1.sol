@@ -10,10 +10,11 @@ import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/crypt
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import {ENSUtils} from "./libraries/ENSUtils.sol";
-import {AgentImagesLib} from "./libraries/AgentImagesLib.sol";
+import {KeyValueLib} from "./libraries/KeyValueLib.sol";
 import {AgenticSignatureLib} from "./libraries/AgenticSignatureLib.sol";
 
 import {KeyValue} from "./types/KeyValue.sol";
+import {NullableUint256} from "./types/NullableUint256.sol";
 import {AgentInformation} from "./types/AgentInformation.sol";
 import {IAgentCollectionV1} from "./interfaces/IAgentCollectionV1/IAgentCollectionV1.sol";
 import {IAgentCollectionsManagerStates} from "./interfaces/IAgentCollectionsManager/IAgentCollectionsManagerStates.sol";
@@ -25,10 +26,11 @@ struct MintProposal {
     string role;
     address owner;
     address signer;
-    string mission;
     address creator;
     address[] wallets;
     KeyValue[] images;
+    KeyValue[] metadata;
+    NullableUint256 cloneOf;
 }
 
 struct AddOrUpdateImageProposal {
@@ -46,7 +48,7 @@ contract AgentCollectionV1 is
     IAgentCollectionV1
 {
     using ECDSA for bytes32;
-    using AgentImagesLib for KeyValue[];
+    using KeyValueLib for KeyValue[];
 
     string private constant SIGNING_DOMAIN = "AgentCollection";
     string private constant SIGNATURE_VERSION = "1";
@@ -229,14 +231,6 @@ contract AgentCollectionV1 is
         return _agentInformationOf[tokenId].images;
     }
 
-    /// @dev Get the mission of an agent.
-    /// @param tokenId The token identifier.
-    function missionOf(uint256 tokenId) external view returns (string memory) {
-        _requireMinted(tokenId);
-
-        return _agentInformationOf[tokenId].mission;
-    }
-
     /// @dev Get the list of agent wallets of an agent.
     /// @param tokenId The token identifier.
     function walletsOf(
@@ -325,21 +319,25 @@ contract AgentCollectionV1 is
         emit AgentSignerUpdated(tokenId, oldSigner, newSigner);
     }
 
-    /// @dev Update the mission of an agent.
-    /// @param tokenId The token whose mission is updated.
-    /// @param newMission The new mission text.
-    function updateAgentMission(uint256 tokenId, string memory newMission) external {
+    /// @dev Add the metadata key/value pair to a token. If the key already exists, its value is updated.
+    /// @param tokenId The token whose metadata key is updated.
+    /// @param key The metadata key to update.
+    /// @param value The new value for the metadata key.
+    function addOrUpdateAgentMetadata(uint256 tokenId, string memory key, string memory value) external {
         _requireMinted(tokenId);
-
         if (ownerOf(tokenId) != _msgSender()) {
             revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
         }
 
         AgentInformation storage agentInfo = _agentInformationOf[tokenId];
-        string memory oldMission = agentInfo.mission;
-        agentInfo.mission = newMission;
 
-        emit AgentMissionUpdated(tokenId, oldMission, newMission);
+        string memory oldValue = agentInfo.metadata.addOrUpdate(key, value);
+        emit AgentMetadataUpdated(
+            tokenId,
+            key,
+            oldValue,
+            value
+        );
     }
 
     /// @dev Propose to add or update an image for a token. (used if moderators setup)
@@ -429,7 +427,7 @@ contract AgentCollectionV1 is
     ) internal {
         AgentInformation storage agentInformation = _agentInformationOf[tokenId];
 
-        string memory oldValue = agentInformation.images.addOrUpdateImage(image.key, image.value);
+        string memory oldValue = agentInformation.images.addOrUpdate(image.key, image.value);
 
         emit AgentImageUpdated(
             tokenId,
@@ -460,9 +458,9 @@ contract AgentCollectionV1 is
         }
 
         KeyValue[] storage images = _agentInformationOf[tokenId].images;
-        images.removeImage(key);
+        images.remove(key);
 
-        if (!images.imagesContainDefault()) {
+        if (!images.containKey("default")) {
             revert MissingDefaultImage();
         }
     }
@@ -473,8 +471,8 @@ contract AgentCollectionV1 is
     /// @param signer The signer address linked to the agent.
     /// @param role The agent role.
     /// @param name The Name of the agent.
-    /// @param mission The initial mission for the agent.
     /// @param images A set of images describing the agent.
+    /// @param cloneOf The ID of the agent to clone (if any).
     /// @param nonce Unique nonce used for signature replay protection.
     /// @param signature Off-chain signature authorizing the mint.
     function createMintProposal(
@@ -483,15 +481,16 @@ contract AgentCollectionV1 is
         address signer,
         string memory role,
         string memory name,
-        string memory mission,
         KeyValue[] memory images,
+        NullableUint256 memory cloneOf,
         bytes32 nonce,
         bytes memory signature
     ) external {
         _requireModerator();
-        _validateMint(to, agentAddresses, signer, role, name, mission, images, nonce, signature);
+        _validateMint(to, agentAddresses, signer, role, name, images, cloneOf, nonce, signature);
 
         _isNonceUsed[nonce] = true;
+
         _mintProposals.push(MintProposal({
             id: _nextProposalId,
             name: name,
@@ -499,9 +498,10 @@ contract AgentCollectionV1 is
             owner: to,
             signer: signer,
             images: images,
-            mission: mission,
+            cloneOf: cloneOf,
             creator: _msgSender(),
-            wallets: agentAddresses
+            wallets: agentAddresses,
+            metadata: new KeyValue[](0)
         }));
 
         _mintProposalIndexById[_nextProposalId] = _mintProposals.length - 1;
@@ -518,8 +518,8 @@ contract AgentCollectionV1 is
     /// @param signer The signer address linked to the agent.
     /// @param role The agent role.
     /// @param name The Name of the agent.
-    /// @param mission The initial mission for the agent.
     /// @param images A set of images describing the agent.
+    /// @param cloneOf The ID of the agent to clone (if any).
     /// @param nonce Unique nonce used for signature replay protection.
     /// @param signature Off-chain signature authorizing the mint.
     function mint(
@@ -528,15 +528,15 @@ contract AgentCollectionV1 is
         address signer,
         string memory role,
         string memory name,
-        string memory mission,
         KeyValue[] memory images,
+        NullableUint256 memory cloneOf,
         bytes32 nonce,
         bytes memory signature
     ) external {
         _requireNoModeratorOrSenderIsModerator();
-        _validateMint(to, agentAddresses, signer, role, name, mission, images, nonce, signature);
+        _validateMint(to, agentAddresses, signer, role, name, images, cloneOf, nonce, signature);
         _isNonceUsed[nonce] = true;
-        _mintAgent(to, agentAddresses, signer, role, name, mission, images, _msgSender());
+        _mintAgent(to, agentAddresses, signer, role, name, images, _msgSender(), cloneOf);
     }
 
     /// @dev Mint an agent from an approved proposal.
@@ -555,9 +555,9 @@ contract AgentCollectionV1 is
             proposalInfo.signer,
             proposalInfo.role,
             proposalInfo.name,
-            proposalInfo.mission,
             proposalInfo.images,
-            proposalInfo.creator
+            proposalInfo.creator,
+            proposalInfo.cloneOf
         );
         _popMintProposalAt(proposalIndex);
     }
@@ -569,8 +569,8 @@ contract AgentCollectionV1 is
         address signer,
         string memory role,
         string memory name,
-        string memory mission,
         KeyValue[] memory images,
+        NullableUint256 memory cloneOf,
         bytes32 nonce,
         bytes memory signature
     ) internal view {
@@ -583,8 +583,11 @@ contract AgentCollectionV1 is
         if (_tokenIdOf[name] != 0) {
             revert UsedName(name);
         }
-        if (!images.imagesContainDefault()) {
+        if (!images.containKey("default")) {
             revert MissingDefaultImage();
+        }
+        if (cloneOf.isSet && (cloneOf.value == 0 || cloneOf.value >= nextTokenId)) {
+            revert InvalidCloneOf(cloneOf.value);
         }
 
         address recoveredAddress = _recoverMintSigner(AgenticSignatureLib.MintParams({
@@ -594,7 +597,7 @@ contract AgentCollectionV1 is
             role: role,
             name: name,
             images: images,
-            mission: mission,
+            cloneOf: cloneOf,
             nonce: nonce
         }), signature);
         if (!IAgentCollectionsManagerStates(collectionsManager).isSigner(recoveredAddress)) {
@@ -612,18 +615,19 @@ contract AgentCollectionV1 is
         address signer,
         string memory role,
         string memory name,
-        string memory mission,
         KeyValue[] memory images,
-        address creator
+        address creator,
+        NullableUint256 memory cloneOf
     ) internal {
         _agentInformationOf[nextTokenId] = AgentInformation({
             name: name,
             role: role,
             images: images,
             signer: signer,
-            mission: mission,
             creator: creator,
-            wallets: agentAddresses
+            cloneOf: cloneOf,
+            wallets: agentAddresses,
+            metadata: new KeyValue[](0)
         });
         _tokenIdOf[name] = nextTokenId;
         _safeMint(to, nextTokenId);

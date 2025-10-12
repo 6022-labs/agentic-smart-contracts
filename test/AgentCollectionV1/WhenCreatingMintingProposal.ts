@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
 import {
   signMintRequest,
   generateRandomAddress,
@@ -14,7 +15,7 @@ describe("WhenCreatingMintingProposal", function () {
 
   // Common constants to avoid repetition
   const DEFAULT_ROLE = "facilitator";
-  const DEFAULT_MISSION = "";
+  const DEFAULT_CLONE_OF: NullableUint256Struct = { isSet: false, value: 0n };
   const DEFAULT_IMAGES = [
     {
       key: "default",
@@ -83,7 +84,7 @@ describe("WhenCreatingMintingProposal", function () {
         role: DEFAULT_ROLE,
         name: INVALID_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -94,8 +95,8 @@ describe("WhenCreatingMintingProposal", function () {
           _signer1.address,
           DEFAULT_ROLE,
           INVALID_NAME,
-          DEFAULT_MISSION,
           DEFAULT_IMAGES,
+          DEFAULT_CLONE_OF,
           ethers.id(NONCE_1),
           signature
         )
@@ -114,7 +115,7 @@ describe("WhenCreatingMintingProposal", function () {
           role: DEFAULT_ROLE,
           name: INVALID_NAME,
           images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
+          cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_1,
         });
 
@@ -125,8 +126,8 @@ describe("WhenCreatingMintingProposal", function () {
             _signer1.address,
             DEFAULT_ROLE,
             INVALID_NAME,
-            DEFAULT_MISSION,
             DEFAULT_IMAGES,
+            DEFAULT_CLONE_OF,
             ethers.id(NONCE_1),
             signature
           )
@@ -146,7 +147,7 @@ describe("WhenCreatingMintingProposal", function () {
           role: DEFAULT_ROLE,
           name: DEFAULT_NAME,
           images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
+          cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_1,
         });
 
@@ -156,8 +157,8 @@ describe("WhenCreatingMintingProposal", function () {
           _signer1.address,
           DEFAULT_ROLE,
           DEFAULT_NAME,
-          DEFAULT_MISSION,
           DEFAULT_IMAGES,
+          DEFAULT_CLONE_OF,
           ethers.id(NONCE_1),
           signature
         );
@@ -169,8 +170,8 @@ describe("WhenCreatingMintingProposal", function () {
             _signer1.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
-            DEFAULT_MISSION,
             DEFAULT_IMAGES,
+            DEFAULT_CLONE_OF,
             ethers.id(NONCE_1),
             signature
           )
@@ -191,7 +192,7 @@ describe("WhenCreatingMintingProposal", function () {
           role: DEFAULT_ROLE,
           name: DEFAULT_NAME,
           images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
+          cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_1,
         });
 
@@ -201,8 +202,8 @@ describe("WhenCreatingMintingProposal", function () {
           _signer1.address,
           DEFAULT_ROLE,
           DEFAULT_NAME,
-          DEFAULT_MISSION,
           DEFAULT_IMAGES,
+          DEFAULT_CLONE_OF,
           ethers.id(NONCE_1),
           sig1
         );
@@ -220,7 +221,7 @@ describe("WhenCreatingMintingProposal", function () {
           role: DEFAULT_ROLE,
           name: DEFAULT_NAME,
           images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
+          cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_2,
         });
 
@@ -231,14 +232,86 @@ describe("WhenCreatingMintingProposal", function () {
             _signer1.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
-            DEFAULT_MISSION,
             DEFAULT_IMAGES,
+            DEFAULT_CLONE_OF,
             ethers.id(NONCE_2),
             sig2
           )
         )
           .to.be.revertedWithCustomError(_collection, "UsedName")
           .withArgs(DEFAULT_NAME);
+      });
+    });
+
+    describe("Given cloneOf is set but value is 0", function () {
+      it("Should revert with 'InvalidCloneOf' error", async function () {
+        const agentAddresses = [generateRandomAddress()];
+        const invalidCloneOf: NullableUint256Struct = {
+          isSet: true,
+          value: 0n,
+        };
+        const signature = await signMintRequest(_signer1, _collection, {
+          to: _owner.address,
+          agentAddresses,
+          signer: _signer1.address,
+          role: DEFAULT_ROLE,
+          name: DEFAULT_NAME,
+          images: DEFAULT_IMAGES,
+          cloneOf: invalidCloneOf,
+          nonce: NONCE_1,
+        });
+
+        await expect(
+          _collection.createMintProposal(
+            _owner.address,
+            agentAddresses,
+            _signer1.address,
+            DEFAULT_ROLE,
+            DEFAULT_NAME,
+            DEFAULT_IMAGES,
+            invalidCloneOf,
+            ethers.id(NONCE_1),
+            signature
+          )
+        )
+          .to.be.revertedWithCustomError(_collection, "InvalidCloneOf")
+          .withArgs(0n);
+      });
+    });
+
+    describe("Given cloneOf is set but related token (agent) does not exist", function () {
+      it("Should revert with 'InvalidCloneOf' error", async function () {
+        const agentAddresses = [generateRandomAddress()];
+        const invalidCloneOf: NullableUint256Struct = {
+          isSet: true,
+          value: 9999n,
+        };
+        const signature = await signMintRequest(_signer1, _collection, {
+          to: _owner.address,
+          agentAddresses,
+          signer: _signer1.address,
+          role: DEFAULT_ROLE,
+          name: DEFAULT_NAME,
+          images: DEFAULT_IMAGES,
+          cloneOf: invalidCloneOf,
+          nonce: NONCE_1,
+        });
+
+        await expect(
+          _collection.createMintProposal(
+            _owner.address,
+            agentAddresses,
+            _signer1.address,
+            DEFAULT_ROLE,
+            DEFAULT_NAME,
+            DEFAULT_IMAGES,
+            invalidCloneOf,
+            ethers.id(NONCE_1),
+            signature
+          )
+        )
+          .to.be.revertedWithCustomError(_collection, "InvalidCloneOf")
+          .withArgs(9999n);
       });
     });
 
@@ -252,7 +325,7 @@ describe("WhenCreatingMintingProposal", function () {
           role: DEFAULT_ROLE,
           name: DEFAULT_NAME,
           images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
+          cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_1,
         });
 
@@ -263,8 +336,8 @@ describe("WhenCreatingMintingProposal", function () {
             _signer2.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
-            DEFAULT_MISSION,
             DEFAULT_IMAGES,
+            DEFAULT_CLONE_OF,
             ethers.id(NONCE_1),
             signature
           )
@@ -275,39 +348,116 @@ describe("WhenCreatingMintingProposal", function () {
     });
 
     describe("Given a valid signature", function () {
-      it("Should create the proposal", async function () {
-        const agentAddresses = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _owner.address,
-          agentAddresses,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
-          nonce: NONCE_1,
+      describe("With cloneOf set", function () {
+        it("Should create the proposal", async function () {
+          const agentAddresses = [generateRandomAddress()];
+
+          // First, mint an agent to clone
+          const signature1 = await signMintRequest(_signer1, _collection, {
+            to: _owner.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role: DEFAULT_ROLE,
+            name: DEFAULT_NAME,
+            images: DEFAULT_IMAGES,
+            cloneOf: DEFAULT_CLONE_OF,
+            nonce: NONCE_1,
+          });
+
+          await _collection.createMintProposal(
+            _owner.address,
+            agentAddresses,
+            _signer1.address,
+            DEFAULT_ROLE,
+            DEFAULT_NAME,
+            DEFAULT_IMAGES,
+            DEFAULT_CLONE_OF,
+            ethers.id(NONCE_1),
+            signature1
+          );
+
+          let mintProposalsLength = await _collection.mintProposalsLength();
+
+          await _collection
+            .connect(_moderator)
+            .mintFromProposal(mintProposalsLength - BigInt(1));
+
+          const cloneOf: NullableUint256Struct = {
+            isSet: true,
+            value: (await _collection.nextTokenId()) - BigInt(1),
+          };
+
+          const signature2 = await signMintRequest(_signer1, _collection, {
+            to: _owner.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role: DEFAULT_ROLE,
+            name: "cloned-agent",
+            images: DEFAULT_IMAGES,
+            cloneOf,
+            nonce: NONCE_2,
+          });
+
+          const mintProposalLengthBefore =
+            await _collection.mintProposalsLength();
+
+          await _collection.createMintProposal(
+            _owner.address,
+            agentAddresses,
+            _signer1.address,
+            DEFAULT_ROLE,
+            "cloned-agent",
+            DEFAULT_IMAGES,
+            cloneOf,
+            ethers.id(NONCE_2),
+            signature2
+          );
+
+          const mintProposalLengthAfter =
+            await _collection.mintProposalsLength();
+
+          expect(mintProposalLengthAfter).to.be.equal(
+            mintProposalLengthBefore + BigInt(1)
+          );
         });
+      });
 
-        const mintProposalLengthBefore =
-          await _collection.mintProposalsLength();
+      describe("With cloneOf not set", function () {
+        it("Should create the proposal", async function () {
+          const agentAddresses = [generateRandomAddress()];
+          const signature = await signMintRequest(_signer1, _collection, {
+            to: _owner.address,
+            agentAddresses,
+            signer: _signer1.address,
+            role: DEFAULT_ROLE,
+            name: DEFAULT_NAME,
+            images: DEFAULT_IMAGES,
+            cloneOf: DEFAULT_CLONE_OF,
+            nonce: NONCE_1,
+          });
 
-        await _collection.createMintProposal(
-          _owner.address,
-          agentAddresses,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          DEFAULT_MISSION,
-          DEFAULT_IMAGES,
-          ethers.id(NONCE_1),
-          signature
-        );
+          const mintProposalLengthBefore =
+            await _collection.mintProposalsLength();
 
-        const mintProposalLengthAfter = await _collection.mintProposalsLength();
+          await _collection.createMintProposal(
+            _owner.address,
+            agentAddresses,
+            _signer1.address,
+            DEFAULT_ROLE,
+            DEFAULT_NAME,
+            DEFAULT_IMAGES,
+            DEFAULT_CLONE_OF,
+            ethers.id(NONCE_1),
+            signature
+          );
 
-        expect(mintProposalLengthAfter).to.be.equal(
-          mintProposalLengthBefore + BigInt(1)
-        );
+          const mintProposalLengthAfter =
+            await _collection.mintProposalsLength();
+
+          expect(mintProposalLengthAfter).to.be.equal(
+            mintProposalLengthBefore + BigInt(1)
+          );
+        });
       });
 
       it("Should emit a MintProposalCreated event", async function () {
@@ -319,7 +469,7 @@ describe("WhenCreatingMintingProposal", function () {
           role: DEFAULT_ROLE,
           name: DEFAULT_NAME,
           images: DEFAULT_IMAGES,
-          mission: DEFAULT_MISSION,
+          cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_1,
         });
 
@@ -330,8 +480,8 @@ describe("WhenCreatingMintingProposal", function () {
             _signer1.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
-            DEFAULT_MISSION,
             DEFAULT_IMAGES,
+            DEFAULT_CLONE_OF,
             ethers.id(NONCE_1),
             signature
           )
@@ -353,7 +503,7 @@ describe("WhenCreatingMintingProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -364,8 +514,8 @@ describe("WhenCreatingMintingProposal", function () {
           _otherAccount.address,
           DEFAULT_ROLE,
           DEFAULT_NAME,
-          DEFAULT_MISSION,
           DEFAULT_IMAGES,
+          DEFAULT_CLONE_OF,
           ethers.id(NONCE_1),
           signature
         )

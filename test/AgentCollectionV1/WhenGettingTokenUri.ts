@@ -9,6 +9,7 @@ import {
   generateRandomAddress,
   deployCollectionWithCreator,
 } from "../common";
+import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
 
 describe("WhenGettingTokenUri", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -65,7 +66,7 @@ describe("WhenGettingTokenUri", function () {
     beforeEach(async function () {
       const nonce = "1";
       _tokenId = await _collection.nextTokenId();
-      const mission = "";
+      const cloneOf: NullableUint256Struct = { isSet: false, value: 0n };
 
       const signature = await signMintRequest(_signer, _collection, {
         to: _owner.address,
@@ -74,7 +75,7 @@ describe("WhenGettingTokenUri", function () {
         role: _role,
         name: _name,
         images: _images,
-        mission,
+        cloneOf,
         nonce,
       });
 
@@ -84,8 +85,8 @@ describe("WhenGettingTokenUri", function () {
         _signer.address,
         _role,
         _name,
-        mission,
         _images,
+        cloneOf,
         ethers.id(nonce),
         signature
       );

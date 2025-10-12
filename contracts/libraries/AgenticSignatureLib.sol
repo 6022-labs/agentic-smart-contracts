@@ -5,6 +5,7 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 import {KeyValue} from "../types/KeyValue.sol";
+import {NullableUint256} from "../types/NullableUint256.sol";
 
 library AgenticSignatureLib {
     using ECDSA for bytes32;
@@ -17,14 +18,14 @@ library AgenticSignatureLib {
         address signer;
         string role;
         string name;
-        string mission;
         KeyValue[] images;
+        NullableUint256 cloneOf;
         bytes32 nonce;
     }
 
     bytes32 internal constant MINT_TYPEHASH =
         keccak256(
-            "MintRequest(address to,bytes32 agentAddressesHash,address signer,bytes32 roleHash,bytes32 nameHash,bytes32 missionHash,bytes32 imagesHash,bytes32 nonce)"
+            "MintRequest(address to,bytes32 agentAddressesHash,address signer,bytes32 roleHash,bytes32 nameHash,bytes32 imagesHash,bytes32 cloneOfHash,bytes32 nonce)"
         );
 
     // Hash MintParams struct
@@ -34,13 +35,13 @@ library AgenticSignatureLib {
         );
         bytes32 nameHash = keccak256(abi.encodePacked(params.name));
         bytes32 roleHash = keccak256(abi.encodePacked(params.role));
-        bytes32 missionHash = keccak256(abi.encodePacked(params.mission));
 
         bytes32[] memory imagesHashes = new bytes32[](params.images.length);
         for (uint i = 0; i < params.images.length; i++) {
             imagesHashes[i] = keccak256(abi.encodePacked(params.images[i].key, params.images[i].value));
         }
         bytes32 imagesHash = keccak256(abi.encodePacked(imagesHashes));
+        bytes32 cloneOfHash = params.cloneOf.isSet ? keccak256(abi.encodePacked(params.cloneOf.value)) : bytes32(0);
 
         return keccak256(
             abi.encode(
@@ -50,8 +51,8 @@ library AgenticSignatureLib {
                 params.signer,
                 roleHash,
                 nameHash,
-                missionHash,
                 imagesHash,
+                cloneOfHash,
                 params.nonce
             )
         );

@@ -1,6 +1,7 @@
 import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { NullableUint256Struct } from "../typechain-types/contracts/AgentCollectionV1";
 
 export function generateRandomAddress(): string {
   return ethers.Wallet.createRandom().address;
@@ -16,7 +17,7 @@ export async function signMintRequest(
     role: string;
     name: string;
     images: { key: string; value: string }[];
-    mission: string;
+    cloneOf: NullableUint256Struct;
     nonce: string;
   }
 ) {
@@ -38,8 +39,8 @@ export async function signMintRequest(
       { name: "signer", type: "address" },
       { name: "roleHash", type: "bytes32" },
       { name: "nameHash", type: "bytes32" },
-      { name: "missionHash", type: "bytes32" },
       { name: "imagesHash", type: "bytes32" },
+      { name: "cloneOfHash", type: "bytes32" },
       { name: "nonce", type: "bytes32" },
     ],
   };
@@ -57,7 +58,11 @@ export async function signMintRequest(
   );
   const imagesPacked = ethers.solidityPacked(["bytes32[]"], [imageHashes]);
   const imagesHash = ethers.keccak256(imagesPacked);
-  const missionHash = ethers.keccak256(ethers.toUtf8Bytes(params.mission));
+  const cloneOfHash = params.cloneOf.isSet
+    ? ethers.keccak256(
+        ethers.solidityPacked(["uint256"], [params.cloneOf.value])
+      )
+    : ethers.ZeroHash;
 
   const message = {
     to: params.to,
@@ -66,7 +71,7 @@ export async function signMintRequest(
     roleHash,
     nameHash,
     imagesHash,
-    missionHash,
+    cloneOfHash,
     nonce: ethers.keccak256(ethers.toUtf8Bytes(params.nonce)),
   };
 
@@ -116,7 +121,7 @@ export async function proposeAndMint(
     role?: string;
     name?: string;
     images?: { key: string; value: string }[];
-    mission?: string;
+    cloneOf?: NullableUint256Struct;
     nonce?: string;
   }
 ) {
@@ -130,7 +135,7 @@ export async function proposeAndMint(
         value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
       },
     ],
-    mission = "",
+    cloneOf = { isSet: false, value: 0n },
     nonce = generateRandomNonce(),
   } = params;
 
@@ -141,7 +146,7 @@ export async function proposeAndMint(
     role,
     name,
     images,
-    mission,
+    cloneOf,
     nonce,
   });
 
@@ -151,8 +156,8 @@ export async function proposeAndMint(
     signer.address,
     role,
     name,
-    mission,
     images,
+    cloneOf!,
     ethers.id(nonce),
     signature
   );

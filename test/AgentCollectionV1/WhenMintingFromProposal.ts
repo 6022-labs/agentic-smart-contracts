@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
 import {
   proposeAndMint,
   signMintRequest,
@@ -15,7 +16,7 @@ describe("WhenMintingFromProposal", function () {
 
   // Common constants to avoid repetition
   const DEFAULT_ROLE = "facilitator";
-  const DEFAULT_MISSION = "";
+  const DEFAULT_CLONE_OF: NullableUint256Struct = { isSet: false, value: 0n };
   const DEFAULT_IMAGES = [
     {
       key: "default",
@@ -73,7 +74,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -83,8 +84,8 @@ describe("WhenMintingFromProposal", function () {
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
-        DEFAULT_MISSION,
         DEFAULT_IMAGES,
+        DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         signature
       );
@@ -126,7 +127,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -136,8 +137,8 @@ describe("WhenMintingFromProposal", function () {
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
-        DEFAULT_MISSION,
         DEFAULT_IMAGES,
+        DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         sig1
       );
@@ -149,7 +150,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_2,
       });
 
@@ -159,8 +160,8 @@ describe("WhenMintingFromProposal", function () {
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
-        DEFAULT_MISSION,
         DEFAULT_IMAGES,
+        DEFAULT_CLONE_OF,
         ethers.id(NONCE_2),
         sig2
       );
@@ -184,7 +185,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -206,7 +207,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME_1,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -226,7 +227,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME_1,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -245,7 +246,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -261,7 +262,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -277,7 +278,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -298,7 +299,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -314,7 +315,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -343,7 +344,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -359,7 +360,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -375,7 +376,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -394,7 +395,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -404,8 +405,8 @@ describe("WhenMintingFromProposal", function () {
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
-        DEFAULT_MISSION,
         DEFAULT_IMAGES,
+        DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         signature
       );
@@ -415,9 +416,7 @@ describe("WhenMintingFromProposal", function () {
         mintProposalsLength - BigInt(1)
       );
 
-      await expect(
-        _collection.connect(_owner).mintFromProposal(proposalId)
-      )
+      await expect(_collection.connect(_owner).mintFromProposal(proposalId))
         .to.emit(_collection, "Minted")
         .withArgs(_otherAccount.address, _signer.address, tokenId);
     });
@@ -434,7 +433,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -444,8 +443,8 @@ describe("WhenMintingFromProposal", function () {
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
-        DEFAULT_MISSION,
         DEFAULT_IMAGES,
+        DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         signature
       );
@@ -455,9 +454,7 @@ describe("WhenMintingFromProposal", function () {
         mintProposalsLength - BigInt(1)
       );
 
-      await expect(
-        _collection.connect(_owner).mintFromProposal(proposalId)
-      )
+      await expect(_collection.connect(_owner).mintFromProposal(proposalId))
         .to.emit(_collection, "AgentSignerUpdated")
         .withArgs(tokenId, ethers.ZeroAddress, _signer.address);
     });
@@ -472,7 +469,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -482,8 +479,8 @@ describe("WhenMintingFromProposal", function () {
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
-        DEFAULT_MISSION,
         DEFAULT_IMAGES,
+        DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         signature
       );
@@ -493,9 +490,7 @@ describe("WhenMintingFromProposal", function () {
         mintProposalsLength - BigInt(1)
       );
 
-      await expect(
-        _collection.connect(_owner).mintFromProposal(proposalId)
-      )
+      await expect(_collection.connect(_owner).mintFromProposal(proposalId))
         .to.emit(_collection, "MintProposalRemoved")
         .withArgs(
           _otherAccount.address,
@@ -514,7 +509,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -524,8 +519,8 @@ describe("WhenMintingFromProposal", function () {
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
-        DEFAULT_MISSION,
         DEFAULT_IMAGES,
+        DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         signature
       );
@@ -552,7 +547,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME_1,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
@@ -562,8 +557,8 @@ describe("WhenMintingFromProposal", function () {
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME_1,
-        DEFAULT_MISSION,
         DEFAULT_IMAGES,
+        DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         sig1
       );
@@ -575,7 +570,7 @@ describe("WhenMintingFromProposal", function () {
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME_2,
         images: DEFAULT_IMAGES,
-        mission: DEFAULT_MISSION,
+        cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_2,
       });
 
@@ -585,8 +580,8 @@ describe("WhenMintingFromProposal", function () {
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME_2,
-        DEFAULT_MISSION,
         DEFAULT_IMAGES,
+        DEFAULT_CLONE_OF,
         ethers.id(NONCE_2),
         sig2
       );

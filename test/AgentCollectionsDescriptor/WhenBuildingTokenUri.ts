@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
 import {
   decodeTokenURI,
   signMintRequest,
@@ -93,7 +94,7 @@ describe("WhenBuildingTokenUri", function () {
     beforeEach(async function () {
       const nonce = "1";
       const agentAddresses = [generateRandomAddress()];
-      const mission = "";
+      const cloneOf: NullableUint256Struct = { isSet: false, value: 0n };
 
       _tokenId = await _collection.nextTokenId();
 
@@ -104,7 +105,7 @@ describe("WhenBuildingTokenUri", function () {
         role: _role,
         name: _name,
         images: _images,
-        mission,
+        cloneOf,
         nonce,
       });
 
@@ -114,8 +115,8 @@ describe("WhenBuildingTokenUri", function () {
         _signer.address,
         _role,
         _name,
-        mission,
         _images,
+        cloneOf,
         ethers.id(nonce),
         signature
       );

@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
 import {
   signMintRequest,
   generateRandomAddress,
@@ -13,7 +14,7 @@ describe("WhenRefusingMintProposals", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   const DEFAULT_ROLE = "facilitator";
-  const DEFAULT_MISSION = "";
+  const DEFAULT_CLONE_OF: NullableUint256Struct = { isSet: false, value: 0n };
   const DEFAULT_IMAGES = [
     {
       key: "default",
@@ -65,7 +66,7 @@ describe("WhenRefusingMintProposals", function () {
       role: DEFAULT_ROLE,
       name,
       images: DEFAULT_IMAGES,
-      mission: DEFAULT_MISSION,
+      cloneOf: DEFAULT_CLONE_OF,
       nonce,
     });
 
@@ -75,8 +76,8 @@ describe("WhenRefusingMintProposals", function () {
       _signer.address,
       DEFAULT_ROLE,
       name,
-      DEFAULT_MISSION,
       DEFAULT_IMAGES,
+      DEFAULT_CLONE_OF,
       ethers.id(nonce),
       signature
     );

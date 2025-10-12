@@ -22,14 +22,16 @@ interface IAgentCollectionV1Events {
         address newSigner
     );
 
-    /// @dev Emitted when an agent's mission is updated.
-    /// @param tokenId The ID of the token whose mission was updated.
-    /// @param oldMission The previous mission text.
-    /// @param newMission The new mission text.
-    event AgentMissionUpdated(
+    /// @dev Emitted when an agent's metadata key is updated.
+    /// @param tokenId The ID of the token whose metadata was updated.
+    /// @param key The key of the metadata that was updated.
+    /// @param oldValue The previous value of the metadata.
+    /// @param newValue The new value of the metadata.
+    event AgentMetadataUpdated(
         uint256 indexed tokenId,
-        string oldMission,
-        string newMission
+        string indexed key,
+        string oldValue,
+        string newValue
     );
 
     /// @dev Emitted when an agent image is added or updated.
