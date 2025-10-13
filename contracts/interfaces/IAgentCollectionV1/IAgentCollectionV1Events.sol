@@ -27,7 +27,7 @@ interface IAgentCollectionV1Events {
     /// @param key The key of the metadata that was updated.
     /// @param oldValue The previous value of the metadata.
     /// @param newValue The new value of the metadata.
-    event AgentMetadataUpdated(
+    event AgentAttributeUpdated(
         uint256 indexed tokenId,
         string indexed key,
         string oldValue,

@@ -11,6 +11,6 @@ struct AgentInformation {
     address creator;
     address[] wallets;
     KeyValue[] images;
-    KeyValue[] metadata;
+    KeyValue[] attributes;
     NullableUint256 cloneOf;
 }

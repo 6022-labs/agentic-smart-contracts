@@ -11,7 +11,7 @@ import {
   deployCollectionWithCreator,
 } from "../common";
 
-describe("WhenAddingOrUpdatingAgentMetadata", function () {
+describe("WhenAddingOrUpdatingAgentAttribute", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _collection: AgentCollectionV1;
@@ -103,7 +103,7 @@ describe("WhenAddingOrUpdatingAgentMetadata", function () {
       await expect(
         _collection
           .connect(_owner)
-          .addOrUpdateAgentMetadata(tokenId, "key", "value")
+          .addOrUpdateAgentAttribute(tokenId, "key", "value")
       )
         .to.be.revertedWithCustomError(_collection, "ERC721NonexistentToken")
         .withArgs(tokenId);
@@ -117,7 +117,7 @@ describe("WhenAddingOrUpdatingAgentMetadata", function () {
       await expect(
         _collection
           .connect(_otherAccount)
-          .addOrUpdateAgentMetadata(tokenId, "key", "value")
+          .addOrUpdateAgentAttribute(tokenId, "key", "value")
       )
         .to.be.revertedWithCustomError(
           _collection,
@@ -127,96 +127,100 @@ describe("WhenAddingOrUpdatingAgentMetadata", function () {
     });
   });
 
-  describe("Given metadata key is not yet defined", function () {
-    const METADATA_KEY = "initial-key";
-    const METADATA_VALUE = "initial-value";
+  describe("Given attribute key is not yet defined", function () {
+    const ATTRIBUTE_KEY = "initial-key";
+    const ATTRIBUTE_VALUE = "initial-value";
 
-    it("Should add the metadata", async function () {
+    it("Should add the attribute", async function () {
       const tokenId = await mintWithSignature(await _owner.getAddress());
 
       await _collection
         .connect(_owner)
-        .addOrUpdateAgentMetadata(tokenId, METADATA_KEY, METADATA_VALUE);
+        .addOrUpdateAgentAttribute(tokenId, ATTRIBUTE_KEY, ATTRIBUTE_VALUE);
 
       const information = await _collection.informationOf(tokenId);
 
-      for (const metadata of information.metadata) {
-        if (metadata.key === METADATA_KEY) {
-          expect(metadata.value).to.equal(METADATA_VALUE);
+      for (const attribute of information.attributes) {
+        if (attribute.key === ATTRIBUTE_KEY) {
+          expect(attribute.value).to.equal(ATTRIBUTE_VALUE);
           return;
         }
       }
 
-      throw new Error("Metadata key not found");
+      throw new Error("Attribute key not found");
     });
 
-    it("Should emit 'AgentMetadataUpdated' event", async function () {
+    it("Should emit 'AgentAttributeUpdated' event", async function () {
       const tokenId = await mintWithSignature(await _owner.getAddress());
 
       await expect(
         _collection
           .connect(_owner)
-          .addOrUpdateAgentMetadata(tokenId, METADATA_KEY, METADATA_VALUE)
+          .addOrUpdateAgentAttribute(tokenId, ATTRIBUTE_KEY, ATTRIBUTE_VALUE)
       )
-        .to.emit(_collection, "AgentMetadataUpdated")
-        .withArgs(tokenId, METADATA_KEY, "", METADATA_VALUE);
+        .to.emit(_collection, "AgentAttributeUpdated")
+        .withArgs(tokenId, ATTRIBUTE_KEY, "", ATTRIBUTE_VALUE);
     });
   });
 
-  describe("Given metadata key is already defined", function () {
-    const METADATA_KEY = "existing-key";
-    const EXISTING_METADATA_VALUE = "existing-value";
-    const NEW_METADATA_VALUE = "new-value";
+  describe("Given attribute key is already defined", function () {
+    const ATTRIBUTE_KEY = "existing-key";
+    const EXISTING_ATTRIBUTE_VALUE = "existing-value";
+    const NEW_ATTRIBUTE_VALUE = "new-value";
 
-    it("Should update the metadata", async function () {
+    it("Should update the attribute", async function () {
       const tokenId = await mintWithSignature(await _owner.getAddress());
 
       await _collection
         .connect(_owner)
-        .addOrUpdateAgentMetadata(
+        .addOrUpdateAgentAttribute(
           tokenId,
-          METADATA_KEY,
-          EXISTING_METADATA_VALUE
+          ATTRIBUTE_KEY,
+          EXISTING_ATTRIBUTE_VALUE
         );
 
       await _collection
         .connect(_owner)
-        .addOrUpdateAgentMetadata(tokenId, METADATA_KEY, NEW_METADATA_VALUE);
+        .addOrUpdateAgentAttribute(tokenId, ATTRIBUTE_KEY, NEW_ATTRIBUTE_VALUE);
 
       const information = await _collection.informationOf(tokenId);
 
-      for (const metadata of information.metadata) {
-        if (metadata.key === METADATA_KEY) {
-          expect(metadata.value).to.equal(NEW_METADATA_VALUE);
+      for (const attribute of information.attributes) {
+        if (attribute.key === ATTRIBUTE_KEY) {
+          expect(attribute.value).to.equal(NEW_ATTRIBUTE_VALUE);
           return;
         }
       }
 
-      throw new Error("Metadata key not found");
+      throw new Error("Attribute key not found");
     });
 
-    it("Should emit 'AgentMetadataUpdated' event", async function () {
+    it("Should emit 'AgentAttributeUpdated' event", async function () {
       const tokenId = await mintWithSignature(await _owner.getAddress());
 
       await _collection
         .connect(_owner)
-        .addOrUpdateAgentMetadata(
+        .addOrUpdateAgentAttribute(
           tokenId,
-          METADATA_KEY,
-          EXISTING_METADATA_VALUE
+          ATTRIBUTE_KEY,
+          EXISTING_ATTRIBUTE_VALUE
         );
 
       await expect(
         _collection
           .connect(_owner)
-          .addOrUpdateAgentMetadata(tokenId, METADATA_KEY, NEW_METADATA_VALUE)
+          .addOrUpdateAgentAttribute(
+            tokenId,
+            ATTRIBUTE_KEY,
+            NEW_ATTRIBUTE_VALUE
+          )
       )
-        .to.emit(_collection, "AgentMetadataUpdated")
+        .to.emit(_collection, "AgentAttributeUpdated")
         .withArgs(
           tokenId,
-          METADATA_KEY,
-          EXISTING_METADATA_VALUE,
-          NEW_METADATA_VALUE
+          ATTRIBUTE_KEY,
+          EXISTING_ATTRIBUTE_VALUE,
+          NEW_ATTRIBUTE_VALUE
         );
     });
   });

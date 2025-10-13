@@ -25,11 +25,11 @@ interface IAgentCollectionV1Actions {
         string memory key
     ) external;
 
-    /// @dev Add the metadata key/value pair to a token. If the key already exists, its value is updated.
-    /// @param tokenId The token whose metadata key is updated.
-    /// @param key The metadata key to update.
-    /// @param value The new value for the metadata key.
-    function addOrUpdateAgentMetadata(
+    /// @dev Add the attribute key/value pair to a token. If the key already exists, its value is updated.
+    /// @param tokenId The token whose attribute key is updated.
+    /// @param key The attribute key to update.
+    /// @param value The new value for the attribute key.
+    function addOrUpdateAgentAttribute(
         uint256 tokenId,
         string memory key,
         string memory value

@@ -29,7 +29,7 @@ struct MintProposal {
     address creator;
     address[] wallets;
     KeyValue[] images;
-    KeyValue[] metadata;
+    KeyValue[] attributes;
     NullableUint256 cloneOf;
 }
 
@@ -319,11 +319,11 @@ contract AgentCollectionV1 is
         emit AgentSignerUpdated(tokenId, oldSigner, newSigner);
     }
 
-    /// @dev Add the metadata key/value pair to a token. If the key already exists, its value is updated.
-    /// @param tokenId The token whose metadata key is updated.
-    /// @param key The metadata key to update.
-    /// @param value The new value for the metadata key.
-    function addOrUpdateAgentMetadata(uint256 tokenId, string memory key, string memory value) external {
+    /// @dev Add the attribute key/value pair to a token. If the key already exists, its value is updated.
+    /// @param tokenId The token whose attribute key is updated.
+    /// @param key The attribute key to update.
+    /// @param value The new value for the attribute key.
+    function addOrUpdateAgentAttribute(uint256 tokenId, string memory key, string memory value) external {
         _requireMinted(tokenId);
         if (ownerOf(tokenId) != _msgSender()) {
             revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
@@ -331,8 +331,8 @@ contract AgentCollectionV1 is
 
         AgentInformation storage agentInfo = _agentInformationOf[tokenId];
 
-        string memory oldValue = agentInfo.metadata.addOrUpdate(key, value);
-        emit AgentMetadataUpdated(
+        string memory oldValue = agentInfo.attributes.addOrUpdate(key, value);
+        emit AgentAttributeUpdated(
             tokenId,
             key,
             oldValue,
@@ -501,7 +501,7 @@ contract AgentCollectionV1 is
             cloneOf: cloneOf,
             creator: _msgSender(),
             wallets: agentAddresses,
-            metadata: new KeyValue[](0)
+            attributes: new KeyValue[](0)
         }));
 
         _mintProposalIndexById[_nextProposalId] = _mintProposals.length - 1;
@@ -627,7 +627,7 @@ contract AgentCollectionV1 is
             creator: creator,
             cloneOf: cloneOf,
             wallets: agentAddresses,
-            metadata: new KeyValue[](0)
+            attributes: new KeyValue[](0)
         });
         _tokenIdOf[name] = nextTokenId;
         _safeMint(to, nextTokenId);
