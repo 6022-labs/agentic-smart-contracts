@@ -282,11 +282,12 @@ describe("WhenMintingFromProposal", function () {
         nonce: NONCE_1,
       });
 
-      const walletsOf = await _collection.walletsOf(tokenId);
+      const walletCount = await _collection.walletsCountOf(tokenId);
+      expect(walletCount).to.equal(agentAddresses.length);
 
-      expect(walletsOf.length).to.equal(agentAddresses.length);
-      for (let i = 0; i < agentAddresses.length; i++) {
-        expect(agentAddresses).to.include(walletsOf[i]);
+      for (let i = 0; i < walletCount; i++) {
+        const walletsOf = await _collection.walletOfByIndex(tokenId, i);
+        expect(agentAddresses).to.include(walletsOf);
       }
     });
 
@@ -319,19 +320,17 @@ describe("WhenMintingFromProposal", function () {
         nonce: NONCE_1,
       });
 
-      const imagesOf = await _collection.imagesOf(tokenId);
+      const imageCount = await _collection.imagesCountOf(tokenId);
+      expect(imageCount).to.equal(DEFAULT_IMAGES.length);
 
-      for (
-        let imagesOfIndex = 0;
-        imagesOfIndex < imagesOf.length;
-        imagesOfIndex++
-      ) {
-        expect(imagesOf[imagesOfIndex][0]).to.be.equal(
-          DEFAULT_IMAGES[imagesOfIndex].key
+      for (let imagesOfIndex = 0; imagesOfIndex < imageCount; imagesOfIndex++) {
+        const imagesOf = await _collection.imageOfByIndex(
+          tokenId,
+          imagesOfIndex
         );
-        expect(imagesOf[imagesOfIndex][1]).to.be.equal(
-          DEFAULT_IMAGES[imagesOfIndex].value
-        );
+
+        expect(imagesOf[0]).to.be.equal(DEFAULT_IMAGES[imagesOfIndex].key);
+        expect(imagesOf[1]).to.be.equal(DEFAULT_IMAGES[imagesOfIndex].value);
       }
     });
 

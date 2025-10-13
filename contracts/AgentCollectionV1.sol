@@ -223,22 +223,55 @@ contract AgentCollectionV1 is
         return _agentInformationOf[tokenId].name;
     }
 
-    /// @dev Get all stored images of an agent.
+    /// @dev Get the number of images of an agent.
     /// @param tokenId The token identifier.
-    function imagesOf(uint256 tokenId) external view returns (KeyValue[] memory) {
+    function imagesCountOf(uint256 tokenId) external view returns (uint256) {
         _requireMinted(tokenId);
 
-        return _agentInformationOf[tokenId].images;
+        return _agentInformationOf[tokenId].images.length;
     }
 
-    /// @dev Get the list of agent wallets of an agent.
+    /// @dev Get a specific image of an agent by its index.
     /// @param tokenId The token identifier.
-    function walletsOf(
-        uint256 tokenId
-    ) external view returns (address[] memory) {
+    /// @param index The index of the image.
+    function imageOfByIndex(uint256 tokenId, uint256 index) external view returns (KeyValue memory) {
         _requireMinted(tokenId);
 
-        return _agentInformationOf[tokenId].wallets;
+        return _agentInformationOf[tokenId].images[index];
+    }
+
+    /// @dev Get the number of agent wallets of an agent.
+    /// @param tokenId The token identifier.
+    function walletsCountOf(uint256 tokenId) external view returns (uint256) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].wallets.length;
+    }
+
+    /// @dev Get a specific agent wallet by its index.
+    /// @param tokenId The token identifier.
+    /// @param index The index of the wallet.
+    function walletOfByIndex(uint256 tokenId, uint256 index) external view returns (address) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].wallets[index];
+    }
+
+    /// @dev Get the number of attributes of an agent.
+    /// @param tokenId The token identifier.
+    function attributesCountOf(uint256 tokenId) external view returns (uint256) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].attributes.length;
+    }
+
+    /// @dev Get a specific attribute of an agent by its index.
+    /// @param tokenId The token identifier.
+    /// @param index The index of the attribute.
+    function attributeOfByIndex(uint256 tokenId, uint256 index) external view returns (KeyValue memory) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].attributes[index];
     }
 
     /// @dev Get the token ID associated to the agent name.

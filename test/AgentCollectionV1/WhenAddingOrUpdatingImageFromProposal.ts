@@ -97,8 +97,15 @@ describe("WhenAddingOrUpdatingImage", function () {
           .connect(_moderator)
           .addOrUpdateImageFromProposal(proposalId);
 
-        const images = await _collection.imagesOf(tokenId);
-        expect(images.length).to.equal(2);
+        const imagesCount = await _collection.imagesCountOf(tokenId);
+        expect(imagesCount).to.equal(2);
+
+        const images: [string, string][] = [];
+        for (let i = 0; i < imagesCount; i++) {
+          const image = await _collection.imageOfByIndex(tokenId, i);
+          images.push([image.key, image.value]);
+        }
+
         expect(images[1][0]).to.equal("profile");
         expect(images[1][1]).to.equal("cid1");
       });
@@ -181,8 +188,15 @@ describe("WhenAddingOrUpdatingImage", function () {
           .connect(_moderator)
           .addOrUpdateImageFromProposal(proposalId);
 
-        const images = await _collection.imagesOf(tokenId);
-        expect(images.length).to.equal(2);
+        const imagesCount = await _collection.imagesCountOf(tokenId);
+        expect(imagesCount).to.equal(2);
+
+        const images: [string, string][] = [];
+        for (let i = 0; i < imagesCount; i++) {
+          const image = await _collection.imageOfByIndex(tokenId, i);
+          images.push([image.key, image.value]);
+        }
+
         expect(images[1][0]).to.equal("profile");
         expect(images[1][1]).to.equal("cid2");
       });
@@ -318,8 +332,15 @@ describe("WhenAddingOrUpdatingImage", function () {
         expect(proposal.image.key).to.equal("profile2");
         expect(proposal.image.value).to.equal("cid2");
 
-        const images = await _collection.imagesOf(tokenId);
-        expect(images.length).to.equal(2);
+        const imagesCount = await _collection.imagesCountOf(tokenId);
+        expect(imagesCount).to.equal(2);
+
+        const images: [string, string][] = [];
+        for (let i = 0; i < imagesCount; i++) {
+          const image = await _collection.imageOfByIndex(tokenId, i);
+          images.push([image.key, image.value]);
+        }
+
         expect(images[1][0]).to.equal("profile1");
       });
     });

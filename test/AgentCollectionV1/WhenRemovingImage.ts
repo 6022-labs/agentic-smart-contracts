@@ -159,7 +159,15 @@ describe("WhenRemovingImage", function () {
 
       await _collection.connect(_owner).removeImage(tokenId, profileImg.key);
 
-      const images = await _collection.imagesOf(tokenId);
+      const imagesCount = await _collection.imagesCountOf(tokenId);
+
+      expect(imagesCount).to.equal(1);
+
+      const images: [string, string][] = [];
+      for (let i = 0; i < imagesCount; i++) {
+        const image = await _collection.imageOfByIndex(tokenId, i);
+        images.push([image.key, image.value]);
+      }
 
       expect(images.length).to.equal(1);
       expect(images[0][0]).to.equal(defaultImg.key);
@@ -178,7 +186,15 @@ describe("WhenRemovingImage", function () {
 
       await _collection.connect(_owner).removeImage(tokenId, "unknown");
 
-      const images = await _collection.imagesOf(tokenId);
+      const imagesCount = await _collection.imagesCountOf(tokenId);
+
+      expect(imagesCount).to.equal(1);
+
+      const images: [string, string][] = [];
+      for (let i = 0; i < imagesCount; i++) {
+        const image = await _collection.imageOfByIndex(tokenId, i);
+        images.push([image.key, image.value]);
+      }
 
       expect(images.length).to.equal(1);
       expect(images[0][0]).to.equal(defaultImg.key);
@@ -197,10 +213,19 @@ describe("WhenRemovingImage", function () {
 
       await _collection.connect(_moderator).removeImage(tokenId, "profile");
 
-      const images = await _collection.imagesOf(tokenId);
+      const imagesCount = await _collection.imagesCountOf(tokenId);
+
+      expect(imagesCount).to.equal(1);
+
+      const images: [string, string][] = [];
+      for (let i = 0; i < imagesCount; i++) {
+        const image = await _collection.imageOfByIndex(tokenId, i);
+        images.push([image.key, image.value]);
+      }
 
       expect(images.length).to.equal(1);
       expect(images[0][0]).to.equal("default");
+      expect(images[0][1]).to.equal("bafybeidefault");
     });
   });
 });

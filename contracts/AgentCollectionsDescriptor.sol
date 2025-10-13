@@ -49,9 +49,8 @@ contract AgentCollectionsDescriptor is
         description = _escapeQuotes(description);
 
         string memory agentName = collectionStates.nameOf(tokenId);
-        KeyValue[] memory agentImages = collectionStates.imagesOf(tokenId);
 
-        string memory defaultImage = _getDefaultImage(agentImages);
+        string memory defaultImage = _getDefaultImage(collectionStates, tokenId);
         string memory defaultImageUrl = _generateImageUrl(defaultImage);
 
         return
@@ -104,14 +103,18 @@ contract AgentCollectionsDescriptor is
 
     /// @dev Retrieve the default image from the image list.
     ///      Reverts if no image with key `default` is found.
-    function _getDefaultImage(KeyValue[] memory images) internal pure returns (string memory) {
+    function _getDefaultImage(IAgentCollectionStates collectionStates, uint256 tokenId) internal view returns (string memory) {
         string memory defaultImage = "";
 
-        for (uint256 i = 0; i < images.length; i++) {
+        uint256 countOfImages = collectionStates.imagesCountOf(tokenId);
+
+        for (uint256 i = 0; i < countOfImages; i++) {
+            KeyValue memory images = collectionStates.imageOfByIndex(tokenId, i);
+
             if (
-                keccak256(abi.encodePacked(images[i].key)) == keccak256(abi.encodePacked("default"))
+                keccak256(abi.encodePacked(images.key)) == keccak256(abi.encodePacked("default"))
             ) {
-                defaultImage = images[i].value;
+                defaultImage = images.value;
                 break;
             }
         }
