@@ -220,6 +220,8 @@ describe("WhenCreatingMintingProposal", function () {
 
         let mintProposalsLength = await _collection.mintProposalsLength();
 
+        const tokenId = await _collection.nextTokenId();
+
         await _collection
           .connect(_moderator)
           .mintFromProposal(mintProposalsLength - BigInt(1));
@@ -251,7 +253,78 @@ describe("WhenCreatingMintingProposal", function () {
           )
         )
           .to.be.revertedWithCustomError(_collection, "UsedName")
-          .withArgs(DEFAULT_NAME);
+          .withArgs(DEFAULT_NAME, tokenId);
+      });
+    });
+
+    describe("Given a wallet already taken", function () {
+      it("Should revert with 'UsedWallet' error", async function () {
+        const wallets = [generateRandomAddress()];
+
+        const name1 = DEFAULT_NAME + "-1";
+        const name2 = DEFAULT_NAME + "-2";
+
+        const sig1 = await signMintRequest(_signer1, _collection, {
+          to: _owner.address,
+          signer: _signer1.address,
+          role: DEFAULT_ROLE,
+          name: name1,
+          wallets,
+          images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
+          cloneOf: DEFAULT_CLONE_OF,
+          nonce: NONCE_1,
+        });
+
+        await _collection.createMintProposal(
+          _owner.address,
+          _signer1.address,
+          DEFAULT_ROLE,
+          name1,
+          wallets,
+          DEFAULT_IMAGES,
+          DEFAULT_ATTRIBUTES,
+          DEFAULT_CLONE_OF,
+          ethers.id(NONCE_1),
+          sig1
+        );
+
+        let mintProposalsLength = await _collection.mintProposalsLength();
+
+        const tokenId = await _collection.nextTokenId();
+
+        await _collection
+          .connect(_moderator)
+          .mintFromProposal(mintProposalsLength - BigInt(1));
+
+        const sig2 = await signMintRequest(_signer1, _collection, {
+          to: _owner.address,
+          signer: _signer1.address,
+          role: DEFAULT_ROLE,
+          name: name2,
+          wallets,
+          images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
+          cloneOf: DEFAULT_CLONE_OF,
+          nonce: NONCE_2,
+        });
+
+        await expect(
+          _collection.createMintProposal(
+            _owner.address,
+            _signer1.address,
+            DEFAULT_ROLE,
+            name2,
+            wallets,
+            DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
+            DEFAULT_CLONE_OF,
+            ethers.id(NONCE_2),
+            sig2
+          )
+        )
+          .to.be.revertedWithCustomError(_collection, "UsedWallet")
+          .withArgs(wallets[0], tokenId);
       });
     });
 
@@ -368,7 +441,7 @@ describe("WhenCreatingMintingProposal", function () {
     describe("Given a valid signature", function () {
       describe("With cloneOf set", function () {
         it("Should create the proposal", async function () {
-          const wallets = [generateRandomAddress()];
+          const wallets1 = [generateRandomAddress()];
 
           // First, mint an agent to clone
           const signature1 = await signMintRequest(_signer1, _collection, {
@@ -376,7 +449,7 @@ describe("WhenCreatingMintingProposal", function () {
             signer: _signer1.address,
             role: DEFAULT_ROLE,
             name: DEFAULT_NAME,
-            wallets,
+            wallets: wallets1,
             images: DEFAULT_IMAGES,
             attributes: DEFAULT_ATTRIBUTES,
             cloneOf: DEFAULT_CLONE_OF,
@@ -388,7 +461,7 @@ describe("WhenCreatingMintingProposal", function () {
             _signer1.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
-            wallets,
+            wallets1,
             DEFAULT_IMAGES,
             DEFAULT_ATTRIBUTES,
             DEFAULT_CLONE_OF,
@@ -407,12 +480,14 @@ describe("WhenCreatingMintingProposal", function () {
             value: (await _collection.nextTokenId()) - BigInt(1),
           };
 
+          const wallets2 = [generateRandomAddress()];
+
           const signature2 = await signMintRequest(_signer1, _collection, {
             to: _owner.address,
             signer: _signer1.address,
             role: DEFAULT_ROLE,
             name: "cloned-agent",
-            wallets,
+            wallets: wallets2,
             images: DEFAULT_IMAGES,
             attributes: DEFAULT_ATTRIBUTES,
             cloneOf,
@@ -427,7 +502,7 @@ describe("WhenCreatingMintingProposal", function () {
             _signer1.address,
             DEFAULT_ROLE,
             "cloned-agent",
-            wallets,
+            wallets2,
             DEFAULT_IMAGES,
             DEFAULT_ATTRIBUTES,
             cloneOf,

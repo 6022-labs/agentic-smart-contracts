@@ -325,6 +325,8 @@ describe("WhenMinting", function () {
           nonce: NONCE_1,
         });
 
+        const tokenId = await _collection.nextTokenId();
+
         await _collection.mint(
           _otherAccount.address,
           _signer1.address,
@@ -365,7 +367,72 @@ describe("WhenMinting", function () {
           )
         )
           .to.be.revertedWithCustomError(_collection, "UsedName")
-          .withArgs(DEFAULT_NAME);
+          .withArgs(DEFAULT_NAME, tokenId);
+      });
+    });
+
+    describe("Given wallet is already taken", function () {
+      it("Should revert with 'UsedWallet'", async function () {
+        const wallets = [generateRandomAddress()];
+
+        const name1 = DEFAULT_NAME + "-1";
+        const name2 = DEFAULT_NAME + "-2";
+
+        const sig1 = await signMintRequest(_signer1, _collection, {
+          to: _otherAccount.address,
+          signer: _signer1.address,
+          role: DEFAULT_ROLE,
+          name: name1,
+          wallets,
+          images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
+          cloneOf: DEFAULT_CLONE_OF,
+          nonce: NONCE_1,
+        });
+
+        const tokenId = await _collection.nextTokenId();
+
+        await _collection.mint(
+          _otherAccount.address,
+          _signer1.address,
+          DEFAULT_ROLE,
+          name1,
+          wallets,
+          DEFAULT_IMAGES,
+          DEFAULT_ATTRIBUTES,
+          DEFAULT_CLONE_OF,
+          ethers.id(NONCE_1),
+          sig1
+        );
+
+        const sig2 = await signMintRequest(_signer1, _collection, {
+          to: _otherAccount.address,
+          signer: _signer1.address,
+          role: DEFAULT_ROLE,
+          name: name2,
+          wallets,
+          images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
+          cloneOf: DEFAULT_CLONE_OF,
+          nonce: NONCE_2,
+        });
+
+        await expect(
+          _collection.mint(
+            _otherAccount.address,
+            _signer1.address,
+            DEFAULT_ROLE,
+            name2,
+            wallets,
+            DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
+            DEFAULT_CLONE_OF,
+            ethers.id(NONCE_2),
+            sig2
+          )
+        )
+          .to.be.revertedWithCustomError(_collection, "UsedWallet")
+          .withArgs(wallets[0], tokenId);
       });
     });
 
@@ -959,7 +1026,41 @@ describe("WhenMinting", function () {
           signature
         );
 
-        expect(await _collection.tokenIdOf(DEFAULT_NAME)).to.be.equal(
+        expect(await _collection.nameToTokenId(DEFAULT_NAME)).to.be.equal(
+          nextTokenId
+        );
+      });
+
+      it("Should assign token id to wallet", async function () {
+        const wallets = [generateRandomAddress()];
+        const signature = await signMintRequest(_signer1, _collection, {
+          to: _otherAccount.address,
+          signer: _signer1.address,
+          role: DEFAULT_ROLE,
+          name: DEFAULT_NAME,
+          wallets,
+          images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
+          cloneOf: DEFAULT_CLONE_OF,
+          nonce: NONCE_1,
+        });
+
+        const nextTokenId = await _collection.nextTokenId();
+
+        await _collection.mint(
+          _otherAccount.address,
+          _signer1.address,
+          DEFAULT_ROLE,
+          DEFAULT_NAME,
+          wallets,
+          DEFAULT_IMAGES,
+          DEFAULT_ATTRIBUTES,
+          DEFAULT_CLONE_OF,
+          ethers.id(NONCE_1),
+          signature
+        );
+
+        expect(await _collection.walletToTokenId(wallets[0])).to.be.equal(
           nextTokenId
         );
       });

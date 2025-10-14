@@ -56,7 +56,8 @@ contract AgentCollectionV1 is
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
     mapping(bytes32 => bool) private _isNonceUsed;
-    mapping(string => uint256) private _tokenIdOf;
+    mapping(string => uint256) private _nameToTokenId;
+    mapping(address => uint256) private _walletToTokenId;
     mapping(uint256 => AgentInformation) private _agentInformationOf;
 
     uint256 private _nextProposalId;
@@ -276,8 +277,14 @@ contract AgentCollectionV1 is
 
     /// @dev Get the token ID associated to the agent name.
     /// @param name The name of the agent.
-    function tokenIdOf(string memory name) external view returns (uint256) {
-        return _tokenIdOf[name];
+    function nameToTokenId(string memory name) external view returns (uint256) {
+        return _nameToTokenId[name];
+    }
+
+    /// @dev Get the token ID associated to the agent wallet.
+    /// @param wallet The wallet address of the agent.
+    function walletToTokenId(address wallet) external view returns (uint256) {
+        return _walletToTokenId[wallet];
     }
 
     /// @dev Check whether a nonce has already been used.
@@ -583,9 +590,9 @@ contract AgentCollectionV1 is
     ) external onlyRole(MODERATOR_ROLE) {
         uint256 proposalIndex = _mintProposalIndexById[proposalId];
         MintProposal memory proposalInfo = _mintProposals[proposalIndex];
-        if (_tokenIdOf[proposalInfo.name] != 0) {
-            revert UsedName(proposalInfo.name);
-        }
+
+        _requireUniqueNameAndUniqueWallets(proposalInfo.name, proposalInfo.wallets);
+
         _mintAgent(
             proposalInfo.owner,
             proposalInfo.signer,
@@ -619,9 +626,9 @@ contract AgentCollectionV1 is
         if (_isNonceUsed[nonce]) {
             revert UsedNonce(nonce);
         }
-        if (_tokenIdOf[name] != 0) {
-            revert UsedName(name);
-        }
+
+        _requireUniqueNameAndUniqueWallets(name, wallets);
+
         if (!images.containKey("default")) {
             revert MissingDefaultImage();
         }
@@ -670,7 +677,10 @@ contract AgentCollectionV1 is
             cloneOf: cloneOf,
             attributes: attributes
         });
-        _tokenIdOf[name] = nextTokenId;
+        _nameToTokenId[name] = nextTokenId;
+        for (uint256 i = 0; i < wallets.length; i++) {
+            _walletToTokenId[wallets[i]] = nextTokenId;
+        }
         _safeMint(to, nextTokenId);
         emit Minted(to, signer, nextTokenId);
         emit AgentSignerUpdated(nextTokenId, address(0), signer);
@@ -750,6 +760,26 @@ contract AgentCollectionV1 is
     function _requireModerator() internal view {
         if (moderatorCount == 0) {
             revert NoModerators();
+        }
+    }
+
+    /// @dev Reverts if name and wallets are already used and wallets are non-zero.
+    function _requireUniqueNameAndUniqueWallets(
+        string memory name,
+        address[] memory wallets
+    ) internal view {
+        uint256 tokenIdForName = _nameToTokenId[name];
+        if (tokenIdForName != 0) {
+            revert UsedName(name, tokenIdForName);
+        }
+        for (uint256 i = 0; i < wallets.length; i++) {
+            if (wallets[i] == address(0)) {
+                revert InvalidWallet();
+            }
+            uint256 tokenIdForWallet = _walletToTokenId[wallets[i]];
+            if (tokenIdForWallet != 0) {
+                revert UsedWallet(wallets[i], tokenIdForWallet);
+            }
         }
     }
 

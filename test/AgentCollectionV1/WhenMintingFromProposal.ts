@@ -174,12 +174,81 @@ describe("WhenMintingFromProposal", function () {
       );
 
       const { id: proposalId } = await _collection.mintProposal(0);
+      const tokenId = await _collection.nextTokenId();
 
       await _collection.connect(_owner).mintFromProposal(proposalId);
 
       await expect(_collection.connect(_owner).mintFromProposal(proposalId))
         .to.be.revertedWithCustomError(_collection, "UsedName")
-        .withArgs(DEFAULT_NAME);
+        .withArgs(DEFAULT_NAME, tokenId);
+    });
+  });
+
+  describe("Given multiple minting proposals share the same wallet", function () {
+    it("Should revert minting the second proposal with 'UsedWallet' error", async function () {
+      const wallets = [generateRandomAddress()];
+
+      const name1 = DEFAULT_NAME + "-1";
+      const name2 = DEFAULT_NAME + "-2";
+
+      const sig1 = await signMintRequest(_signer, _collection, {
+        to: _otherAccount.address,
+        signer: _signer.address,
+        role: DEFAULT_ROLE,
+        name: name1,
+        wallets,
+        images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
+        cloneOf: DEFAULT_CLONE_OF,
+        nonce: NONCE_1,
+      });
+
+      await _collection.createMintProposal(
+        _otherAccount.address,
+        _signer.address,
+        DEFAULT_ROLE,
+        name1,
+        wallets,
+        DEFAULT_IMAGES,
+        DEFAULT_ATTRIBUTES,
+        DEFAULT_CLONE_OF,
+        ethers.id(NONCE_1),
+        sig1
+      );
+
+      const sig2 = await signMintRequest(_signer, _collection, {
+        to: _otherAccount.address,
+        signer: _signer.address,
+        role: DEFAULT_ROLE,
+        name: name2,
+        wallets,
+        images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
+        cloneOf: DEFAULT_CLONE_OF,
+        nonce: NONCE_2,
+      });
+
+      await _collection.createMintProposal(
+        _otherAccount.address,
+        _signer.address,
+        DEFAULT_ROLE,
+        name2,
+        wallets,
+        DEFAULT_IMAGES,
+        DEFAULT_ATTRIBUTES,
+        DEFAULT_CLONE_OF,
+        ethers.id(NONCE_2),
+        sig2
+      );
+
+      const { id: proposalId } = await _collection.mintProposal(0);
+      const tokenId = await _collection.nextTokenId();
+
+      await _collection.connect(_owner).mintFromProposal(proposalId);
+
+      await expect(_collection.connect(_owner).mintFromProposal(proposalId))
+        .to.be.revertedWithCustomError(_collection, "UsedWallet")
+        .withArgs(wallets[0], tokenId);
     });
   });
 
@@ -386,7 +455,27 @@ describe("WhenMintingFromProposal", function () {
         nonce: NONCE_1,
       });
 
-      expect(await _collection.tokenIdOf(DEFAULT_NAME)).to.be.equal(tokenId);
+      expect(await _collection.nameToTokenId(DEFAULT_NAME)).to.be.equal(
+        tokenId
+      );
+    });
+
+    it("Should assign token id to wallet", async function () {
+      const wallets = [generateRandomAddress()];
+
+      const tokenId = await proposeAndMint(_signer, _collection, _owner, {
+        to: _otherAccount.address,
+        wallets,
+        role: DEFAULT_ROLE,
+        name: DEFAULT_NAME,
+        images: DEFAULT_IMAGES,
+        cloneOf: DEFAULT_CLONE_OF,
+        nonce: NONCE_1,
+      });
+
+      expect(await _collection.walletToTokenId(wallets[0])).to.be.equal(
+        tokenId
+      );
     });
 
     it("Should emit 'Minted' event", async function () {
