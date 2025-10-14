@@ -23,6 +23,7 @@ describe("WhenMintingFromProposal", function () {
       value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
     },
   ];
+  const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
   const DEFAULT_NAME = "test-agent";
   const DEFAULT_NAME_1 = "test-agent-1";
   const DEFAULT_NAME_2 = "test-agent-2";
@@ -65,26 +66,28 @@ describe("WhenMintingFromProposal", function () {
 
   describe("Given signer is not moderator", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' error", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const signature = await signMintRequest(_signer, _collection, {
         to: _otherAccount.address,
-        agentAddresses,
         signer: _signer.address,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
+        wallets,
         images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
         cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
       await _collection.createMintProposal(
         _otherAccount.address,
-        agentAddresses,
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
+        wallets,
         DEFAULT_IMAGES,
+        DEFAULT_ATTRIBUTES,
         DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         signature
@@ -118,26 +121,28 @@ describe("WhenMintingFromProposal", function () {
 
   describe("Given multiple minting proposals share the same name", function () {
     it("Should revert minting the second proposal with 'UsedName' error", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const sig1 = await signMintRequest(_signer, _collection, {
         to: _otherAccount.address,
-        agentAddresses,
         signer: _signer.address,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
+        wallets,
         images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
         cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
       await _collection.createMintProposal(
         _otherAccount.address,
-        agentAddresses,
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
+        wallets,
         DEFAULT_IMAGES,
+        DEFAULT_ATTRIBUTES,
         DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         sig1
@@ -145,22 +150,24 @@ describe("WhenMintingFromProposal", function () {
 
       const sig2 = await signMintRequest(_signer, _collection, {
         to: _otherAccount.address,
-        agentAddresses,
         signer: _signer.address,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
+        wallets,
         images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
         cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_2,
       });
 
       await _collection.createMintProposal(
         _otherAccount.address,
-        agentAddresses,
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
+        wallets,
         DEFAULT_IMAGES,
+        DEFAULT_ATTRIBUTES,
         DEFAULT_CLONE_OF,
         ethers.id(NONCE_2),
         sig2
@@ -178,10 +185,10 @@ describe("WhenMintingFromProposal", function () {
 
   describe("Given a valid minting proposal", function () {
     it("Should assign the owner of the token", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
       const tokenId = await proposeAndMint(_signer, _collection, _owner, {
         to: _otherAccount.address,
-        agentAddresses,
+        wallets,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
@@ -195,7 +202,7 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should mint the NFT with the expected token ID", async function () {
-      const agentAddresses1 = [generateRandomAddress()];
+      const wallets1 = [generateRandomAddress()];
 
       const nextTokenId = await _collection.nextTokenId();
 
@@ -203,7 +210,7 @@ describe("WhenMintingFromProposal", function () {
 
       await proposeAndMint(_signer, _collection, _owner, {
         to: _otherAccount.address,
-        agentAddresses: agentAddresses1,
+        wallets: wallets1,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME_1,
         images: DEFAULT_IMAGES,
@@ -217,13 +224,13 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should increment next token ID", async function () {
-      const agentAddresses1 = [generateRandomAddress()];
+      const wallets1 = [generateRandomAddress()];
 
       const nextTokenIdBefore = await _collection.nextTokenId();
 
       await proposeAndMint(_signer, _collection, _owner, {
         to: _otherAccount.address,
-        agentAddresses: agentAddresses1,
+        wallets: wallets1,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME_1,
         images: DEFAULT_IMAGES,
@@ -236,13 +243,13 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should mark the nonce as used", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       expect(await _collection.isNonceUsed(ethers.id(NONCE_1))).to.be.false;
 
       await proposeAndMint(_signer, _collection, _owner, {
         to: _otherAccount.address,
-        agentAddresses,
+        wallets,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
@@ -254,11 +261,11 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should assign signer of the token", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const tokenId = await proposeAndMint(_signer, _collection, _owner, {
         to: _otherAccount.address,
-        agentAddresses,
+        wallets,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
@@ -270,11 +277,11 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should assign agent addresses to the token", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const tokenId = await proposeAndMint(_signer, _collection, _owner, {
         to: _otherAccount.address,
-        agentAddresses,
+        wallets,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
@@ -283,20 +290,20 @@ describe("WhenMintingFromProposal", function () {
       });
 
       const walletCount = await _collection.walletsCountOf(tokenId);
-      expect(walletCount).to.equal(agentAddresses.length);
+      expect(walletCount).to.equal(wallets.length);
 
       for (let i = 0; i < walletCount; i++) {
         const walletsOf = await _collection.walletOfByIndex(tokenId, i);
-        expect(agentAddresses).to.include(walletsOf);
+        expect(wallets).to.include(walletsOf);
       }
     });
 
     it("Should assign name to the token", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const tokenId = await proposeAndMint(_signer, _collection, _owner, {
         to: _otherAccount.address,
-        agentAddresses,
+        wallets,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
@@ -308,11 +315,11 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should assign images to the token", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const tokenId = await proposeAndMint(_signer, _collection, _owner, {
         to: _otherAccount.address,
-        agentAddresses,
+        wallets,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
@@ -335,11 +342,11 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should assign creator to the token", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const tokenId = await proposeAndMint(_signer, _collection, _owner, {
         to: _otherAccount.address,
-        agentAddresses,
+        wallets,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
@@ -351,11 +358,11 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should assign role to the token", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const tokenId = await proposeAndMint(_signer, _collection, _owner, {
         to: _otherAccount.address,
-        agentAddresses,
+        wallets,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
@@ -367,11 +374,11 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should assign token id to name", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const tokenId = await proposeAndMint(_signer, _collection, _owner, {
         to: _otherAccount.address,
-        agentAddresses,
+        wallets,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
         images: DEFAULT_IMAGES,
@@ -383,28 +390,30 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should emit 'Minted' event", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const tokenId = await _collection.nextTokenId();
 
       const signature = await signMintRequest(_signer, _collection, {
         to: _otherAccount.address,
-        agentAddresses,
         signer: _signer.address,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
+        wallets,
         images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
         cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
       await _collection.createMintProposal(
         _otherAccount.address,
-        agentAddresses,
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
+        wallets,
         DEFAULT_IMAGES,
+        DEFAULT_ATTRIBUTES,
         DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         signature
@@ -421,28 +430,30 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should emit 'AgentSignerUpdated' event", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const tokenId = await _collection.nextTokenId();
 
       const signature = await signMintRequest(_signer, _collection, {
         to: _otherAccount.address,
-        agentAddresses,
         signer: _signer.address,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
+        wallets,
         images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
         cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
       await _collection.createMintProposal(
         _otherAccount.address,
-        agentAddresses,
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
+        wallets,
         DEFAULT_IMAGES,
+        DEFAULT_ATTRIBUTES,
         DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         signature
@@ -459,26 +470,28 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should emit 'MintProposalRemoved' event", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const signature = await signMintRequest(_signer, _collection, {
         to: _otherAccount.address,
-        agentAddresses,
         signer: _signer.address,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
+        wallets,
         images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
         cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
       await _collection.createMintProposal(
         _otherAccount.address,
-        agentAddresses,
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
+        wallets,
         DEFAULT_IMAGES,
+        DEFAULT_ATTRIBUTES,
         DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         signature
@@ -499,26 +512,28 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should decrease proposals length", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const signature = await signMintRequest(_signer, _collection, {
         to: _otherAccount.address,
-        agentAddresses,
         signer: _signer.address,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
+        wallets,
         images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
         cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
       await _collection.createMintProposal(
         _otherAccount.address,
-        agentAddresses,
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME,
+        wallets,
         DEFAULT_IMAGES,
+        DEFAULT_ATTRIBUTES,
         DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         signature
@@ -537,26 +552,28 @@ describe("WhenMintingFromProposal", function () {
     });
 
     it("Should reorder remaining proposals", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const sig1 = await signMintRequest(_signer, _collection, {
         to: _otherAccount.address,
-        agentAddresses,
         signer: _signer.address,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME_1,
+        wallets,
         images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
         cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
 
       await _collection.createMintProposal(
         _otherAccount.address,
-        agentAddresses,
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME_1,
+        wallets,
         DEFAULT_IMAGES,
+        DEFAULT_ATTRIBUTES,
         DEFAULT_CLONE_OF,
         ethers.id(NONCE_1),
         sig1
@@ -564,22 +581,24 @@ describe("WhenMintingFromProposal", function () {
 
       const sig2 = await signMintRequest(_signer, _collection, {
         to: _otherAccount.address,
-        agentAddresses,
         signer: _signer.address,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME_2,
+        wallets,
         images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
         cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_2,
       });
 
       await _collection.createMintProposal(
         _otherAccount.address,
-        agentAddresses,
         _signer.address,
         DEFAULT_ROLE,
         DEFAULT_NAME_2,
+        wallets,
         DEFAULT_IMAGES,
+        DEFAULT_ATTRIBUTES,
         DEFAULT_CLONE_OF,
         ethers.id(NONCE_2),
         sig2

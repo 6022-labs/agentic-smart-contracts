@@ -21,6 +21,7 @@ describe("WhenRefusingMintProposals", function () {
       value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
     },
   ];
+  const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
 
   let _collection: AgentCollectionV1;
   let _owner: HardhatEthersSigner;
@@ -58,25 +59,27 @@ describe("WhenRefusingMintProposals", function () {
   });
 
   async function createMintProposal(name: string, nonce: string) {
-    const agentAddresses = [generateRandomAddress()];
+    const wallets = [generateRandomAddress()];
     const signature = await signMintRequest(_signer, _collection, {
       to: _otherAccount.address,
-      agentAddresses,
       signer: _signer.address,
       role: DEFAULT_ROLE,
       name,
+      wallets,
       images: DEFAULT_IMAGES,
+      attributes: DEFAULT_ATTRIBUTES,
       cloneOf: DEFAULT_CLONE_OF,
       nonce,
     });
 
     await _collection.createMintProposal(
       _otherAccount.address,
-      agentAddresses,
       _signer.address,
       DEFAULT_ROLE,
       name,
+      wallets,
       DEFAULT_IMAGES,
+      DEFAULT_ATTRIBUTES,
       DEFAULT_CLONE_OF,
       ethers.id(nonce),
       signature

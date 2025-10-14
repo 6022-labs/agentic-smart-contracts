@@ -5,11 +5,10 @@ import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   decodeTokenURI,
-  signMintRequest,
+  proposeAndMint,
   generateRandomAddress,
   deployCollectionWithCreator,
 } from "../common";
-import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
 
 describe("WhenGettingTokenUri", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -61,41 +60,18 @@ describe("WhenGettingTokenUri", function () {
         value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
       },
     ];
-    let _agentAddresses: string[] = [generateRandomAddress()];
+    let _wallets: string[] = [generateRandomAddress()];
 
     beforeEach(async function () {
-      const nonce = "1";
       _tokenId = await _collection.nextTokenId();
-      const cloneOf: NullableUint256Struct = { isSet: false, value: 0n };
 
-      const signature = await signMintRequest(_signer, _collection, {
+      await proposeAndMint(_signer, _collection, _owner, {
         to: _owner.address,
-        agentAddresses: _agentAddresses,
-        signer: _signer.address,
+        wallets: _wallets,
         role: _role,
         name: _name,
         images: _images,
-        cloneOf,
-        nonce,
       });
-
-      await _collection.createMintProposal(
-        _owner.address,
-        _agentAddresses,
-        _signer.address,
-        _role,
-        _name,
-        _images,
-        cloneOf,
-        ethers.id(nonce),
-        signature
-      );
-
-      const mintProposalsLength = await _collection.mintProposalsLength();
-
-      await _collection
-        .connect(_owner)
-        .mintFromProposal(mintProposalsLength - BigInt(1));
     });
 
     it("Should return token URI as base 64 encoded JSON", async function () {

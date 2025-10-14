@@ -33,7 +33,7 @@ struct MintProposal {
     NullableUint256 cloneOf;
 }
 
-struct AddOrUpdateImageProposal {
+struct AddOrUpdateAgentImageProposal {
     uint256 id;
     uint256 tokenId;
     KeyValue image;
@@ -64,8 +64,8 @@ contract AgentCollectionV1 is
     MintProposal[] private _mintProposals;
     mapping(uint256 => uint256) private _mintProposalIndexById;
 
-    AddOrUpdateImageProposal[] private _addOrUpdateImageProposals;
-    mapping(uint256 => uint256) private _addOrUpdateImageProposalIndexById;
+    AddOrUpdateAgentImageProposal[] private _addOrUpdateAgentImageProposals;
+    mapping(uint256 => uint256) private _addOrUpdateAgentImageProposalIndexById;
 
     string public description;
     uint256 public moderatorCount;
@@ -298,14 +298,14 @@ contract AgentCollectionV1 is
     }
 
     /// @dev Number of pending image proposals.
-    function addOrUpdateImageProposalsLength() external view returns (uint256) {
-        return _addOrUpdateImageProposals.length;
+    function addOrUpdateAgentImageProposalsLength() external view returns (uint256) {
+        return _addOrUpdateAgentImageProposals.length;
     }
 
     /// @dev Get an image proposal by index.
     /// @param proposalIndex Index of the proposal.
-    function addOrUpdateImageProposal(uint256 proposalIndex) external view returns (AddOrUpdateImageProposal memory) {
-        return _addOrUpdateImageProposals[proposalIndex];
+    function addOrUpdateAgentImageProposal(uint256 proposalIndex) external view returns (AddOrUpdateAgentImageProposal memory) {
+        return _addOrUpdateAgentImageProposals[proposalIndex];
     }
 
     /// @dev Update the signer address of an agent.
@@ -376,7 +376,7 @@ contract AgentCollectionV1 is
     /// @dev Propose to add or update an image for a token. (used if moderators setup)
     /// @param tokenId The token affected by the proposal.
     /// @param image The key/value pair representing the image.
-    function createAddOrUpdateImageProposal(
+    function createAddOrUpdateAgentImageProposal(
         uint256 tokenId,
         KeyValue memory image
     ) external {
@@ -388,25 +388,25 @@ contract AgentCollectionV1 is
 
         bool isProposalAlreadyExistForThisAgentAndKey = false;
 
-        for (uint256 i = 0; i < _addOrUpdateImageProposals.length; i++) {
+        for (uint256 i = 0; i < _addOrUpdateAgentImageProposals.length; i++) {
             if (
-                _addOrUpdateImageProposals[i].tokenId == tokenId &&
-                keccak256(abi.encodePacked(_addOrUpdateImageProposals[i].image.key)) == keccak256(abi.encodePacked(image.key))
+                _addOrUpdateAgentImageProposals[i].tokenId == tokenId &&
+                keccak256(abi.encodePacked(_addOrUpdateAgentImageProposals[i].image.key)) == keccak256(abi.encodePacked(image.key))
             ) {
-                _addOrUpdateImageProposals[i].image = image;
+                _addOrUpdateAgentImageProposals[i].image = image;
                 isProposalAlreadyExistForThisAgentAndKey = true;
                 break;
             }
         }
 
         if (!isProposalAlreadyExistForThisAgentAndKey) {
-            _addOrUpdateImageProposals.push(AddOrUpdateImageProposal({
+            _addOrUpdateAgentImageProposals.push(AddOrUpdateAgentImageProposal({
                 id: _nextProposalId,
                 tokenId: tokenId,
                 image: image
             }));
 
-            _addOrUpdateImageProposalIndexById[_nextProposalId] = _addOrUpdateImageProposals.length - 1;
+            _addOrUpdateAgentImageProposalIndexById[_nextProposalId] = _addOrUpdateAgentImageProposals.length - 1;
 
             emit AgentImageProposalCreated(
                 tokenId,
@@ -422,7 +422,7 @@ contract AgentCollectionV1 is
     /// setup or the caller is a moderator)
     /// @param tokenId The token affected.
     /// @param image The key/value pair representing the image.
-    function addOrUpdateImage(
+    function addOrUpdateAgentImage(
         uint256 tokenId,
         KeyValue memory image
     ) external {
@@ -432,7 +432,7 @@ contract AgentCollectionV1 is
             revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
         }
 
-        _addOrUpdateImage(
+        _addOrUpdateAgentImage(
             tokenId,
             image
         );
@@ -440,21 +440,21 @@ contract AgentCollectionV1 is
 
     /// @dev Apply an image proposal.
     /// @param proposalId The id of the proposal to apply.
-    function addOrUpdateImageFromProposal(
+    function addOrUpdateAgentImageFromProposal(
         uint256 proposalId
     ) external onlyRole(MODERATOR_ROLE) {
-        uint256 proposalIndex = _addOrUpdateImageProposalIndexById[proposalId];
-        AddOrUpdateImageProposal memory proposalInfo = _addOrUpdateImageProposals[proposalIndex];
+        uint256 proposalIndex = _addOrUpdateAgentImageProposalIndexById[proposalId];
+        AddOrUpdateAgentImageProposal memory proposalInfo = _addOrUpdateAgentImageProposals[proposalIndex];
 
-        _addOrUpdateImage(
+        _addOrUpdateAgentImage(
             proposalInfo.tokenId,
             proposalInfo.image
         );
 
-        _popAddOrUpdateImageProposalAt(proposalIndex);
+        _popAddOrUpdateAgentImageProposalAt(proposalIndex);
     }
 
-    function _addOrUpdateImage(
+    function _addOrUpdateAgentImage(
         uint256 tokenId,
         KeyValue memory image
     ) internal {
@@ -472,16 +472,16 @@ contract AgentCollectionV1 is
 
     /// @dev Refuse an image proposal.
     /// @param proposalId The id of the proposal to refuse.
-    function refuseAddOrUpdateImageProposal(
+    function refuseAddOrUpdateAgentImageProposal(
         uint256 proposalId
     ) external onlyRole(MODERATOR_ROLE) {
-        _popAddOrUpdateImageProposalAt(proposalId);
+        _popAddOrUpdateAgentImageProposalAt(proposalId);
     }
 
     /// @dev Remove an image from a token.
     /// @param tokenId The token whose image is removed.
     /// @param key The key of the image to remove.
-    function removeImage(
+    function removeAgentImage(
         uint256 tokenId,
         string memory key
     ) external {
@@ -500,27 +500,29 @@ contract AgentCollectionV1 is
 
     /// @dev Propose minting of a new agent token. (used if moderators setup)
     /// @param to The future owner of the token.
-    /// @param agentAddresses Wallet addresses controlled by the agent.
     /// @param signer The signer address linked to the agent.
     /// @param role The agent role.
     /// @param name The Name of the agent.
+    /// @param wallets Wallet addresses controlled by the agent.
     /// @param images A set of images describing the agent.
+    /// @param attributes A set of attributes describing the agent.
     /// @param cloneOf The ID of the agent to clone (if any).
     /// @param nonce Unique nonce used for signature replay protection.
     /// @param signature Off-chain signature authorizing the mint.
     function createMintProposal(
         address to,
-        address[] memory agentAddresses,
         address signer,
         string memory role,
         string memory name,
+        address[] memory wallets,
         KeyValue[] memory images,
+        KeyValue[] memory attributes,
         NullableUint256 memory cloneOf,
         bytes32 nonce,
         bytes memory signature
     ) external {
         _requireModerator();
-        _validateMint(to, agentAddresses, signer, role, name, images, cloneOf, nonce, signature);
+        _validateMint(to, signer, role, name, wallets, images, attributes, cloneOf, nonce, signature);
 
         _isNonceUsed[nonce] = true;
 
@@ -532,9 +534,9 @@ contract AgentCollectionV1 is
             signer: signer,
             images: images,
             cloneOf: cloneOf,
+            wallets: wallets,
             creator: _msgSender(),
-            wallets: agentAddresses,
-            attributes: new KeyValue[](0)
+            attributes: attributes
         }));
 
         _mintProposalIndexById[_nextProposalId] = _mintProposals.length - 1;
@@ -547,29 +549,31 @@ contract AgentCollectionV1 is
     /// @dev Mint a new agent token. (allowed when no moderators are setup or
     /// the caller is a moderator)
     /// @param to The future owner of the token.
-    /// @param agentAddresses Wallet addresses controlled by the agent.
     /// @param signer The signer address linked to the agent.
     /// @param role The agent role.
     /// @param name The Name of the agent.
+    /// @param wallets Wallet addresses controlled by the agent.
     /// @param images A set of images describing the agent.
+    /// @param attributes A set of attributes describing the agent.
     /// @param cloneOf The ID of the agent to clone (if any).
     /// @param nonce Unique nonce used for signature replay protection.
     /// @param signature Off-chain signature authorizing the mint.
     function mint(
         address to,
-        address[] memory agentAddresses,
         address signer,
         string memory role,
         string memory name,
+        address[] memory wallets,
         KeyValue[] memory images,
+        KeyValue[] memory attributes,
         NullableUint256 memory cloneOf,
         bytes32 nonce,
         bytes memory signature
     ) external {
         _requireNoModeratorOrSenderIsModerator();
-        _validateMint(to, agentAddresses, signer, role, name, images, cloneOf, nonce, signature);
+        _validateMint(to, signer, role, name, wallets, images, attributes, cloneOf, nonce, signature);
         _isNonceUsed[nonce] = true;
-        _mintAgent(to, agentAddresses, signer, role, name, images, _msgSender(), cloneOf);
+        _mintAgent(to, signer, _msgSender(), role, name, wallets, images, attributes, cloneOf);
     }
 
     /// @dev Mint an agent from an approved proposal.
@@ -584,12 +588,13 @@ contract AgentCollectionV1 is
         }
         _mintAgent(
             proposalInfo.owner,
-            proposalInfo.wallets,
             proposalInfo.signer,
+            proposalInfo.creator,
             proposalInfo.role,
             proposalInfo.name,
+            proposalInfo.wallets,
             proposalInfo.images,
-            proposalInfo.creator,
+            proposalInfo.attributes,
             proposalInfo.cloneOf
         );
         _popMintProposalAt(proposalIndex);
@@ -598,11 +603,12 @@ contract AgentCollectionV1 is
     /// @dev Internal function to validate minting parameters and signature.
     function _validateMint(
         address to,
-        address[] memory agentAddresses,
         address signer,
         string memory role,
         string memory name,
+        address[] memory wallets,
         KeyValue[] memory images,
+        KeyValue[] memory attributes,
         NullableUint256 memory cloneOf,
         bytes32 nonce,
         bytes memory signature
@@ -625,12 +631,13 @@ contract AgentCollectionV1 is
 
         address recoveredAddress = _recoverMintSigner(AgenticSignatureLib.MintParams({
             to: to,
-            agentAddresses: agentAddresses,
-            signer: signer,
             role: role,
             name: name,
+            signer: signer,
             images: images,
+            wallets: wallets,
             cloneOf: cloneOf,
+            attributes: attributes,
             nonce: nonce
         }), signature);
         if (!IAgentCollectionsManagerStates(collectionsManager).isSigner(recoveredAddress)) {
@@ -644,12 +651,13 @@ contract AgentCollectionV1 is
     /// @dev Internal function to mint an agent NFT and store its information.
     function _mintAgent(
         address to,
-        address[] memory agentAddresses,
         address signer,
+        address creator,
         string memory role,
         string memory name,
+        address[] memory wallets,
         KeyValue[] memory images,
-        address creator,
+        KeyValue[] memory attributes,
         NullableUint256 memory cloneOf
     ) internal {
         _agentInformationOf[nextTokenId] = AgentInformation({
@@ -657,10 +665,10 @@ contract AgentCollectionV1 is
             role: role,
             images: images,
             signer: signer,
+            wallets: wallets,
             creator: creator,
             cloneOf: cloneOf,
-            wallets: agentAddresses,
-            attributes: new KeyValue[](0)
+            attributes: attributes
         });
         _tokenIdOf[name] = nextTokenId;
         _safeMint(to, nextTokenId);
@@ -697,17 +705,17 @@ contract AgentCollectionV1 is
         return ECDSA.recover(digest, signature);
     }
 
-    function _popAddOrUpdateImageProposalAt(uint256 proposalId) private {
-        uint256 index = _addOrUpdateImageProposalIndexById[proposalId];
+    function _popAddOrUpdateAgentImageProposalAt(uint256 proposalId) private {
+        uint256 index = _addOrUpdateAgentImageProposalIndexById[proposalId];
 
-        AddOrUpdateImageProposal memory proposal = _addOrUpdateImageProposals[index];
-        uint256 lastIndex = _addOrUpdateImageProposals.length - 1;
+        AddOrUpdateAgentImageProposal memory proposal = _addOrUpdateAgentImageProposals[index];
+        uint256 lastIndex = _addOrUpdateAgentImageProposals.length - 1;
         if (index != lastIndex) {
-            _addOrUpdateImageProposals[index] = _addOrUpdateImageProposals[lastIndex];
-            _addOrUpdateImageProposalIndexById[_addOrUpdateImageProposals[index].id] = index;
+            _addOrUpdateAgentImageProposals[index] = _addOrUpdateAgentImageProposals[lastIndex];
+            _addOrUpdateAgentImageProposalIndexById[_addOrUpdateAgentImageProposals[index].id] = index;
         }
-        _addOrUpdateImageProposals.pop();
-        delete _addOrUpdateImageProposalIndexById[proposalId];
+        _addOrUpdateAgentImageProposals.pop();
+        delete _addOrUpdateAgentImageProposalIndexById[proposalId];
 
         emit AgentImageProposalRemoved(
             proposal.tokenId,

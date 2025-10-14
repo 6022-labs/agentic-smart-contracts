@@ -8,6 +8,7 @@ import {
   signMintRequest,
   generateRandomAddress,
   deployCollectionWithCreator,
+  proposeAndMint,
 } from "../common";
 import {
   AgentCollectionV1,
@@ -92,40 +93,14 @@ describe("WhenBuildingTokenUri", function () {
     ];
 
     beforeEach(async function () {
-      const nonce = "1";
-      const agentAddresses = [generateRandomAddress()];
-      const cloneOf: NullableUint256Struct = { isSet: false, value: 0n };
-
       _tokenId = await _collection.nextTokenId();
 
-      const signature = await signMintRequest(_signer, _collection, {
+      await proposeAndMint(_signer, _collection, _owner, {
         to: _owner.address,
-        agentAddresses,
-        signer: _signer.address,
-        role: _role,
         name: _name,
+        role: _role,
         images: _images,
-        cloneOf,
-        nonce,
       });
-
-      await _collection.createMintProposal(
-        _owner.address,
-        agentAddresses,
-        _signer.address,
-        _role,
-        _name,
-        _images,
-        cloneOf,
-        ethers.id(nonce),
-        signature
-      );
-
-      const mintProposalsLength = await _collection.mintProposalsLength();
-
-      await _collection
-        .connect(_owner)
-        .mintFromProposal(mintProposalsLength - BigInt(1));
     });
 
     it("Should return token URI as base 64 encoded JSON", async function () {

@@ -5,19 +5,18 @@ import { proposeAndMint, deployCollectionWithCreator } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
-describe("WhenAddingOrUpdatingImage", function () {
+describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _collection: AgentCollectionV1;
   let _owner: HardhatEthersSigner;
   let _signer: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
-  let _otherAccount: HardhatEthersSigner;
 
   async function deployAgentCollection() {
     await reset();
 
-    const [owner, signer, moderator, otherAccount] = await ethers.getSigners();
+    const [owner, signer, moderator] = await ethers.getSigners();
 
     const { collection, collectionsManager } =
       await deployCollectionWithCreator({
@@ -29,18 +28,18 @@ describe("WhenAddingOrUpdatingImage", function () {
     const signerRole = await collectionsManager.SIGNER_ROLE();
     await collectionsManager.grantRole(signerRole, signer.address);
 
-    return { collection, owner, signer, moderator, otherAccount };
+    return { collection, owner, signer, moderator };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, moderator, otherAccount } =
-      await loadFixture(deployAgentCollection);
+    const { collection, owner, signer, moderator } = await loadFixture(
+      deployAgentCollection
+    );
 
     _collection = collection;
     _owner = owner;
     _signer = signer;
     _moderator = moderator;
-    _otherAccount = otherAccount;
   });
 
   describe("Given caller is not moderator", function () {
@@ -49,15 +48,18 @@ describe("WhenAddingOrUpdatingImage", function () {
         to: await _owner.getAddress(),
       });
 
-      await _collection.createAddOrUpdateImageProposal(tokenId, {
+      await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
         key: "profile",
         value: "cid1",
       });
 
-      const { id: proposalId } = await _collection.addOrUpdateImageProposal(0);
+      const { id: proposalId } =
+        await _collection.addOrUpdateAgentImageProposal(0);
 
       await expect(
-        _collection.connect(_owner).addOrUpdateImageFromProposal(proposalId)
+        _collection
+          .connect(_owner)
+          .addOrUpdateAgentImageFromProposal(proposalId)
       ).to.be.revertedWithCustomError(
         _collection,
         "AccessControlUnauthorizedAccount"
@@ -73,7 +75,7 @@ describe("WhenAddingOrUpdatingImage", function () {
         });
 
         return expect(
-          _collection.connect(_moderator).addOrUpdateImageFromProposal(0)
+          _collection.connect(_moderator).addOrUpdateAgentImageFromProposal(0)
         ).to.be.reverted;
       });
     });
@@ -84,18 +86,17 @@ describe("WhenAddingOrUpdatingImage", function () {
           to: await _owner.getAddress(),
         });
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid1",
         });
 
-        const { id: proposalId } = await _collection.addOrUpdateImageProposal(
-          0
-        );
+        const { id: proposalId } =
+          await _collection.addOrUpdateAgentImageProposal(0);
 
         await _collection
           .connect(_moderator)
-          .addOrUpdateImageFromProposal(proposalId);
+          .addOrUpdateAgentImageFromProposal(proposalId);
 
         const imagesCount = await _collection.imagesCountOf(tokenId);
         expect(imagesCount).to.equal(2);
@@ -115,19 +116,18 @@ describe("WhenAddingOrUpdatingImage", function () {
           to: await _owner.getAddress(),
         });
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid1",
         });
 
-        const { id: proposalId } = await _collection.addOrUpdateImageProposal(
-          0
-        );
+        const { id: proposalId } =
+          await _collection.addOrUpdateAgentImageProposal(0);
 
         await expect(
           _collection
             .connect(_moderator)
-            .addOrUpdateImageFromProposal(proposalId)
+            .addOrUpdateAgentImageFromProposal(proposalId)
         )
           .to.emit(_collection, "AgentImageUpdated")
           .withArgs(tokenId, "profile", "", "cid1");
@@ -138,19 +138,18 @@ describe("WhenAddingOrUpdatingImage", function () {
           to: await _owner.getAddress(),
         });
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid1",
         });
 
-        const { id: proposalId } = await _collection.addOrUpdateImageProposal(
-          0
-        );
+        const { id: proposalId } =
+          await _collection.addOrUpdateAgentImageProposal(0);
 
         await expect(
           _collection
             .connect(_moderator)
-            .addOrUpdateImageFromProposal(proposalId)
+            .addOrUpdateAgentImageFromProposal(proposalId)
         )
           .to.emit(_collection, "AgentImageProposalRemoved")
           .withArgs(tokenId, "profile", 0n);
@@ -163,30 +162,30 @@ describe("WhenAddingOrUpdatingImage", function () {
           to: await _owner.getAddress(),
         });
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid1",
         });
         const { id: firstProposalId } =
-          await _collection.addOrUpdateImageProposal(0);
+          await _collection.addOrUpdateAgentImageProposal(0);
         await _collection
           .connect(_moderator)
-          .addOrUpdateImageFromProposal(firstProposalId);
+          .addOrUpdateAgentImageFromProposal(firstProposalId);
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid2",
         });
 
         const proposalIndex =
-          (await _collection.addOrUpdateImageProposalsLength()) - BigInt(1);
-        const { id: proposalId } = await _collection.addOrUpdateImageProposal(
-          proposalIndex
-        );
+          (await _collection.addOrUpdateAgentImageProposalsLength()) -
+          BigInt(1);
+        const { id: proposalId } =
+          await _collection.addOrUpdateAgentImageProposal(proposalIndex);
 
         await _collection
           .connect(_moderator)
-          .addOrUpdateImageFromProposal(proposalId);
+          .addOrUpdateAgentImageFromProposal(proposalId);
 
         const imagesCount = await _collection.imagesCountOf(tokenId);
         expect(imagesCount).to.equal(2);
@@ -206,31 +205,31 @@ describe("WhenAddingOrUpdatingImage", function () {
           to: await _owner.getAddress(),
         });
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid1",
         });
         const { id: firstProposalId } =
-          await _collection.addOrUpdateImageProposal(0);
+          await _collection.addOrUpdateAgentImageProposal(0);
         await _collection
           .connect(_moderator)
-          .addOrUpdateImageFromProposal(firstProposalId);
+          .addOrUpdateAgentImageFromProposal(firstProposalId);
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid2",
         });
 
         const proposalIndex =
-          (await _collection.addOrUpdateImageProposalsLength()) - BigInt(1);
-        const { id: proposalId } = await _collection.addOrUpdateImageProposal(
-          proposalIndex
-        );
+          (await _collection.addOrUpdateAgentImageProposalsLength()) -
+          BigInt(1);
+        const { id: proposalId } =
+          await _collection.addOrUpdateAgentImageProposal(proposalIndex);
 
         await expect(
           _collection
             .connect(_moderator)
-            .addOrUpdateImageFromProposal(proposalId)
+            .addOrUpdateAgentImageFromProposal(proposalId)
         )
           .to.emit(_collection, "AgentImageUpdated")
           .withArgs(tokenId, "profile", "cid1", "cid2");
@@ -241,31 +240,31 @@ describe("WhenAddingOrUpdatingImage", function () {
           to: await _owner.getAddress(),
         });
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid1",
         });
         const { id: firstProposalId } =
-          await _collection.addOrUpdateImageProposal(0);
+          await _collection.addOrUpdateAgentImageProposal(0);
         await _collection
           .connect(_moderator)
-          .addOrUpdateImageFromProposal(firstProposalId);
+          .addOrUpdateAgentImageFromProposal(firstProposalId);
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid2",
         });
 
         const proposalIndex =
-          (await _collection.addOrUpdateImageProposalsLength()) - BigInt(1);
-        const { id: proposalId } = await _collection.addOrUpdateImageProposal(
-          proposalIndex
-        );
+          (await _collection.addOrUpdateAgentImageProposalsLength()) -
+          BigInt(1);
+        const { id: proposalId } =
+          await _collection.addOrUpdateAgentImageProposal(proposalIndex);
 
         await expect(
           _collection
             .connect(_moderator)
-            .addOrUpdateImageFromProposal(proposalId)
+            .addOrUpdateAgentImageFromProposal(proposalId)
         )
           .to.emit(_collection, "AgentImageProposalRemoved")
           .withArgs(tokenId, "profile", proposalIndex);
@@ -278,27 +277,29 @@ describe("WhenAddingOrUpdatingImage", function () {
           to: await _owner.getAddress(),
         });
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid1",
         });
 
         const proposalIndex =
-          (await _collection.addOrUpdateImageProposalsLength()) - BigInt(1);
-        const { id: proposalId } = await _collection.addOrUpdateImageProposal(
-          proposalIndex
-        );
+          (await _collection.addOrUpdateAgentImageProposalsLength()) -
+          BigInt(1);
+        const { id: proposalId } =
+          await _collection.addOrUpdateAgentImageProposal(proposalIndex);
 
         await _collection
           .connect(_moderator)
-          .addOrUpdateImageFromProposal(proposalId);
+          .addOrUpdateAgentImageFromProposal(proposalId);
 
-        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(0n);
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          0n
+        );
 
         await expect(
           _collection
             .connect(_moderator)
-            .addOrUpdateImageFromProposal(proposalId)
+            .addOrUpdateAgentImageFromProposal(proposalId)
         ).to.be.reverted;
       });
 
@@ -307,28 +308,32 @@ describe("WhenAddingOrUpdatingImage", function () {
           to: await _owner.getAddress(),
         });
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile1",
           value: "cid1",
         });
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile2",
           value: "cid2",
         });
 
-        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(2n);
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          2n
+        );
 
         const { id: firstProposalId } =
-          await _collection.addOrUpdateImageProposal(0);
+          await _collection.addOrUpdateAgentImageProposal(0);
 
         await _collection
           .connect(_moderator)
-          .addOrUpdateImageFromProposal(firstProposalId);
+          .addOrUpdateAgentImageFromProposal(firstProposalId);
 
-        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          1n
+        );
 
-        const proposal = await _collection.addOrUpdateImageProposal(0);
+        const proposal = await _collection.addOrUpdateAgentImageProposal(0);
         expect(proposal.image.key).to.equal("profile2");
         expect(proposal.image.value).to.equal("cid2");
 

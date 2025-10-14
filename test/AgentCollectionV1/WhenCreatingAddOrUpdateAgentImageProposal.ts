@@ -5,7 +5,7 @@ import { proposeAndMint, deployCollectionWithCreator } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
-describe("WhenCreatingAddOrUpdateImageProposal", function () {
+describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _collection: AgentCollectionV1;
@@ -53,7 +53,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
         .revokeRole(MODERATOR_ROLE, _moderator.address);
 
       await expect(
-        _collection.createAddOrUpdateImageProposal(1n, {
+        _collection.createAddOrUpdateAgentImageProposal(1n, {
           key: "profile",
           value: "cid1",
         })
@@ -64,7 +64,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
   describe("Given token does not exist", function () {
     it("Should revert with 'ERC721NonexistentToken' error", async function () {
       await expect(
-        _collection.createAddOrUpdateImageProposal(1n, {
+        _collection.createAddOrUpdateAgentImageProposal(1n, {
           key: "profile",
           value: "cid1",
         })
@@ -83,7 +83,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
       await expect(
         _collection
           .connect(_otherAccount)
-          .createAddOrUpdateImageProposal(tokenId, {
+          .createAddOrUpdateAgentImageProposal(tokenId, {
             key: "profile",
             value: "cid1",
           })
@@ -103,16 +103,20 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           to: await _owner.getAddress(),
         });
 
-        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(0n);
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          0n
+        );
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid1",
         });
 
-        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          1n
+        );
 
-        const proposal = await _collection.addOrUpdateImageProposal(0);
+        const proposal = await _collection.addOrUpdateAgentImageProposal(0);
         expect(proposal.tokenId).to.equal(tokenId);
         expect(proposal.image.key).to.equal("profile");
         expect(proposal.image.value).to.equal("cid1");
@@ -124,7 +128,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
         });
 
         await expect(
-          _collection.createAddOrUpdateImageProposal(tokenId, {
+          _collection.createAddOrUpdateAgentImageProposal(tokenId, {
             key: "profile",
             value: "cid1",
           })
@@ -140,21 +144,25 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           to: await _owner.getAddress(),
         });
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid1",
         });
 
-        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          1n
+        );
 
-        await _collection.createAddOrUpdateImageProposal(tokenId, {
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
           key: "profile",
           value: "cid2",
         });
 
-        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          1n
+        );
 
-        const proposal = await _collection.addOrUpdateImageProposal(0);
+        const proposal = await _collection.addOrUpdateAgentImageProposal(0);
         expect(proposal.tokenId).to.equal(tokenId);
         expect(proposal.image.value).to.equal("cid2");
       });
@@ -168,18 +176,22 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           to: await _owner.getAddress(),
         });
 
-        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(0n);
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          0n
+        );
 
         await _collection
           .connect(_moderator)
-          .createAddOrUpdateImageProposal(tokenId, {
+          .createAddOrUpdateAgentImageProposal(tokenId, {
             key: "profile",
             value: "cid1",
           });
 
-        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          1n
+        );
 
-        const proposal = await _collection.addOrUpdateImageProposal(0);
+        const proposal = await _collection.addOrUpdateAgentImageProposal(0);
         expect(proposal.tokenId).to.equal(tokenId);
         expect(proposal.image.key).to.equal("profile");
         expect(proposal.image.value).to.equal("cid1");
@@ -193,7 +205,7 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
         await expect(
           _collection
             .connect(_moderator)
-            .createAddOrUpdateImageProposal(tokenId, {
+            .createAddOrUpdateAgentImageProposal(tokenId, {
               key: "profile",
               value: "cid1",
             })
@@ -209,18 +221,22 @@ describe("WhenCreatingAddOrUpdateImageProposal", function () {
           to: await _owner.getAddress(),
         });
 
-        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(0n);
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          0n
+        );
 
         await _collection
           .connect(_moderator)
-          .createAddOrUpdateImageProposal(tokenId, {
+          .createAddOrUpdateAgentImageProposal(tokenId, {
             key: "profile",
             value: "cid1",
           });
 
-        expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          1n
+        );
 
-        const proposal = await _collection.addOrUpdateImageProposal(0);
+        const proposal = await _collection.addOrUpdateAgentImageProposal(0);
         expect(proposal.tokenId).to.equal(tokenId);
         expect(proposal.image.key).to.equal("profile");
         expect(proposal.image.value).to.equal("cid1");

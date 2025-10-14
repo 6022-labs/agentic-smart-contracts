@@ -3,13 +3,7 @@ import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
-import {
-  signMintRequest,
-  generateRandomNonce,
-  generateRandomAddress,
-  deployCollectionWithCreator,
-} from "../common";
+import { proposeAndMint, deployCollectionWithCreator } from "../common";
 
 describe("WhenAddingOrUpdatingAgentAttribute", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -18,82 +12,47 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
 
   let _owner: HardhatEthersSigner;
   let _signer: HardhatEthersSigner;
+  let _moderator: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
 
   async function deployAgentCollection() {
     await reset();
 
-    const [owner, signer, otherAccount] = await ethers.getSigners();
+    const [owner, signer, otherAccount, moderator] = await ethers.getSigners();
 
     const { collection, collectionsManager } =
       await deployCollectionWithCreator({
         owner,
-        moderator: owner,
+        moderator,
         ipfsGateway,
       });
 
     const signerRole = await collectionsManager.SIGNER_ROLE();
     await collectionsManager.grantRole(signerRole, signer.address);
 
-    return { collection, owner, signer, otherAccount };
+    return { collection, owner, signer, moderator, otherAccount };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, otherAccount } = await loadFixture(
-      deployAgentCollection
-    );
+    const { collection, owner, signer, moderator, otherAccount } =
+      await loadFixture(deployAgentCollection);
 
     _collection = collection;
+
     _owner = owner;
     _signer = signer;
+    _moderator = moderator;
     _otherAccount = otherAccount;
   });
 
-  async function mintWithSignature(to: string) {
-    const name = "test-agent";
-    const images = [
-      {
-        key: "default",
-        value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
-      },
-    ];
-    const role = "facilitator";
+  async function mint(to: string) {
+    const tokenId = await _collection.nextTokenId();
 
-    const nonce = generateRandomNonce();
-    const agentAddresses = [generateRandomAddress()];
-
-    const cloneOf: NullableUint256Struct = { isSet: false, value: 0n };
-
-    const signature = await signMintRequest(_signer, _collection, {
+    await proposeAndMint(_signer, _collection, _moderator, {
       to,
-      agentAddresses,
-      signer: _signer.address,
-      role,
-      name,
-      images,
-      cloneOf,
-      nonce,
     });
 
-    await _collection.createMintProposal(
-      to,
-      agentAddresses,
-      _signer.address,
-      role,
-      name,
-      images,
-      cloneOf,
-      ethers.id(nonce),
-      signature
-    );
-
-    const mintProposalsLength = await _collection.mintProposalsLength();
-
-    await _collection
-      .connect(_owner)
-      .mintFromProposal(mintProposalsLength - BigInt(1));
-
-    return (await _collection.nextTokenId()) - BigInt(1);
+    return tokenId;
   }
 
   describe("Given token id does not exist", function () {
@@ -112,7 +71,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
 
   describe("Given sender is not the owner of the token", function () {
     it("Should revert with 'OwnableUnauthorizedAccount' error", async function () {
-      const tokenId = await mintWithSignature(await _owner.getAddress());
+      const tokenId = await mint(await _owner.getAddress());
 
       await expect(
         _collection
@@ -132,7 +91,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
     const ATTRIBUTE_VALUE = "initial-value";
 
     it("Should add the attribute", async function () {
-      const tokenId = await mintWithSignature(await _owner.getAddress());
+      const tokenId = await mint(await _owner.getAddress());
 
       await _collection
         .connect(_owner)
@@ -151,7 +110,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
     });
 
     it("Should emit 'AgentAttributeUpdated' event", async function () {
-      const tokenId = await mintWithSignature(await _owner.getAddress());
+      const tokenId = await mint(await _owner.getAddress());
 
       await expect(
         _collection
@@ -169,7 +128,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
     const NEW_ATTRIBUTE_VALUE = "new-value";
 
     it("Should update the attribute", async function () {
-      const tokenId = await mintWithSignature(await _owner.getAddress());
+      const tokenId = await mint(await _owner.getAddress());
 
       await _collection
         .connect(_owner)
@@ -196,7 +155,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
     });
 
     it("Should emit 'AgentAttributeUpdated' event", async function () {
-      const tokenId = await mintWithSignature(await _owner.getAddress());
+      const tokenId = await mint(await _owner.getAddress());
 
       await _collection
         .connect(_owner)

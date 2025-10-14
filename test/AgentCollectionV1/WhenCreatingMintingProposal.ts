@@ -22,6 +22,7 @@ describe("WhenCreatingMintingProposal", function () {
       value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
     },
   ];
+  const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
   const DEFAULT_NAME = "test-agent";
   const INVALID_NAME = "Invalid_Name";
   const NONCE_1 = "1";
@@ -76,14 +77,15 @@ describe("WhenCreatingMintingProposal", function () {
         .connect(_owner)
         .revokeRole(MODERATOR_ROLE, _moderator.address);
 
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
       const signature = await signMintRequest(_signer1, _collection, {
         to: _owner.address,
-        agentAddresses,
         signer: _signer1.address,
-        role: DEFAULT_ROLE,
         name: INVALID_NAME,
+        role: DEFAULT_ROLE,
+        wallets,
         images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
         cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
@@ -91,11 +93,12 @@ describe("WhenCreatingMintingProposal", function () {
       await expect(
         _collection.createMintProposal(
           _owner.address,
-          agentAddresses,
           _signer1.address,
           DEFAULT_ROLE,
           INVALID_NAME,
+          wallets,
           DEFAULT_IMAGES,
+          DEFAULT_ATTRIBUTES,
           DEFAULT_CLONE_OF,
           ethers.id(NONCE_1),
           signature
@@ -107,14 +110,15 @@ describe("WhenCreatingMintingProposal", function () {
   describe("Given a signature from signer", function () {
     describe("Given an invalid name", function () {
       it("Should revert with 'InvalidName' error", async function () {
-        const agentAddresses = [generateRandomAddress()];
+        const wallets = [generateRandomAddress()];
         const signature = await signMintRequest(_signer1, _collection, {
           to: _owner.address,
-          agentAddresses,
           signer: _signer1.address,
-          role: DEFAULT_ROLE,
           name: INVALID_NAME,
+          role: DEFAULT_ROLE,
+          wallets,
           images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
           cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_1,
         });
@@ -122,11 +126,12 @@ describe("WhenCreatingMintingProposal", function () {
         await expect(
           _collection.createMintProposal(
             _owner.address,
-            agentAddresses,
             _signer1.address,
             DEFAULT_ROLE,
             INVALID_NAME,
+            wallets,
             DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
             DEFAULT_CLONE_OF,
             ethers.id(NONCE_1),
             signature
@@ -139,25 +144,27 @@ describe("WhenCreatingMintingProposal", function () {
 
     describe("Given a valid nonce used twice", function () {
       it("Should revert with 'UsedNonce' error on second attempt", async function () {
-        const agentAddresses = [generateRandomAddress()];
+        const wallets = [generateRandomAddress()];
         const signature = await signMintRequest(_signer1, _collection, {
           to: _owner.address,
-          agentAddresses,
           signer: _signer1.address,
           role: DEFAULT_ROLE,
           name: DEFAULT_NAME,
+          wallets,
           images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
           cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_1,
         });
 
         await _collection.createMintProposal(
           _owner.address,
-          agentAddresses,
           _signer1.address,
           DEFAULT_ROLE,
           DEFAULT_NAME,
+          wallets,
           DEFAULT_IMAGES,
+          DEFAULT_ATTRIBUTES,
           DEFAULT_CLONE_OF,
           ethers.id(NONCE_1),
           signature
@@ -166,11 +173,12 @@ describe("WhenCreatingMintingProposal", function () {
         await expect(
           _collection.createMintProposal(
             _owner.address,
-            agentAddresses,
             _signer1.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
+            wallets,
             DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
             DEFAULT_CLONE_OF,
             ethers.id(NONCE_1),
             signature
@@ -183,26 +191,28 @@ describe("WhenCreatingMintingProposal", function () {
 
     describe("Given a name already taken", function () {
       it("Should revert with 'UsedName' error", async function () {
-        const agentAddresses = [generateRandomAddress()];
+        const wallets = [generateRandomAddress()];
 
         const sig1 = await signMintRequest(_signer1, _collection, {
           to: _owner.address,
-          agentAddresses,
           signer: _signer1.address,
           role: DEFAULT_ROLE,
           name: DEFAULT_NAME,
+          wallets,
           images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
           cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_1,
         });
 
         await _collection.createMintProposal(
           _owner.address,
-          agentAddresses,
           _signer1.address,
           DEFAULT_ROLE,
           DEFAULT_NAME,
+          wallets,
           DEFAULT_IMAGES,
+          DEFAULT_ATTRIBUTES,
           DEFAULT_CLONE_OF,
           ethers.id(NONCE_1),
           sig1
@@ -216,11 +226,12 @@ describe("WhenCreatingMintingProposal", function () {
 
         const sig2 = await signMintRequest(_signer1, _collection, {
           to: _owner.address,
-          agentAddresses,
           signer: _signer1.address,
           role: DEFAULT_ROLE,
           name: DEFAULT_NAME,
+          wallets,
           images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
           cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_2,
         });
@@ -228,11 +239,12 @@ describe("WhenCreatingMintingProposal", function () {
         await expect(
           _collection.createMintProposal(
             _owner.address,
-            agentAddresses,
             _signer1.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
+            wallets,
             DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
             DEFAULT_CLONE_OF,
             ethers.id(NONCE_2),
             sig2
@@ -245,18 +257,19 @@ describe("WhenCreatingMintingProposal", function () {
 
     describe("Given cloneOf is set but value is 0", function () {
       it("Should revert with 'InvalidCloneOf' error", async function () {
-        const agentAddresses = [generateRandomAddress()];
+        const wallets = [generateRandomAddress()];
         const invalidCloneOf: NullableUint256Struct = {
           isSet: true,
           value: 0n,
         };
         const signature = await signMintRequest(_signer1, _collection, {
           to: _owner.address,
-          agentAddresses,
-          signer: _signer1.address,
           role: DEFAULT_ROLE,
+          signer: _signer1.address,
           name: DEFAULT_NAME,
+          wallets,
           images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
           cloneOf: invalidCloneOf,
           nonce: NONCE_1,
         });
@@ -264,11 +277,12 @@ describe("WhenCreatingMintingProposal", function () {
         await expect(
           _collection.createMintProposal(
             _owner.address,
-            agentAddresses,
             _signer1.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
+            wallets,
             DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
             invalidCloneOf,
             ethers.id(NONCE_1),
             signature
@@ -281,18 +295,19 @@ describe("WhenCreatingMintingProposal", function () {
 
     describe("Given cloneOf is set but related token (agent) does not exist", function () {
       it("Should revert with 'InvalidCloneOf' error", async function () {
-        const agentAddresses = [generateRandomAddress()];
+        const wallets = [generateRandomAddress()];
         const invalidCloneOf: NullableUint256Struct = {
           isSet: true,
           value: 9999n,
         };
         const signature = await signMintRequest(_signer1, _collection, {
           to: _owner.address,
-          agentAddresses,
           signer: _signer1.address,
           role: DEFAULT_ROLE,
           name: DEFAULT_NAME,
+          wallets,
           images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
           cloneOf: invalidCloneOf,
           nonce: NONCE_1,
         });
@@ -300,11 +315,12 @@ describe("WhenCreatingMintingProposal", function () {
         await expect(
           _collection.createMintProposal(
             _owner.address,
-            agentAddresses,
             _signer1.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
+            wallets,
             DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
             invalidCloneOf,
             ethers.id(NONCE_1),
             signature
@@ -317,14 +333,15 @@ describe("WhenCreatingMintingProposal", function () {
 
     describe("Given a signature that does not match signer parameter", function () {
       it("Should revert with 'InvalidSigner' error", async function () {
-        const agentAddresses = [generateRandomAddress()];
+        const wallets = [generateRandomAddress()];
         const signature = await signMintRequest(_signer1, _collection, {
           to: _owner.address,
-          agentAddresses,
           signer: _signer2.address,
           role: DEFAULT_ROLE,
           name: DEFAULT_NAME,
+          wallets,
           images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
           cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_1,
         });
@@ -332,11 +349,12 @@ describe("WhenCreatingMintingProposal", function () {
         await expect(
           _collection.createMintProposal(
             _owner.address,
-            agentAddresses,
             _signer2.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
+            wallets,
             DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
             DEFAULT_CLONE_OF,
             ethers.id(NONCE_1),
             signature
@@ -350,27 +368,29 @@ describe("WhenCreatingMintingProposal", function () {
     describe("Given a valid signature", function () {
       describe("With cloneOf set", function () {
         it("Should create the proposal", async function () {
-          const agentAddresses = [generateRandomAddress()];
+          const wallets = [generateRandomAddress()];
 
           // First, mint an agent to clone
           const signature1 = await signMintRequest(_signer1, _collection, {
             to: _owner.address,
-            agentAddresses,
             signer: _signer1.address,
             role: DEFAULT_ROLE,
             name: DEFAULT_NAME,
+            wallets,
             images: DEFAULT_IMAGES,
+            attributes: DEFAULT_ATTRIBUTES,
             cloneOf: DEFAULT_CLONE_OF,
             nonce: NONCE_1,
           });
 
           await _collection.createMintProposal(
             _owner.address,
-            agentAddresses,
             _signer1.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
+            wallets,
             DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
             DEFAULT_CLONE_OF,
             ethers.id(NONCE_1),
             signature1
@@ -389,11 +409,12 @@ describe("WhenCreatingMintingProposal", function () {
 
           const signature2 = await signMintRequest(_signer1, _collection, {
             to: _owner.address,
-            agentAddresses,
             signer: _signer1.address,
             role: DEFAULT_ROLE,
             name: "cloned-agent",
+            wallets,
             images: DEFAULT_IMAGES,
+            attributes: DEFAULT_ATTRIBUTES,
             cloneOf,
             nonce: NONCE_2,
           });
@@ -403,11 +424,12 @@ describe("WhenCreatingMintingProposal", function () {
 
           await _collection.createMintProposal(
             _owner.address,
-            agentAddresses,
             _signer1.address,
             DEFAULT_ROLE,
             "cloned-agent",
+            wallets,
             DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
             cloneOf,
             ethers.id(NONCE_2),
             signature2
@@ -424,14 +446,15 @@ describe("WhenCreatingMintingProposal", function () {
 
       describe("With cloneOf not set", function () {
         it("Should create the proposal", async function () {
-          const agentAddresses = [generateRandomAddress()];
+          const wallets = [generateRandomAddress()];
           const signature = await signMintRequest(_signer1, _collection, {
             to: _owner.address,
-            agentAddresses,
             signer: _signer1.address,
             role: DEFAULT_ROLE,
             name: DEFAULT_NAME,
+            wallets,
             images: DEFAULT_IMAGES,
+            attributes: DEFAULT_ATTRIBUTES,
             cloneOf: DEFAULT_CLONE_OF,
             nonce: NONCE_1,
           });
@@ -441,11 +464,12 @@ describe("WhenCreatingMintingProposal", function () {
 
           await _collection.createMintProposal(
             _owner.address,
-            agentAddresses,
             _signer1.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
+            wallets,
             DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
             DEFAULT_CLONE_OF,
             ethers.id(NONCE_1),
             signature
@@ -461,14 +485,15 @@ describe("WhenCreatingMintingProposal", function () {
       });
 
       it("Should emit a MintProposalCreated event", async function () {
-        const agentAddresses = [generateRandomAddress()];
+        const wallets = [generateRandomAddress()];
         const signature = await signMintRequest(_signer1, _collection, {
           to: _owner.address,
-          agentAddresses,
           signer: _signer1.address,
           role: DEFAULT_ROLE,
           name: DEFAULT_NAME,
+          wallets,
           images: DEFAULT_IMAGES,
+          attributes: DEFAULT_ATTRIBUTES,
           cloneOf: DEFAULT_CLONE_OF,
           nonce: NONCE_1,
         });
@@ -476,11 +501,12 @@ describe("WhenCreatingMintingProposal", function () {
         await expect(
           _collection.createMintProposal(
             _owner.address,
-            agentAddresses,
             _signer1.address,
             DEFAULT_ROLE,
             DEFAULT_NAME,
+            wallets,
             DEFAULT_IMAGES,
+            DEFAULT_ATTRIBUTES,
             DEFAULT_CLONE_OF,
             ethers.id(NONCE_1),
             signature
@@ -494,15 +520,16 @@ describe("WhenCreatingMintingProposal", function () {
 
   describe("Given a signature from a non-signer", function () {
     it("Should revert with 'NotSigner' error", async function () {
-      const agentAddresses = [generateRandomAddress()];
+      const wallets = [generateRandomAddress()];
 
       const signature = await signMintRequest(_otherAccount, _collection, {
         to: _owner.address,
-        agentAddresses,
         signer: _otherAccount.address,
         role: DEFAULT_ROLE,
         name: DEFAULT_NAME,
+        wallets,
         images: DEFAULT_IMAGES,
+        attributes: DEFAULT_ATTRIBUTES,
         cloneOf: DEFAULT_CLONE_OF,
         nonce: NONCE_1,
       });
@@ -510,11 +537,12 @@ describe("WhenCreatingMintingProposal", function () {
       await expect(
         _collection.createMintProposal(
           _owner.address,
-          agentAddresses,
           _otherAccount.address,
           DEFAULT_ROLE,
           DEFAULT_NAME,
+          wallets,
           DEFAULT_IMAGES,
+          DEFAULT_ATTRIBUTES,
           DEFAULT_CLONE_OF,
           ethers.id(NONCE_1),
           signature

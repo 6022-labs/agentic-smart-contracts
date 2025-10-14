@@ -5,7 +5,7 @@ import { proposeAndMint, deployCollectionWithCreator } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
-describe("WhenRefusingAddOrUpdateImageProposals", function () {
+describe("WhenRefusingAddOrUpdateAgentImageProposals", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _collection: AgentCollectionV1;
@@ -43,21 +43,22 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
     _otherAccount = otherAccount;
   });
 
-  describe("refuseAddOrUpdateImageProposal", function () {
+  describe("refuseAddOrUpdateAgentImageProposal", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' when caller is not moderator", async function () {
       const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
         to: await _owner.getAddress(),
       });
 
-      await _collection.createAddOrUpdateImageProposal(tokenId, {
+      await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
         key: "profile",
         value: "cid1",
       });
 
-      const { id: proposalId } = await _collection.addOrUpdateImageProposal(0);
+      const { id: proposalId } =
+        await _collection.addOrUpdateAgentImageProposal(0);
 
       await expect(
-        _collection.refuseAddOrUpdateImageProposal(proposalId)
+        _collection.refuseAddOrUpdateAgentImageProposal(proposalId)
       ).to.be.revertedWithCustomError(
         _collection,
         "AccessControlUnauthorizedAccount"
@@ -70,7 +71,7 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
       });
 
       await expect(
-        _collection.connect(_moderator).refuseAddOrUpdateImageProposal(0)
+        _collection.connect(_moderator).refuseAddOrUpdateAgentImageProposal(0)
       ).to.be.reverted;
     });
 
@@ -79,27 +80,32 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
         to: await _owner.getAddress(),
       });
 
-      await _collection.createAddOrUpdateImageProposal(tokenId, {
+      await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
         key: "profile1",
         value: "cid1",
       });
 
-      await _collection.createAddOrUpdateImageProposal(tokenId, {
+      await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
         key: "profile2",
         value: "cid2",
       });
 
-      expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(2n);
+      expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+        2n
+      );
 
-      const { id: proposalId } = await _collection.addOrUpdateImageProposal(0);
+      const { id: proposalId } =
+        await _collection.addOrUpdateAgentImageProposal(0);
 
       await _collection
         .connect(_moderator)
-        .refuseAddOrUpdateImageProposal(proposalId);
+        .refuseAddOrUpdateAgentImageProposal(proposalId);
 
-      expect(await _collection.addOrUpdateImageProposalsLength()).to.eq(1n);
+      expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+        1n
+      );
 
-      const proposal = await _collection.addOrUpdateImageProposal(0);
+      const proposal = await _collection.addOrUpdateAgentImageProposal(0);
       expect(proposal.image.key).to.equal("profile2");
     });
 
@@ -108,17 +114,18 @@ describe("WhenRefusingAddOrUpdateImageProposals", function () {
         to: await _owner.getAddress(),
       });
 
-      await _collection.createAddOrUpdateImageProposal(tokenId, {
+      await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
         key: "profile",
         value: "cid1",
       });
 
-      const { id: proposalId } = await _collection.addOrUpdateImageProposal(0);
+      const { id: proposalId } =
+        await _collection.addOrUpdateAgentImageProposal(0);
 
       await expect(
         _collection
           .connect(_moderator)
-          .refuseAddOrUpdateImageProposal(proposalId)
+          .refuseAddOrUpdateAgentImageProposal(proposalId)
       )
         .to.emit(_collection, "AgentImageProposalRemoved")
         .withArgs(tokenId, "profile", 2n);

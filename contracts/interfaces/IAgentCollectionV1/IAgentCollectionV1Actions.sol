@@ -20,7 +20,7 @@ interface IAgentCollectionV1Actions {
     /// @dev Remove an image from a token.
     /// @param tokenId The token whose image is removed.
     /// @param key The key of the image to remove.
-    function removeImage(
+    function removeAgentImage(
         uint256 tokenId,
         string memory key
     ) external;
@@ -35,23 +35,25 @@ interface IAgentCollectionV1Actions {
         string memory value
     ) external;
 
-    /// @dev Propose minting of a new agent token. (used if moderators setup)
+    // @dev Propose minting of a new agent token. (used if moderators setup)
     /// @param to The future owner of the token.
-    /// @param agentAddresses Wallet addresses controlled by the agent.
     /// @param signer The signer address linked to the agent.
     /// @param role The agent role.
     /// @param name The Name of the agent.
+    /// @param wallets Wallet addresses controlled by the agent.
     /// @param images A set of images describing the agent.
+    /// @param attributes A set of attributes describing the agent.
     /// @param cloneOf The ID of the agent to clone (if any).
     /// @param nonce Unique nonce used for signature replay protection.
     /// @param signature Off-chain signature authorizing the mint.
     function createMintProposal(
         address to,
-        address[] memory agentAddresses,
         address signer,
         string memory role,
         string memory name,
+        address[] memory wallets,
         KeyValue[] memory images,
+        KeyValue[] memory attributes,
         NullableUint256 memory cloneOf,
         bytes32 nonce,
         bytes memory signature
@@ -60,21 +62,23 @@ interface IAgentCollectionV1Actions {
     /// @dev Mint a new agent token. (allowed when no moderators are setup or
     /// the caller is a moderator)
     /// @param to The future owner of the token.
-    /// @param agentAddresses Wallet addresses controlled by the agent.
     /// @param signer The signer address linked to the agent.
     /// @param role The agent role.
     /// @param name The Name of the agent.
+    /// @param wallets Wallet addresses controlled by the agent.
     /// @param images A set of images describing the agent.
+    /// @param attributes A set of attributes describing the agent.
     /// @param cloneOf The ID of the agent to clone (if any).
     /// @param nonce Unique nonce used for signature replay protection.
     /// @param signature Off-chain signature authorizing the mint.
     function mint(
         address to,
-        address[] memory agentAddresses,
         address signer,
         string memory role,
         string memory name,
+        address[] memory wallets,
         KeyValue[] memory images,
+        KeyValue[] memory attributes,
         NullableUint256 memory cloneOf,
         bytes32 nonce,
         bytes memory signature
@@ -83,7 +87,7 @@ interface IAgentCollectionV1Actions {
     /// @dev Propose to add or update an image for a token. (used if moderators setup)
     /// @param tokenId The token affected by the proposal.
     /// @param image The key/value pair representing the image.
-    function createAddOrUpdateImageProposal(
+    function createAddOrUpdateAgentImageProposal(
         uint256 tokenId,
         KeyValue memory image
     ) external;
@@ -91,7 +95,7 @@ interface IAgentCollectionV1Actions {
     /// @dev Add or update an image for a token. (used if no moderators setup)
     /// @param tokenId The token affected.
     /// @param image The key/value pair representing the image.
-    function addOrUpdateImage(
+    function addOrUpdateAgentImage(
         uint256 tokenId,
         KeyValue memory image
     ) external;
