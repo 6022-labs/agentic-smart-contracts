@@ -31,6 +31,15 @@ export default task("create-collection")
       collectionModerator = signer.address,
     } = taskArgs;
 
+    console.log(`Deploying collection with the following parameters:
+      Collection Creator Address: ${collectionCreatorAddress}
+      Collection Name: ${collectionName}
+      Collection Symbol: ${collectionSymbol}
+      Collection Description: ${collectionDescription}
+      Collection Admin: ${collectionAdmin}
+      Collection Moderator: ${collectionModerator}
+    `);
+
     const agentCollectionCreator = (await hre.ethers.getContractAt(
       "AgentCollectionCreatorV1",
       collectionCreatorAddress
@@ -55,7 +64,7 @@ export default task("create-collection")
         hre,
         txReceipt.logs,
         "CollectionCreated(uint256,address,string,string)",
-        "AgentCollectionCreatorV1"
+        "AgentCollectionsManager"
       );
 
       if (collectionCreatedLogs.length === 0) {
