@@ -2,13 +2,10 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
 import {
   decodeTokenURI,
-  signMintRequest,
-  generateRandomAddress,
-  deployCollectionWithCreator,
   proposeAndMint,
+  deployCollectionWithCreator,
 } from "../common";
 import {
   AgentCollectionV1,
