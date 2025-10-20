@@ -5,7 +5,7 @@ import { proposeAndMint, deployCollectionWithCreator } from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
-describe("WhenAddingOrUpdatingImage", function () {
+describe("WhenAddingOrUpdatingAgentImage", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
   let _collection: AgentCollectionV1;
@@ -53,7 +53,7 @@ describe("WhenAddingOrUpdatingImage", function () {
     describe("And caller is not a moderator", function () {
       it("Should revert with 'NotModerator' error", async function () {
         await expect(
-          _collection.addOrUpdateImage(1n, {
+          _collection.addOrUpdateAgentImage(1n, {
             key: "profile",
             value: "cid1",
           })
@@ -68,7 +68,7 @@ describe("WhenAddingOrUpdatingImage", function () {
         });
 
         await expect(
-          _collection.connect(_moderator).addOrUpdateImage(tokenId, {
+          _collection.connect(_moderator).addOrUpdateAgentImage(tokenId, {
             key: "profile",
             value: "cid1",
           })
@@ -87,7 +87,7 @@ describe("WhenAddingOrUpdatingImage", function () {
         const tokenId = 1n;
 
         await expect(
-          _collection.addOrUpdateImage(tokenId, {
+          _collection.addOrUpdateAgentImage(tokenId, {
             key: "profile",
             value: "cid1",
           })
@@ -110,7 +110,7 @@ describe("WhenAddingOrUpdatingImage", function () {
         await expect(
           _collection
             .connect(_otherAccount)
-            .addOrUpdateImage(tokenId, { key: "profile", value: "cid1" })
+            .addOrUpdateAgentImage(tokenId, { key: "profile", value: "cid1" })
         )
           .to.be.revertedWithCustomError(
             _collection,
@@ -130,20 +130,27 @@ describe("WhenAddingOrUpdatingImage", function () {
       });
 
       it("Should add the image", async function () {
-        await _collection.addOrUpdateImage(tokenId, {
+        await _collection.addOrUpdateAgentImage(tokenId, {
           key: "profile",
           value: "cid1",
         });
 
-        const images = await _collection.imagesOf(tokenId);
-        expect(images.length).to.equal(2);
+        const imagesCount = await _collection.imagesCountOf(tokenId);
+        expect(imagesCount).to.equal(2);
+
+        const images: [string, string][] = [];
+        for (let i = 0; i < imagesCount; i++) {
+          const image = await _collection.imageOfByIndex(tokenId, i);
+          images.push([image.key, image.value]);
+        }
+
         expect(images[1][0]).to.equal("profile");
         expect(images[1][1]).to.equal("cid1");
       });
 
       it("Should emit 'AgentImageUpdated' event", async function () {
         await expect(
-          _collection.addOrUpdateImage(tokenId, {
+          _collection.addOrUpdateAgentImage(tokenId, {
             key: "profile",
             value: "cid1",
           })
@@ -160,27 +167,34 @@ describe("WhenAddingOrUpdatingImage", function () {
           to: await _owner.getAddress(),
         });
         await revokeModerator();
-        await _collection.addOrUpdateImage(tokenId, {
+        await _collection.addOrUpdateAgentImage(tokenId, {
           key: "profile",
           value: "cid1",
         });
       });
 
       it("Should update the image value", async function () {
-        await _collection.addOrUpdateImage(tokenId, {
+        await _collection.addOrUpdateAgentImage(tokenId, {
           key: "profile",
           value: "cid2",
         });
 
-        const images = await _collection.imagesOf(tokenId);
-        expect(images.length).to.equal(2);
+        const imagesCount = await _collection.imagesCountOf(tokenId);
+        expect(imagesCount).to.equal(2);
+
+        const images: [string, string][] = [];
+        for (let i = 0; i < imagesCount; i++) {
+          const image = await _collection.imageOfByIndex(tokenId, i);
+          images.push([image.key, image.value]);
+        }
+
         expect(images[1][0]).to.equal("profile");
         expect(images[1][1]).to.equal("cid2");
       });
 
       it("Should emit 'AgentImageUpdated' event", async function () {
         await expect(
-          _collection.addOrUpdateImage(tokenId, {
+          _collection.addOrUpdateAgentImage(tokenId, {
             key: "profile",
             value: "cid2",
           })

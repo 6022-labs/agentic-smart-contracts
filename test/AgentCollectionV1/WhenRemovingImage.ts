@@ -4,9 +4,8 @@ import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
-  signMintRequest,
+  proposeAndMint,
   generateRandomNonce,
-  generateRandomAddress,
   deployCollectionWithCreator,
 } from "../common";
 
@@ -53,43 +52,15 @@ describe("WhenRemovingImage", function () {
     images: { key: string; value: string }[],
     to: string
   ) {
-    const name = "test-agent";
-    const role = "facilitator";
-    const mission = "";
-
     const nonce = generateRandomNonce();
-    const agentAddresses = [generateRandomAddress()];
-
-    const signature = await signMintRequest(_signer, _collection, {
-      to,
-      agentAddresses,
-      signer: _signer.address,
-      role,
-      name,
-      images,
-      mission,
-      nonce,
-    });
-
-    await _collection.createMintProposal(
-      to,
-      agentAddresses,
-      _signer.address,
-      role,
-      name,
-      mission,
-      images,
-      ethers.id(nonce),
-      signature
-    );
-
-    const mintProposalsLength = await _collection.mintProposalsLength();
 
     const tokenId = await _collection.nextTokenId();
 
-    await _collection
-      .connect(_moderator)
-      .mintFromProposal(mintProposalsLength - BigInt(1));
+    await proposeAndMint(_signer, _collection, _moderator, {
+      to,
+      images,
+      nonce,
+    });
 
     return tokenId;
   }
@@ -98,7 +69,9 @@ describe("WhenRemovingImage", function () {
     it("Should revert with 'ERC721NonexistentToken' error", async function () {
       const tokenId = 1;
 
-      await expect(_collection.connect(_owner).removeImage(tokenId, "default"))
+      await expect(
+        _collection.connect(_owner).removeAgentImage(tokenId, "default")
+      )
         .to.be.revertedWithCustomError(_collection, "ERC721NonexistentToken")
         .withArgs(tokenId);
     });
@@ -115,7 +88,7 @@ describe("WhenRemovingImage", function () {
       );
 
       await expect(
-        _collection.connect(_otherAccount).removeImage(tokenId, "default")
+        _collection.connect(_otherAccount).removeAgentImage(tokenId, "default")
       )
         .to.be.revertedWithCustomError(
           _collection,
@@ -136,7 +109,7 @@ describe("WhenRemovingImage", function () {
       );
 
       await expect(
-        _collection.connect(_owner).removeImage(tokenId, "default")
+        _collection.connect(_owner).removeAgentImage(tokenId, "default")
       ).to.be.revertedWithCustomError(_collection, "MissingDefaultImage");
     });
   });
@@ -156,9 +129,19 @@ describe("WhenRemovingImage", function () {
         await _owner.getAddress()
       );
 
-      await _collection.connect(_owner).removeImage(tokenId, profileImg.key);
+      await _collection
+        .connect(_owner)
+        .removeAgentImage(tokenId, profileImg.key);
 
-      const images = await _collection.imagesOf(tokenId);
+      const imagesCount = await _collection.imagesCountOf(tokenId);
+
+      expect(imagesCount).to.equal(1);
+
+      const images: [string, string][] = [];
+      for (let i = 0; i < imagesCount; i++) {
+        const image = await _collection.imageOfByIndex(tokenId, i);
+        images.push([image.key, image.value]);
+      }
 
       expect(images.length).to.equal(1);
       expect(images[0][0]).to.equal(defaultImg.key);
@@ -175,9 +158,17 @@ describe("WhenRemovingImage", function () {
         await _owner.getAddress()
       );
 
-      await _collection.connect(_owner).removeImage(tokenId, "unknown");
+      await _collection.connect(_owner).removeAgentImage(tokenId, "unknown");
 
-      const images = await _collection.imagesOf(tokenId);
+      const imagesCount = await _collection.imagesCountOf(tokenId);
+
+      expect(imagesCount).to.equal(1);
+
+      const images: [string, string][] = [];
+      for (let i = 0; i < imagesCount; i++) {
+        const image = await _collection.imageOfByIndex(tokenId, i);
+        images.push([image.key, image.value]);
+      }
 
       expect(images.length).to.equal(1);
       expect(images[0][0]).to.equal(defaultImg.key);
@@ -194,12 +185,23 @@ describe("WhenRemovingImage", function () {
         await _otherAccount.getAddress()
       );
 
-      await _collection.connect(_moderator).removeImage(tokenId, "profile");
+      await _collection
+        .connect(_moderator)
+        .removeAgentImage(tokenId, "profile");
 
-      const images = await _collection.imagesOf(tokenId);
+      const imagesCount = await _collection.imagesCountOf(tokenId);
+
+      expect(imagesCount).to.equal(1);
+
+      const images: [string, string][] = [];
+      for (let i = 0; i < imagesCount; i++) {
+        const image = await _collection.imageOfByIndex(tokenId, i);
+        images.push([image.key, image.value]);
+      }
 
       expect(images.length).to.equal(1);
       expect(images[0][0]).to.equal("default");
+      expect(images[0][1]).to.equal("bafybeidefault");
     });
   });
 });

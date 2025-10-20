@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
+import {KeyValue} from "../../types/KeyValue.sol";
 import {AgentInformation} from "../../types/AgentInformation.sol";
 import {IAgentCollectionStates} from "../IAgentCollection/IAgentCollectionStates.sol";
 
@@ -19,27 +20,24 @@ interface IAgentCollectionV1States is IAgentCollectionStates {
     /// @return The agent information structure.
     function informationOf(uint256 tokenId) external view returns (AgentInformation memory);
 
-    /// @dev Get the signer address of an agent.
-    /// @param tokenId The token identifier.
-    function signerOf(uint256 tokenId) external view returns (address);
-
     /// @dev Get the creator address of an agent.
     /// @param tokenId The token identifier.
     function creatorOf(uint256 tokenId) external view returns (address);
 
-    /// @dev Get the role of an agent
+    /// @dev Get the number of attributes of an agent.
     /// @param tokenId The token identifier.
-    function roleOf(uint256 tokenId) external view returns (string memory);
+    function attributesCountOf(uint256 tokenId) external view returns (uint256);
 
-    /// @dev Get the mission of an agent.
+    /// @dev Get a specific attribute of an agent by its index.
     /// @param tokenId The token identifier.
-    function missionOf(uint256 tokenId) external view returns (string memory);
-
-    /// @dev Get the list of agent wallets of an agent.
-    /// @param tokenId The token identifier.
-    function walletsOf(uint256 tokenId) external view returns (address[] memory);
+    /// @param index The index of the attribute.
+    function attributeOfByIndex(uint256 tokenId, uint256 index) external view returns (KeyValue memory);
 
     /// @dev Get the token ID associated to the agent name.
     /// @param name The name of the agent.
-    function tokenIdOf(string memory name) external view returns (uint256);
+    function nameToTokenId(string memory name) external view returns (uint256);
+
+    /// @dev Get the token ID associated to the agent wallet.
+    /// @param wallet The wallet address of the agent.
+    function walletToTokenId(address wallet) external view returns (uint256);
 }

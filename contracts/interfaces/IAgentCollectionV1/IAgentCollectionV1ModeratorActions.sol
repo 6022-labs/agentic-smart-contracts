@@ -14,13 +14,13 @@ interface IAgentCollectionV1ModeratorActions {
 
     /// @dev Apply an image proposal.
     /// @param proposalId The id of the proposal to apply.
-    function addOrUpdateImageFromProposal(
+    function addOrUpdateAgentImageFromProposal(
         uint256 proposalId
     ) external;
 
     /// @dev Refuse an image proposal.
     /// @param proposalId The id of the proposal to refuse.
-    function refuseAddOrUpdateImageProposal(
+    function refuseAddOrUpdateAgentImageProposal(
         uint256 proposalId
     ) external;
 

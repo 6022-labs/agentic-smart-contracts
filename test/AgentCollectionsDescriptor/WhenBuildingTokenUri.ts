@@ -4,8 +4,7 @@ import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   decodeTokenURI,
-  signMintRequest,
-  generateRandomAddress,
+  proposeAndMint,
   deployCollectionWithCreator,
 } from "../common";
 import {
@@ -91,40 +90,14 @@ describe("WhenBuildingTokenUri", function () {
     ];
 
     beforeEach(async function () {
-      const nonce = "1";
-      const agentAddresses = [generateRandomAddress()];
-      const mission = "";
-
       _tokenId = await _collection.nextTokenId();
 
-      const signature = await signMintRequest(_signer, _collection, {
+      await proposeAndMint(_signer, _collection, _owner, {
         to: _owner.address,
-        agentAddresses,
-        signer: _signer.address,
-        role: _role,
         name: _name,
+        role: _role,
         images: _images,
-        mission,
-        nonce,
       });
-
-      await _collection.createMintProposal(
-        _owner.address,
-        agentAddresses,
-        _signer.address,
-        _role,
-        _name,
-        mission,
-        _images,
-        ethers.id(nonce),
-        signature
-      );
-
-      const mintProposalsLength = await _collection.mintProposalsLength();
-
-      await _collection
-        .connect(_owner)
-        .mintFromProposal(mintProposalsLength - BigInt(1));
     });
 
     it("Should return token URI as base 64 encoded JSON", async function () {

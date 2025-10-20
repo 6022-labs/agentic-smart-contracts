@@ -7,8 +7,17 @@ interface IAgentCollectionV1Errors {
     error UsedNonce(bytes32 nonce);
 
     /// @dev Error when the name is already in use.
-    /// @param name The name that was used.
-    error UsedName(string name);
+    /// @param name The name that is already in use.
+    /// @param tokenId The token ID associated with the name.
+    error UsedName(string name, uint256 tokenId);
+
+    /// @dev Error when the wallet is already in use.
+    /// @param wallet The wallet that is already in use.
+    /// @param tokenId The token ID associated with the wallet.
+    error UsedWallet(address wallet, uint256 tokenId);
+
+    /// @dev Error when the wallet address is invalid (e.g., zero address).
+    error InvalidWallet();
 
     /// @dev Error when the signer is invalid.
     /// @param signer The actual signer address.
@@ -18,6 +27,10 @@ interface IAgentCollectionV1Errors {
     /// @dev Error when the name is invalid.
     /// @param name The name that is not valid.
     error InvalidName(string name);
+
+    /// @dev Error when the cloneOf is invalid.
+    /// @param cloneOf The cloneOf that is not valid.
+    error InvalidCloneOf(uint256 cloneOf);
 
     /// @dev Error when the address is not a signer.
     /// @param signer The address that is not a signer.

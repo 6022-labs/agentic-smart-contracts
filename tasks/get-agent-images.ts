@@ -21,8 +21,20 @@ export default task("get-agent-images")
     )) as unknown as AgentCollectionV1;
 
     try {
-      const images = await agentCollection.imagesOf(collectionTokenId);
-      console.log(`Images of token ID ${collectionTokenId}: ${images}`);
+      const imagesCount = await agentCollection.imagesCountOf(
+        collectionTokenId
+      );
+      console.log(
+        `Image count of token ID ${collectionTokenId}: ${imagesCount}`
+      );
+
+      for (let i = 0; i < imagesCount; i++) {
+        const image = await agentCollection.imageOfByIndex(
+          collectionTokenId,
+          i
+        );
+        console.log(`Image ${i}: ${image}`);
+      }
     } catch (error) {
       console.error("Error getting agent images:", error);
 

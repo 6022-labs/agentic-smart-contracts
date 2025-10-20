@@ -4,9 +4,8 @@ import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
-  signMintRequest,
+  proposeAndMint,
   generateRandomNonce,
-  generateRandomAddress,
   deployCollectionWithCreator,
   signUpdateAgentSignerRequest,
 } from "../common";
@@ -59,55 +58,17 @@ describe("WhenUpdatingAgentSigner", function () {
     _collection = AgentCollection;
   });
 
-  async function mintWithSignature(signer: HardhatEthersSigner, to: string) {
-    const name = "test-agent";
-    const images = [
-      {
-        key: "default",
-        value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
-      },
-    ];
-    const role = "facilitator";
-    const mission = "";
-
-    const nonce = generateRandomNonce();
-    const agentAddresses = [generateRandomAddress()];
-
-    const signature = await signMintRequest(signer, _collection, {
+  async function mint(signer: HardhatEthersSigner, to: string) {
+    await proposeAndMint(signer, _collection, _owner, {
       to,
-      agentAddresses,
-      signer: signer.address,
-      role,
-      name,
-      images,
-      mission,
-      nonce,
     });
-
-    await _collection.createMintProposal(
-      to,
-      agentAddresses,
-      signer.address,
-      role,
-      name,
-      mission,
-      images,
-      ethers.id(nonce),
-      signature
-    );
-
-    const mintProposalsLength = await _collection.mintProposalsLength();
-
-    await _collection
-      .connect(_owner)
-      .mintFromProposal(mintProposalsLength - BigInt(1));
   }
 
   describe("Given nonce has already been used", function () {
     it("Should revert with 'UsedNonce' error", async function () {
       const nextTokenId = await _collection.nextTokenId();
 
-      await mintWithSignature(_signer, await _owner.getAddress());
+      await mint(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(
@@ -148,7 +109,7 @@ describe("WhenUpdatingAgentSigner", function () {
     it("Should revert with 'OwnableUnauthorizedAccount' error", async function () {
       const nextTokenId = await _collection.nextTokenId();
 
-      await mintWithSignature(_signer, await _owner.getAddress());
+      await mint(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(
@@ -183,7 +144,7 @@ describe("WhenUpdatingAgentSigner", function () {
     it("Should revert with 'NotSigner' error", async function () {
       const nextTokenId = await _collection.nextTokenId();
 
-      await mintWithSignature(_signer, await _owner.getAddress());
+      await mint(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(
@@ -215,7 +176,7 @@ describe("WhenUpdatingAgentSigner", function () {
 
       const signerAddress = await _signer.getAddress();
 
-      await mintWithSignature(_signer, await _owner.getAddress());
+      await mint(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(
@@ -247,7 +208,7 @@ describe("WhenUpdatingAgentSigner", function () {
     it("Should revert with 'NotSigner' error", async function () {
       const nextTokenId = await _collection.nextTokenId();
 
-      await mintWithSignature(_signer, await _owner.getAddress());
+      await mint(_signer, await _owner.getAddress());
 
       const firstNonce = generateRandomNonce();
       const secondNonce = generateRandomNonce();
@@ -278,7 +239,7 @@ describe("WhenUpdatingAgentSigner", function () {
     it("Should update the signer of the token", async function () {
       const nextTokenId = await _collection.nextTokenId();
 
-      await mintWithSignature(_signer, await _owner.getAddress());
+      await mint(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(
@@ -308,7 +269,7 @@ describe("WhenUpdatingAgentSigner", function () {
     it("Should emit 'AgentSignerUpdated' event", async function () {
       const nextTokenId = await _collection.nextTokenId();
 
-      await mintWithSignature(_signer, await _owner.getAddress());
+      await mint(_signer, await _owner.getAddress());
 
       const nonce = generateRandomNonce();
       const signature = await signUpdateAgentSignerRequest(

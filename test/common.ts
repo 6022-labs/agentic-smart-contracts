@@ -1,6 +1,7 @@
 import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { NullableUint256Struct } from "../typechain-types/contracts/AgentCollectionV1";
 
 export function generateRandomAddress(): string {
   return ethers.Wallet.createRandom().address;
@@ -11,12 +12,13 @@ export async function signMintRequest(
   agentCollection: AgentCollectionV1,
   params: {
     to: string;
-    agentAddresses: string[];
     signer: string;
     role: string;
     name: string;
+    wallets: string[];
     images: { key: string; value: string }[];
-    mission: string;
+    attributes: { key: string; value: string }[];
+    cloneOf: NullableUint256Struct;
     nonce: string;
   }
 ) {
@@ -34,21 +36,28 @@ export async function signMintRequest(
   const types = {
     MintRequest: [
       { name: "to", type: "address" },
-      { name: "agentAddressesHash", type: "bytes32" },
       { name: "signer", type: "address" },
       { name: "roleHash", type: "bytes32" },
       { name: "nameHash", type: "bytes32" },
-      { name: "missionHash", type: "bytes32" },
+      { name: "walletsHash", type: "bytes32" },
       { name: "imagesHash", type: "bytes32" },
+      { name: "attributesHash", type: "bytes32" },
+      { name: "cloneOfHash", type: "bytes32" },
       { name: "nonce", type: "bytes32" },
     ],
   };
 
-  const agentAddressesHash = ethers.keccak256(
-    ethers.solidityPacked(["address[]"], [params.agentAddresses])
+  const walletsHash = ethers.keccak256(
+    ethers.solidityPacked(["address[]"], [params.wallets])
   );
   const roleHash = ethers.keccak256(ethers.toUtf8Bytes(params.role));
   const nameHash = ethers.keccak256(ethers.toUtf8Bytes(params.name));
+  const cloneOfHash = params.cloneOf.isSet
+    ? ethers.keccak256(
+        ethers.solidityPacked(["uint256"], [params.cloneOf.value])
+      )
+    : ethers.ZeroHash;
+
   // Hash the images array as in Solidity: keccak256(abi.encodePacked(keccak256(abi.encodePacked(key, value)), ...))
   const imageHashes = params.images.map((img) =>
     ethers.keccak256(
@@ -57,16 +66,28 @@ export async function signMintRequest(
   );
   const imagesPacked = ethers.solidityPacked(["bytes32[]"], [imageHashes]);
   const imagesHash = ethers.keccak256(imagesPacked);
-  const missionHash = ethers.keccak256(ethers.toUtf8Bytes(params.mission));
+
+  // Hash the attributes array as in Solidity: keccak256(abi.encodePacked(keccak256(abi.encodePacked(key, value)), ...))
+  const attributeHashes = params.attributes.map((attr) =>
+    ethers.keccak256(
+      ethers.solidityPacked(["string", "string"], [attr.key, attr.value])
+    )
+  );
+  const attributesPacked = ethers.solidityPacked(
+    ["bytes32[]"],
+    [attributeHashes]
+  );
+  const attributesHash = ethers.keccak256(attributesPacked);
 
   const message = {
     to: params.to,
-    agentAddressesHash,
     signer: params.signer,
     roleHash,
     nameHash,
+    walletsHash,
     imagesHash,
-    missionHash,
+    attributesHash,
+    cloneOfHash,
     nonce: ethers.keccak256(ethers.toUtf8Bytes(params.nonce)),
   };
 
@@ -112,16 +133,17 @@ export async function proposeAndMint(
   minter: HardhatEthersSigner,
   params: {
     to: string;
-    agentAddresses?: string[];
+    wallets?: string[];
     role?: string;
     name?: string;
     images?: { key: string; value: string }[];
-    mission?: string;
+    attributes?: { key: string; value: string }[];
+    cloneOf?: NullableUint256Struct;
     nonce?: string;
   }
 ) {
   const {
-    agentAddresses = [generateRandomAddress()],
+    wallets = [generateRandomAddress()],
     role = "facilitator",
     name = "test-agent",
     images = [
@@ -130,29 +152,32 @@ export async function proposeAndMint(
         value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
       },
     ],
-    mission = "",
+    attributes = [{ key: "mission", value: "random mission" }],
+    cloneOf = { isSet: false, value: 0n },
     nonce = generateRandomNonce(),
   } = params;
 
   const signature = await signMintRequest(signer, collection, {
     to: params.to,
-    agentAddresses,
+    wallets,
     signer: signer.address,
     role,
     name,
     images,
-    mission,
+    attributes,
+    cloneOf,
     nonce,
   });
 
   await collection.createMintProposal(
     params.to,
-    agentAddresses,
     signer.address,
     role,
     name,
-    mission,
+    wallets,
     images,
+    attributes,
+    cloneOf!,
     ethers.id(nonce),
     signature
   );
