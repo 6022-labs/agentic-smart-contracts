@@ -12,7 +12,9 @@ import "./tasks/get-agent-description";
 import "./tasks/add-creator-to-manager";
 import "./tasks/get-collection-description";
 import "./tasks/add-moderator-to-collection";
+import "./tasks/remove-creator-from-manager";
 import "./tasks/add-authorized-token-for-creation";
+import "./tasks/update-minimum-token-balance-for-creation";
 
 require("dotenv").config();
 
@@ -64,10 +66,7 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: {
-      polygon: scanApiKey,
-      polygonAmoy: scanApiKey,
-    },
+    apiKey: scanApiKey,
   },
 };
 
