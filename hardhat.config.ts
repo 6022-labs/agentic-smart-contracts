@@ -2,20 +2,27 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
 
-import "./tasks/get-name-of";
-import "./tasks/get-owner-of";
-import "./tasks/build-token-uri";
-import "./tasks/get-agent-images";
-import "./tasks/create-collection";
-import "./tasks/get-agent-attributes";
-import "./tasks/add-signer-to-manager";
-import "./tasks/get-agent-description";
-import "./tasks/add-creator-to-manager";
-import "./tasks/get-collection-description";
-import "./tasks/add-moderator-to-collection";
-import "./tasks/remove-creator-from-manager";
-import "./tasks/add-authorized-token-for-creation";
-import "./tasks/update-minimum-token-balance-for-creation";
+// AgentCollection tasks
+import "./tasks/agent-collection/add-moderator-to-collection";
+import "./tasks/agent-collection/get-agent-attributes";
+import "./tasks/agent-collection/get-agent-description";
+import "./tasks/agent-collection/get-agent-images";
+import "./tasks/agent-collection/get-collection-description";
+import "./tasks/agent-collection/get-name-of";
+import "./tasks/agent-collection/get-owner-of";
+
+// AgentCollectionsManager tasks
+import "./tasks/agent-collections-manager/add-creator-to-manager";
+import "./tasks/agent-collections-manager/add-signer-to-manager";
+import "./tasks/agent-collections-manager/remove-creator-from-manager";
+
+// AgentCollectionCreator tasks
+import "./tasks/agent-collection-creator/add-authorized-token-for-creation";
+import "./tasks/agent-collection-creator/create-collection";
+import "./tasks/agent-collection-creator/update-minimum-token-balance-for-creation";
+
+// AgentCollectionsDescriptor tasks
+import "./tasks/agent-collections-descriptor/build-token-uri";
 
 require("dotenv").config();
 

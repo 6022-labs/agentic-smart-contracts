@@ -2,17 +2,16 @@ import { task } from "hardhat/config";
 import {
   AgentCollectionV1,
   AgentCollectionV1__factory,
-} from "../typechain-types";
+} from "../../typechain-types";
 
-export default task("get-name-of")
+export default task("get-collection-description")
   .addParam("collectionAddress", "The address of the collection")
-  .addParam("collectionTokenId", "The token ID of the collection")
-  .setDescription("Get the name of an agent")
+  .setDescription("Get the description of a collection")
   .setAction(async (taskArgs, hre) => {
-    const { collectionAddress, collectionTokenId } = taskArgs;
+    const { collectionAddress } = taskArgs;
 
     console.log(
-      `Getting agent name for collection at address: ${collectionAddress}, token ID: ${collectionTokenId}`
+      `Getting collection description for address: ${collectionAddress}`
     );
 
     const agentCollection = (await hre.ethers.getContractAt(
@@ -21,10 +20,12 @@ export default task("get-name-of")
     )) as unknown as AgentCollectionV1;
 
     try {
-      const name = await agentCollection.nameOf(collectionTokenId);
-      console.log(`Name of token ID ${collectionTokenId}: ${name}`);
+      const description = await agentCollection.description();
+      console.log(
+        `Description of collection at ${collectionAddress}: ${description}`
+      );
     } catch (error) {
-      console.error("Error getting agent name:", error);
+      console.error("Error getting collection description:", error);
 
       const iface = new hre.ethers.Interface(AgentCollectionV1__factory.abi);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

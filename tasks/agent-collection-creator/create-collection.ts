@@ -4,7 +4,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import {
   AgentCollectionCreatorV1,
   AgentCollectionCreatorV1__factory,
-} from "../typechain-types";
+} from "../../typechain-types";
 
 export default task("create-collection")
   .addParam("collectionCreatorAddress", "The address of the collection creator")

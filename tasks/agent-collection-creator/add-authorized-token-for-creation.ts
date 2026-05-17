@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { AgentCollectionCreatorV1 } from "../typechain-types";
+import { AgentCollectionCreatorV1 } from "../../typechain-types";
 
 export default task("add-authorized-token-for-creation")
   .addParam("collectionCreatorAddress", "The address of the collection creator")

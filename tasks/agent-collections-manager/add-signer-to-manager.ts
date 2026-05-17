@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { AgentCollectionsManager } from "../typechain-types";
+import { AgentCollectionsManager } from "../../typechain-types";
 
 export default task("add-signer-to-manager")
   .addParam(

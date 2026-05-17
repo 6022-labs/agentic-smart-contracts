@@ -2,7 +2,7 @@ import { task } from "hardhat/config";
 import {
   AgentCollectionsDescriptor,
   AgentCollectionsDescriptor__factory,
-} from "../typechain-types";
+} from "../../typechain-types";
 
 export default task("build-token-uri")
   .addParam(
