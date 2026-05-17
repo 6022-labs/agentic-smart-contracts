@@ -1,0 +1,8 @@
+{
+  "AgentEnsOffchainResolver": {
+    "urls": [
+      "https://ens-gateway-development-6022-static.up.railway.app/{sender}/{data}.json"
+    ],
+    "signer": "0xaD11b91E86b681a15EED9457438cAC1D2047f9Aa"
+  }
+}

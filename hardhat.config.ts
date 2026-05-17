@@ -24,6 +24,29 @@ import "./tasks/agent-collection-creator/update-minimum-token-balance-for-creati
 // AgentCollectionsDescriptor tasks
 import "./tasks/agent-collections-descriptor/build-token-uri";
 
+// AgentEnsRegistry tasks
+import "./tasks/agent-ens-registry/get-ens-registry-manager";
+import "./tasks/agent-ens-registry/get-ens-registry-parent-node";
+import "./tasks/agent-ens-registry/get-ens-registry-provisioned";
+import "./tasks/agent-ens-registry/get-agent-text";
+import "./tasks/agent-ens-registry/init-agent-texts";
+import "./tasks/agent-ens-registry/set-agent-text";
+import "./tasks/agent-ens-registry/set-ens-registry-manager";
+import "./tasks/agent-ens-registry/set-ens-registry-parent-node";
+import "./tasks/agent-ens-registry/add-admin-to-ens-registry";
+import "./tasks/agent-ens-registry/remove-admin-from-ens-registry";
+
+// AgentEnsOffchainResolver tasks
+import "./tasks/agent-ens-offchain-resolver/get-resolver-url-at";
+import "./tasks/agent-ens-offchain-resolver/is-resolver-signer-trusted";
+import "./tasks/agent-ens-offchain-resolver/resolve-name";
+import "./tasks/agent-ens-offchain-resolver/resolve-with-proof";
+import "./tasks/agent-ens-offchain-resolver/get-resolver-supports-interface";
+import "./tasks/agent-ens-offchain-resolver/set-resolver-urls";
+import "./tasks/agent-ens-offchain-resolver/set-resolver-signer";
+import "./tasks/agent-ens-offchain-resolver/add-admin-to-resolver";
+import "./tasks/agent-ens-offchain-resolver/remove-admin-from-resolver";
+
 require("dotenv").config();
 
 const alchemyKey = process?.env?.ALCHEMY_KEY?.trim() ?? "";
@@ -71,6 +94,26 @@ const config: HardhatUserConfig = {
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
       url: "https://rpc.testnet.citrea.xyz",
+    },
+    ethereum: {
+      gas: "auto",
+      chainId: 1,
+      gasMultiplier: 2,
+      accounts: [privateKey],
+      throwOnCallFailures: true,
+      throwOnTransactionFailures: true,
+      allowUnlimitedContractSize: true,
+      url: "https://eth-mainnet.g.alchemy.com/v2/" + alchemyKey,
+    },
+    sepolia: {
+      gas: "auto",
+      chainId: 11155111,
+      gasMultiplier: 2,
+      accounts: [privateKey],
+      throwOnCallFailures: true,
+      throwOnTransactionFailures: true,
+      allowUnlimitedContractSize: true,
+      url: "https://eth-sepolia.g.alchemy.com/v2/" + alchemyKey,
     },
   },
   etherscan: {

@@ -5,6 +5,7 @@
     "hardhat-contract-sizer": "^2.10.1"
   },
   "dependencies": {
+    "@ensdomains/ens-contracts": "^1.7.0",
     "@openzeppelin/contracts": "^5.3.0",
     "@openzeppelin/contracts-upgradeable": "^5.3.0",
     "dotenv": "^17.2.3"
