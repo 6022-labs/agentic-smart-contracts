@@ -7,7 +7,8 @@ import {
   deployAgentEnsRegistryWithAgent,
   agentNode,
   runtimeRecords,
-  RUNTIME_URL_KEY,
+  URL_KEY,
+  AGENT_KIND_KEY,
   AGENT_NAME,
 } from "./common";
 
@@ -64,11 +65,11 @@ describe("WhenSettingAgentText", function () {
             .setAgentText(
               _collectionAddress,
               _tokenId,
-              RUNTIME_URL_KEY,
+              URL_KEY,
               "https://updated.example/"
             );
 
-          expect(await _ensRegistry.text(_node, RUNTIME_URL_KEY)).to.equal(
+          expect(await _ensRegistry.text(_node, URL_KEY)).to.equal(
             "https://updated.example/"
           );
         });
@@ -79,7 +80,7 @@ describe("WhenSettingAgentText", function () {
             .setAgentText(
               _collectionAddress,
               _tokenId,
-              RUNTIME_URL_KEY,
+              URL_KEY,
               "https://updated.example/"
             );
 
@@ -88,7 +89,7 @@ describe("WhenSettingAgentText", function () {
             .withArgs(
               _collectionAddress,
               _tokenId,
-              RUNTIME_URL_KEY,
+              URL_KEY,
               "https://updated.example/"
             );
           await expect(tx).to.not.emit(_ensRegistry, "SubnodeProvisioned");
@@ -101,10 +102,63 @@ describe("WhenSettingAgentText", function () {
               .setAgentText(
                 _collectionAddress,
                 _tokenId,
-                "avatar",
-                "ipfs://..."
+                "description",
+                "An autonomous agent"
               )
           ).to.emit(_ensRegistry, "AgentTextUpdated");
+        });
+
+        it("Should accept clearing a non-mandatory key", async function () {
+          await _ensRegistry
+            .connect(getSigner())
+            .setAgentText(
+              _collectionAddress,
+              _tokenId,
+              "description",
+              "An autonomous agent"
+            );
+
+          await expect(
+            _ensRegistry
+              .connect(getSigner())
+              .setAgentText(_collectionAddress, _tokenId, "description", "")
+          ).to.emit(_ensRegistry, "AgentTextUpdated");
+          expect(await _ensRegistry.text(_node, "description")).to.equal("");
+        });
+
+        it("Should revert when clearing url", async function () {
+          await expect(
+            _ensRegistry
+              .connect(getSigner())
+              .setAgentText(_collectionAddress, _tokenId, URL_KEY, "")
+          )
+            .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
+            .withArgs(URL_KEY);
+        });
+
+        it("Should revert when clearing agent.kind", async function () {
+          await expect(
+            _ensRegistry
+              .connect(getSigner())
+              .setAgentText(_collectionAddress, _tokenId, AGENT_KIND_KEY, "")
+          )
+            .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
+            .withArgs(AGENT_KIND_KEY);
+        });
+
+        it("Should revert with ReservedKey when writing the avatar key", async function () {
+          await expect(
+            _ensRegistry
+              .connect(getSigner())
+              .setAgentText(
+                _collectionAddress,
+                _tokenId,
+                "avatar",
+                "ipfs://override"
+              )
+          )
+            .to.be.revertedWithCustomError(_ensRegistry, "ReservedKey")
+            .withArgs("avatar");
         });
       });
     }
@@ -118,7 +172,7 @@ describe("WhenSettingAgentText", function () {
           .setAgentText(
             _collectionAddress,
             _tokenId,
-            RUNTIME_URL_KEY,
+            URL_KEY,
             "https://agent.example/"
           )
       )
@@ -153,7 +207,7 @@ describe("WhenSettingAgentText", function () {
           .setAgentText(
             await outsideCollection.getAddress(),
             outsideTokenId,
-            RUNTIME_URL_KEY,
+            URL_KEY,
             "https://agent.example/"
           )
       )
@@ -170,7 +224,7 @@ describe("WhenSettingAgentText", function () {
           .setAgentText(
             _collectionAddress,
             _tokenId,
-            RUNTIME_URL_KEY,
+            URL_KEY,
             "https://agent.example/"
           )
       )

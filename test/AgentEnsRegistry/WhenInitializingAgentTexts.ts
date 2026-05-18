@@ -7,8 +7,8 @@ import {
   deployAgentEnsRegistryWithAgent,
   agentNode,
   runtimeRecords,
-  RUNTIME_URL_KEY,
-  RUNTIME_KIND_KEY,
+  URL_KEY,
+  AGENT_KIND_KEY,
   AGENT_NAME,
 } from "./common";
 
@@ -40,7 +40,7 @@ describe("WhenInitializingAgentTexts", function () {
     _node = await agentNode();
   });
 
-  describe("Given a batch carrying both runtime keys", function () {
+  describe("Given a batch carrying both mandatory keys", function () {
     // The contract gate accepts the NFT owner and any registered agent wallet
     // through the same code path, so run identical assertions for both callers.
     const callers = [
@@ -59,12 +59,22 @@ describe("WhenInitializingAgentTexts", function () {
             .initAgentTexts(_collectionAddress, _tokenId, runtimeRecords());
 
           expect(await _ensRegistry.provisioned(_node)).to.equal(true);
-          expect(await _ensRegistry.text(_node, RUNTIME_URL_KEY)).to.equal(
+          expect(await _ensRegistry.text(_node, URL_KEY)).to.equal(
             "https://agent.example/"
           );
-          expect(await _ensRegistry.text(_node, RUNTIME_KIND_KEY)).to.equal(
+          expect(await _ensRegistry.text(_node, AGENT_KIND_KEY)).to.equal(
             "agent-node"
           );
+        });
+
+        it("Should populate agentRef so derived records can resolve", async function () {
+          await _ensRegistry
+            .connect(getSigner())
+            .initAgentTexts(_collectionAddress, _tokenId, runtimeRecords());
+
+          const ref = await _ensRegistry.agentRef(_node);
+          expect(ref.collection).to.equal(_collectionAddress);
+          expect(ref.tokenId).to.equal(_tokenId);
         });
 
         it("Should emit SubnodeProvisioned and AgentTextUpdated per record", async function () {
@@ -79,19 +89,34 @@ describe("WhenInitializingAgentTexts", function () {
             .withArgs(
               _collectionAddress,
               _tokenId,
-              RUNTIME_URL_KEY,
+              URL_KEY,
               "https://agent.example/"
             )
             .and.to.emit(_ensRegistry, "AgentTextUpdated")
             .withArgs(
               _collectionAddress,
               _tokenId,
-              RUNTIME_KIND_KEY,
+              AGENT_KIND_KEY,
               "agent-node"
             );
         });
       });
     }
+  });
+
+  describe("Given the batch includes the reserved avatar key", function () {
+    it("Should revert with ReservedKey", async function () {
+      await expect(
+        _ensRegistry
+          .connect(_agentWallet)
+          .initAgentTexts(_collectionAddress, _tokenId, [
+            ...runtimeRecords(),
+            { key: "avatar", value: "ipfs://override" },
+          ])
+      )
+        .to.be.revertedWithCustomError(_ensRegistry, "ReservedKey")
+        .withArgs("avatar");
+    });
   });
 
   describe("Given the agent is already provisioned", function () {
@@ -110,61 +135,61 @@ describe("WhenInitializingAgentTexts", function () {
     });
   });
 
-  describe("Given the batch is missing agent.runtime-url", function () {
+  describe("Given the batch is missing url", function () {
     it("Should revert with MissingRequiredKey", async function () {
       await expect(
         _ensRegistry
           .connect(_agentWallet)
           .initAgentTexts(_collectionAddress, _tokenId, [
-            { key: RUNTIME_KIND_KEY, value: "agent-node" },
+            { key: AGENT_KIND_KEY, value: "agent-node" },
           ])
       )
         .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
-        .withArgs(RUNTIME_URL_KEY);
+        .withArgs(URL_KEY);
     });
   });
 
-  describe("Given the batch is missing agent.runtime-kind", function () {
+  describe("Given the batch is missing agent.kind", function () {
     it("Should revert with MissingRequiredKey", async function () {
       await expect(
         _ensRegistry
           .connect(_agentWallet)
           .initAgentTexts(_collectionAddress, _tokenId, [
-            { key: RUNTIME_URL_KEY, value: "https://agent.example/" },
+            { key: URL_KEY, value: "https://agent.example/" },
           ])
       )
         .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
-        .withArgs(RUNTIME_KIND_KEY);
+        .withArgs(AGENT_KIND_KEY);
     });
   });
 
-  describe("Given agent.runtime-url is present but has an empty value", function () {
+  describe("Given url is present but has an empty value", function () {
     it("Should revert with MissingRequiredKey", async function () {
       await expect(
         _ensRegistry
           .connect(_agentWallet)
           .initAgentTexts(_collectionAddress, _tokenId, [
-            { key: RUNTIME_URL_KEY, value: "" },
-            { key: RUNTIME_KIND_KEY, value: "agent-node" },
+            { key: URL_KEY, value: "" },
+            { key: AGENT_KIND_KEY, value: "agent-node" },
           ])
       )
         .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
-        .withArgs(RUNTIME_URL_KEY);
+        .withArgs(URL_KEY);
     });
   });
 
-  describe("Given agent.runtime-kind is present but has an empty value", function () {
+  describe("Given agent.kind is present but has an empty value", function () {
     it("Should revert with MissingRequiredKey", async function () {
       await expect(
         _ensRegistry
           .connect(_agentWallet)
           .initAgentTexts(_collectionAddress, _tokenId, [
-            { key: RUNTIME_URL_KEY, value: "https://agent.example/" },
-            { key: RUNTIME_KIND_KEY, value: "" },
+            { key: URL_KEY, value: "https://agent.example/" },
+            { key: AGENT_KIND_KEY, value: "" },
           ])
       )
         .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
-        .withArgs(RUNTIME_KIND_KEY);
+        .withArgs(AGENT_KIND_KEY);
     });
   });
 

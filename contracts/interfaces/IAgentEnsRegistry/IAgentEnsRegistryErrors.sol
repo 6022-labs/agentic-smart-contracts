@@ -19,4 +19,9 @@ interface IAgentEnsRegistryErrors {
 
     /// @dev `initAgentTexts` did not include a required key with a non-empty value.
     error MissingRequiredKey(string key);
+
+    /// @dev Caller attempted to write a key that is resolved by the registry
+    ///      itself (e.g. `avatar`, which derives from the agent's `default`
+    ///      image) and therefore cannot be stored.
+    error ReservedKey(string key);
 }

@@ -6,7 +6,7 @@ import {
   deployAgentEnsRegistryWithAgent,
   agentNode,
   runtimeRecords,
-  RUNTIME_URL_KEY,
+  URL_KEY,
 } from "./common";
 
 describe("WhenReadingText", function () {
@@ -28,7 +28,7 @@ describe("WhenReadingText", function () {
   });
 
   it("Should return the empty string for an unprovisioned node", async function () {
-    expect(await _ensRegistry.text(_node, RUNTIME_URL_KEY)).to.equal("");
+    expect(await _ensRegistry.text(_node, URL_KEY)).to.equal("");
   });
 
   it("Should return the empty string for a key that was never written", async function () {
@@ -36,7 +36,7 @@ describe("WhenReadingText", function () {
       .connect(_agentWallet)
       .initAgentTexts(_collectionAddress, _tokenId, runtimeRecords());
 
-    expect(await _ensRegistry.text(_node, "avatar")).to.equal("");
+    expect(await _ensRegistry.text(_node, "description")).to.equal("");
   });
 
   it("Should return the stored value after initialization", async function () {
@@ -44,8 +44,22 @@ describe("WhenReadingText", function () {
       .connect(_agentWallet)
       .initAgentTexts(_collectionAddress, _tokenId, runtimeRecords());
 
-    expect(await _ensRegistry.text(_node, RUNTIME_URL_KEY)).to.equal(
+    expect(await _ensRegistry.text(_node, URL_KEY)).to.equal(
       "https://agent.example/"
     );
+  });
+
+  it("Should return the agent's default image when reading the avatar key", async function () {
+    await _ensRegistry
+      .connect(_agentWallet)
+      .initAgentTexts(_collectionAddress, _tokenId, runtimeRecords());
+
+    const defaultImage = await _collection.imageOfByIndex(_tokenId, 0);
+    expect(defaultImage.key).to.equal("default");
+    expect(await _ensRegistry.text(_node, "avatar")).to.equal(defaultImage.value);
+  });
+
+  it("Should return the empty string when reading the avatar key on an unprovisioned node", async function () {
+    expect(await _ensRegistry.text(_node, "avatar")).to.equal("");
   });
 });
