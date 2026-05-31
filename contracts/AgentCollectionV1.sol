@@ -569,7 +569,9 @@ contract AgentCollectionV1 is
         KeyValue[] memory attributes,
         NullableUint256 memory cloneOf
     ) internal {
-        _agentInformationOf[nextTokenId] = AgentInformation({
+        uint256 tokenId = nextTokenId;
+
+        _agentInformationOf[tokenId] = AgentInformation({
             name: name,
             role: role,
             images: images,
@@ -578,13 +580,14 @@ contract AgentCollectionV1 is
             cloneOf: cloneOf,
             attributes: attributes
         });
-        _nameToTokenId[name] = nextTokenId;
+        _nameToTokenId[name] = tokenId;
         for (uint256 i = 0; i < wallets.length; i++) {
-            _walletToTokenId[wallets[i]] = nextTokenId;
+            _walletToTokenId[wallets[i]] = tokenId;
         }
-        _safeMint(to, nextTokenId);
-        emit Minted(to, nextTokenId);
-        nextTokenId++;
+        nextTokenId = tokenId + 1;
+
+        _safeMint(to, tokenId);
+        emit Minted(to, tokenId);
     }
 
     /// @dev Refuse a mint proposal.
