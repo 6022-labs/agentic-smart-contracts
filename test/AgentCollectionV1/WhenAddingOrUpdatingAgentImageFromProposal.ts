@@ -146,7 +146,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
             .addOrUpdateAgentImageFromProposal(proposalId)
         )
           .to.emit(_collection, "AgentImageProposalRemoved")
-          .withArgs(tokenId, "profile", 0n);
+          .withArgs(tokenId, "profile", proposalId);
       });
     });
 
@@ -261,7 +261,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
             .addOrUpdateAgentImageFromProposal(proposalId)
         )
           .to.emit(_collection, "AgentImageProposalRemoved")
-          .withArgs(tokenId, "profile", proposalIndex);
+          .withArgs(tokenId, "profile", proposalId);
       });
     });
 
@@ -341,6 +341,37 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
         }
 
         expect(images[1][0]).to.equal("profile1");
+      });
+
+      it("Should remove only the applied proposal when applying out of order", async function () {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
+          to: await _owner.getAddress(),
+        });
+
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+          key: "profile1",
+          value: "cid1",
+        });
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+          key: "profile2",
+          value: "cid2",
+        });
+
+        // Apply the SECOND proposal (id at index 1), not the first.
+        const { id: secondProposalId } =
+          await _collection.addOrUpdateAgentImageProposal(1);
+
+        await _collection
+          .connect(_moderator)
+          .addOrUpdateAgentImageFromProposal(secondProposalId);
+
+        // The untouched profile1 proposal must survive intact.
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          1n
+        );
+        const remaining = await _collection.addOrUpdateAgentImageProposal(0);
+        expect(remaining.image.key).to.equal("profile1");
+        expect(remaining.image.value).to.equal("cid1");
       });
     });
   });

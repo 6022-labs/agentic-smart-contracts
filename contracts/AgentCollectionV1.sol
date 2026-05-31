@@ -412,7 +412,7 @@ contract AgentCollectionV1 is
             proposalInfo.image
         );
 
-        _popAddOrUpdateAgentImageProposalAt(proposalIndex);
+        _popAddOrUpdateAgentImageProposalAt(proposalId);
     }
 
     function _addOrUpdateAgentImage(
@@ -534,7 +534,7 @@ contract AgentCollectionV1 is
             proposalInfo.attributes,
             proposalInfo.cloneOf
         );
-        _popMintProposalAt(proposalIndex);
+        _popMintProposalAt(proposalId);
     }
 
     /// @dev Internal function to validate minting parameters.

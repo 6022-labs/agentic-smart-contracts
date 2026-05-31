@@ -300,11 +300,9 @@ describe("WhenMintingFromProposal", function () {
       const index = (await _collection.mintProposalsLength()) - BigInt(1);
       const { id: proposalId } = await _collection.mintProposal(index);
 
-      // The event's owner arg is the proposal recipient; the second arg is the
-      // swapped-removal index, not the proposal id.
       await expect(_collection.connect(_owner).mintFromProposal(proposalId))
         .to.emit(_collection, "MintProposalRemoved")
-        .withArgs(_otherAccount.address, index);
+        .withArgs(_otherAccount.address, proposalId);
     });
 
     it("Should decrease proposals length", async function () {
@@ -344,6 +342,30 @@ describe("WhenMintingFromProposal", function () {
 
       const proposal = await _collection.mintProposal(0);
       expect(proposal.name).to.equal(DEFAULT_NAME_2);
+    });
+
+    it("Should remove only the applied proposal when applying out of order", async function () {
+      await createMintProposal(
+        DEFAULT_NAME_1,
+        [generateRandomAddress()],
+        _otherAccount.address
+      );
+      await createMintProposal(
+        DEFAULT_NAME_2,
+        [generateRandomAddress()],
+        _otherAccount.address
+      );
+
+      // Apply the SECOND proposal (id at index 1), not the first.
+      const { id: secondProposalId } = await _collection.mintProposal(1);
+      const tokenId = await _collection.nextTokenId();
+
+      await _collection.connect(_owner).mintFromProposal(secondProposalId);
+
+      // The minted token is NAME_2; the untouched NAME_1 proposal must survive.
+      expect(await _collection.nameOf(tokenId)).to.equal(DEFAULT_NAME_2);
+      expect(await _collection.mintProposalsLength()).to.eq(1n);
+      expect((await _collection.mintProposal(0)).name).to.equal(DEFAULT_NAME_1);
     });
   });
 });
