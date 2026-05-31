@@ -1,8 +1,0 @@
-{
-  "AgentCollectionCreatorV1": {
-    "agentCollectionsManager": "0x9D95B7D6D940cBB279777ec1136514F85eEd12C2",
-    "agentCollectionsDescriptor": "0x3f03513d8dEeEc05B1914123172C7d2c367bF7E7",
-    "agentCollectionV1Bytecode": "0x475C96C0b150831E18524c9a1C91ECE910517CD0",
-    "collateralController6022": "0x349f760fe5C407829e931B3d53D1e2a5f4C69848"
-  }
-}

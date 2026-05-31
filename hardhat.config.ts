@@ -1,6 +1,8 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
+import "hardhat-deploy";
+import "./deploy-config/types";
 
 // AgentCollection tasks
 import "./tasks/agent-collection/add-moderator-to-collection";
@@ -74,6 +76,13 @@ const config: HardhatUserConfig = {
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
       url: "https://polygon-mainnet.g.alchemy.com/v2/" + alchemyKey,
+      agentic: {
+        collateralController: "0xf6643c07f03a7a8c98aac2ab3d08c03e47b5731c",
+      },
+      ensRegistry: {
+        parentNode:
+          "0x9ec94752dcac587079728bde5f535457f7aa0bbe0b088555bca6d40cfcc78197",
+      },
     },
     amoy: {
       gas: "auto",
@@ -84,6 +93,13 @@ const config: HardhatUserConfig = {
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
       url: "https://polygon-amoy.g.alchemy.com/v2/" + alchemyKey,
+      agentic: {
+        collateralController: "0x33CCF04be6e83e6b94A0ebb6777bCa44A492CfB1",
+      },
+      ensRegistry: {
+        parentNode:
+          "0x9ec94752dcac587079728bde5f535457f7aa0bbe0b088555bca6d40cfcc78197",
+      },
     },
     citreaTestnet: {
       gas: "auto",
@@ -94,6 +110,9 @@ const config: HardhatUserConfig = {
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
       url: "https://rpc.testnet.citrea.xyz",
+      agentic: {
+        collateralController: "0x349f760fe5C407829e931B3d53D1e2a5f4C69848",
+      },
     },
     ethereum: {
       gas: "auto",
@@ -104,6 +123,12 @@ const config: HardhatUserConfig = {
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
       url: "https://eth-mainnet.g.alchemy.com/v2/" + alchemyKey,
+      ensResolver: {
+        gatewayUrls: [
+          "https://ens-gateway.agentic.6022.io/{sender}/{data}.json",
+        ],
+        signer: "0x2447D11B2BC95EEDb0d1897aDcdb5eC5D5ED7dd7",
+      },
     },
     sepolia: {
       gas: "auto",
@@ -114,6 +139,17 @@ const config: HardhatUserConfig = {
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
       url: "https://eth-sepolia.g.alchemy.com/v2/" + alchemyKey,
+      ensResolver: {
+        gatewayUrls: [
+          "https://testnet.ens-gateway.agentic.6022.io/{sender}/{data}.json",
+        ],
+        signer: "0xaD11b91E86b681a15EED9457438cAC1D2047f9Aa",
+      },
+    },
+  },
+  namedAccounts: {
+    deployer: {
+      default: 0,
     },
   },
   etherscan: {

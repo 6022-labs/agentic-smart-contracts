@@ -1,6 +1,0 @@
-{
-  "AgentEnsOffchainResolver": {
-    "urls": ["https://ens-gateway.agentic.6022.io/{sender}/{data}.json"],
-    "signer": "0x2447D11B2BC95EEDb0d1897aDcdb5eC5D5ED7dd7"
-  }
-}
