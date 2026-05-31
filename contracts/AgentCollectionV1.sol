@@ -132,20 +132,24 @@ contract AgentCollectionV1 is
         __AccessControl_init();
     }
 
-    /// @dev See {AccessControl-_grantRole}.
+    /// @dev See {AccessControl-_grantRole}. Only adjusts the moderator count on
+    /// an actual change so redundant grants don't desync it.
     function _grantRole(bytes32 role, address account) internal override returns (bool) {
-        if (role == MODERATOR_ROLE) {
+        bool granted = super._grantRole(role, account);
+        if (granted && role == MODERATOR_ROLE) {
             moderatorCount++;
         }
-        return super._grantRole(role, account);
+        return granted;
     }
 
-    /// @dev See {AccessControl-_revokeRole}.
+    /// @dev See {AccessControl-_revokeRole}. Only adjusts the moderator count on
+    /// an actual change so spurious revokes don't desync (or underflow) it.
     function _revokeRole(bytes32 role, address account) internal override returns (bool) {
-        if (role == MODERATOR_ROLE) {
+        bool revoked = super._revokeRole(role, account);
+        if (revoked && role == MODERATOR_ROLE) {
             moderatorCount--;
         }
-        return super._revokeRole(role, account);
+        return revoked;
     }
 
     /// @dev Get the fact that a account is a moderator or not.

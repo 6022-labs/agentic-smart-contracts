@@ -64,6 +64,22 @@ describe("WhenManagingModerators", function () {
 
         expect(newModeratorCount).to.equal(initialModeratorCount + BigInt(1));
       });
+
+      it("Should not increase the count when granting to an existing moderator", async function () {
+        const MODERATOR_ROLE = await _collection.MODERATOR_ROLE();
+
+        await _collection
+          .connect(_owner)
+          .grantRole(MODERATOR_ROLE, _otherAccount.address);
+
+        const countAfterFirst = await _collection.moderatorCount();
+
+        await _collection
+          .connect(_owner)
+          .grantRole(MODERATOR_ROLE, _otherAccount.address);
+
+        expect(await _collection.moderatorCount()).to.equal(countAfterFirst);
+      });
     });
 
     describe("And revoking a moderator role", function () {
@@ -98,6 +114,20 @@ describe("WhenManagingModerators", function () {
         const newModeratorCount = await _collection.moderatorCount();
 
         expect(newModeratorCount).to.equal(initialModeratorCount - BigInt(1));
+      });
+
+      it("Should not decrease the count when revoking from a non-moderator", async function () {
+        const MODERATOR_ROLE = await _collection.MODERATOR_ROLE();
+
+        const initialModeratorCount = await _collection.moderatorCount();
+
+        await _collection
+          .connect(_owner)
+          .revokeRole(MODERATOR_ROLE, _otherAccount.address);
+
+        expect(await _collection.moderatorCount()).to.equal(
+          initialModeratorCount
+        );
       });
     });
   });
