@@ -60,7 +60,7 @@ export async function deployAgentEnsRegistryWithAgent() {
 
   // agentWallet owns the NFT; agentControlledWallet is registered in the
   // agent's AgentInformation.wallets so it can also write records.
-  const [owner, moderator, agentSigner, agentWallet, outsider, agentControlledWallet] =
+  const [owner, moderator, agentWallet, outsider, agentControlledWallet] =
     await ethers.getSigners();
 
   const { collection, collectionsManager } = await deployCollectionWithCreator({
@@ -69,10 +69,7 @@ export async function deployAgentEnsRegistryWithAgent() {
     moderator,
   });
 
-  const signerRole = await collectionsManager.SIGNER_ROLE();
-  await collectionsManager.grantRole(signerRole, agentSigner.address);
-
-  const tokenId = await proposeAndMint(agentSigner, collection, moderator, {
+  const tokenId = await proposeAndMint(collection, moderator, {
     to: agentWallet.address,
     name: AGENT_NAME,
     wallets: [agentControlledWallet.address],
@@ -87,7 +84,6 @@ export async function deployAgentEnsRegistryWithAgent() {
   return {
     owner,
     moderator,
-    agentSigner,
     agentWallet,
     agentControlledWallet,
     outsider,

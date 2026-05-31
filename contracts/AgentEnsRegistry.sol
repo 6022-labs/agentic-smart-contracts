@@ -9,7 +9,6 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IAgentCollectionStates} from "./interfaces/IAgentCollection/IAgentCollectionStates.sol";
 import {IAgentCollectionsManagerStates} from "./interfaces/IAgentCollectionsManager/IAgentCollectionsManagerStates.sol";
 import {IAgentEnsRegistry} from "./interfaces/IAgentEnsRegistry/IAgentEnsRegistry.sol";
-import {ENSUtils} from "./libraries/ENSUtils.sol";
 import {AgentRef} from "./types/AgentRef.sol";
 import {KeyValue} from "./types/KeyValue.sol";
 
@@ -45,8 +44,7 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
     /// @dev `msg.sender` must own the agent NFT or be one of its registered
     ///      wallets, and `collection` must be registered with the manager.
     modifier onlyAgentController(address collection, uint256 tokenId) {
-        string memory collectionName = IERC721Metadata(collection).name();
-        if (IAgentCollectionsManagerStates(manager).collectionIdByName(collectionName) == 0) {
+        if (!IAgentCollectionsManagerStates(manager).isKnownCollection(collection)) {
             revert UnknownCollection(collection);
         }
         if (!_isAgentController(collection, tokenId, msg.sender)) {
@@ -122,8 +120,8 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
         view
         returns (bytes32 node, string memory label)
     {
+        // Labels validated at mint / initialize and immutable; no re-check here.
         label = IAgentCollectionStates(collection).nameOf(tokenId);
-        if (!ENSUtils.isValidENSName(label)) revert InvalidLabel(label);
         string memory collectionName = IERC721Metadata(collection).name();
 
         bytes32 chainNode = keccak256(

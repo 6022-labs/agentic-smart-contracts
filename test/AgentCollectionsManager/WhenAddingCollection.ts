@@ -88,7 +88,7 @@ describe("WhenAddingCollection", function () {
     describe("Given collection with this name already exists", function () {
       it("Should revert", async function () {
         await _collectionCreator.createCollection(
-          "",
+          "agents",
           "first-symbol",
           "description",
           _owner.address,
@@ -97,7 +97,7 @@ describe("WhenAddingCollection", function () {
 
         await expect(
           _collectionCreator.createCollection(
-            "",
+            "agents",
             "second-symbol",
             "description",
             _owner.address,
@@ -108,7 +108,7 @@ describe("WhenAddingCollection", function () {
             _collectionsManager,
             "CollectionNameAlreadyExists"
           )
-          .withArgs("");
+          .withArgs("agents");
       });
     });
 
@@ -172,6 +172,29 @@ describe("WhenAddingCollection", function () {
         );
 
         expect(collectionAddress).to.not.equal(ethers.ZeroAddress);
+      });
+
+      it("Should flag the created collection as known", async function () {
+        await _collectionCreator.createCollection(
+          "first-name",
+          "AIA",
+          "description",
+          _owner.address,
+          _owner.address
+        );
+
+        const collectionAddress = await _collectionsManager.collections(
+          (await _collectionsManager.nextCollectionId()) - 1n
+        );
+
+        expect(await _collectionsManager.isKnownCollection(collectionAddress)).to
+          .equal(true);
+      });
+
+      it("Should not flag an unregistered address as known", async function () {
+        expect(
+          await _collectionsManager.isKnownCollection(generateRandomAddress())
+        ).to.equal(false);
       });
     });
   });

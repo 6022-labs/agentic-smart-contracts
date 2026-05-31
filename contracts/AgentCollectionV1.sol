@@ -1,23 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import {ENSUtils} from "./libraries/ENSUtils.sol";
 import {KeyValueLib} from "./libraries/KeyValueLib.sol";
-import {AgenticSignatureLib} from "./libraries/AgenticSignatureLib.sol";
 
 import {KeyValue} from "./types/KeyValue.sol";
 import {NullableUint256} from "./types/NullableUint256.sol";
 import {AgentInformation} from "./types/AgentInformation.sol";
 import {IAgentCollectionV1} from "./interfaces/IAgentCollectionV1/IAgentCollectionV1.sol";
-import {IAgentCollectionsManagerStates} from "./interfaces/IAgentCollectionsManager/IAgentCollectionsManagerStates.sol";
 import {IAgentCollectionsDescriptorActions} from "./interfaces/IAgentCollectionsDescriptor/IAgentCollectionsDescriptorActions.sol";
 
 struct MintProposal {
@@ -25,7 +21,6 @@ struct MintProposal {
     string name;
     string role;
     address owner;
-    address signer;
     address creator;
     address[] wallets;
     KeyValue[] images;
@@ -43,19 +38,13 @@ struct AddOrUpdateAgentImageProposal {
 /// @dev ERC721 collection that supports off-chain minting proposals and image management.
 contract AgentCollectionV1 is
     ERC721Upgradeable,
-    EIP712Upgradeable,
     AccessControlUpgradeable,
     IAgentCollectionV1
 {
-    using ECDSA for bytes32;
     using KeyValueLib for KeyValue[];
-
-    string private constant SIGNING_DOMAIN = "AgentCollection";
-    string private constant SIGNATURE_VERSION = "1";
 
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
-    mapping(bytes32 => bool) private _isNonceUsed;
     mapping(string => uint256) private _nameToTokenId;
     mapping(address => uint256) private _walletToTokenId;
     mapping(uint256 => AgentInformation) private _agentInformationOf;
@@ -72,11 +61,43 @@ contract AgentCollectionV1 is
     uint256 public moderatorCount;
     uint256 public nextTokenId;
 
-    address public collectionsManager;
     address public collectionsDescriptor;
 
     constructor() {
         _disableInitializers();
+    }
+
+    /// @dev Reverts if the caller is neither the agent owner nor one of its wallets.
+    modifier onlyAgentController(uint256 tokenId) {
+        if (!_isAgentController(tokenId, _msgSender())) {
+            revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
+        }
+        _;
+    }
+
+    /// @dev Reverts if the caller is neither an agent controller (owner or
+    /// wallet) nor a moderator.
+    modifier onlyAgentControllerOrModerator(uint256 tokenId) {
+        if (!_isAgentController(tokenId, _msgSender()) && !hasRole(MODERATOR_ROLE, _msgSender())) {
+            revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
+        }
+        _;
+    }
+
+    /// @dev Reverts if there is no moderator set.
+    modifier onlyWhenModeratorsExist() {
+        if (moderatorCount == 0) {
+            revert NoModerators();
+        }
+        _;
+    }
+
+    /// @dev Reverts if there is a moderator set and the caller is not one.
+    modifier onlyWhenNoModeratorsOrSenderIsModerator() {
+        if (moderatorCount > 0 && !hasRole(MODERATOR_ROLE, _msgSender())) {
+            revert NotModerator(_msgSender());
+        }
+        _;
     }
 
     /// @dev Initialize a new agent collection.
@@ -84,7 +105,6 @@ contract AgentCollectionV1 is
     /// @param symbol ERC721 symbol of the collection.
     /// @param admin Address granted the default admin role.
     /// @param moderator Address granted the moderator role.
-    /// @param initialCollectionsManager Address of the collections manager contract.
     /// @param initialCollectionsDescriptor Address of the descriptor contract.
     function initialize(
         string memory name,
@@ -92,10 +112,12 @@ contract AgentCollectionV1 is
         string memory initialDescription,
         address admin,
         address moderator,
-        address initialCollectionsManager,
         address initialCollectionsDescriptor
     ) external initializer {
-        collectionsManager = initialCollectionsManager;
+        if (!ENSUtils.isValidENSName(name)) {
+            revert InvalidCollectionName(name);
+        }
+
         collectionsDescriptor = initialCollectionsDescriptor;
 
         nextTokenId = 1;
@@ -107,7 +129,6 @@ contract AgentCollectionV1 is
         _grantRole(MODERATOR_ROLE, moderator);
 
         __ERC721_init(name, symbol);
-        __EIP712_init(SIGNING_DOMAIN, SIGNATURE_VERSION);
         __AccessControl_init();
     }
 
@@ -190,14 +211,6 @@ contract AgentCollectionV1 is
         _requireMinted(tokenId);
 
         return _agentInformationOf[tokenId];
-    }
-
-    /// @dev Get the signer address of an agent.
-    /// @param tokenId The token identifier.
-    function signerOf(uint256 tokenId) external view returns (address) {
-        _requireMinted(tokenId);
-
-        return _agentInformationOf[tokenId].signer;
     }
 
     /// @dev Get the creator address of an agent.
@@ -287,12 +300,6 @@ contract AgentCollectionV1 is
         return _walletToTokenId[wallet];
     }
 
-    /// @dev Check whether a nonce has already been used.
-    /// @param nonce The nonce to query.
-    function isNonceUsed(bytes32 nonce) external view returns (bool) {
-        return _isNonceUsed[nonce];
-    }
-
     /// @dev Number of pending mint proposals.
     function mintProposalsLength() external view returns (uint256) {
         return _mintProposals.length;
@@ -315,60 +322,15 @@ contract AgentCollectionV1 is
         return _addOrUpdateAgentImageProposals[proposalIndex];
     }
 
-    /// @dev Update the signer address of an agent.
-    /// @param tokenId The token to update.
-    /// @param newSigner The new signer address.
-    /// @param nonce Unique nonce used for signature.
-    /// @param signature Off-chain signature authorizing the change.
-    function updateAgentSigner(
-        uint256 tokenId,
-        address newSigner,
-        bytes32 nonce,
-        bytes memory signature
-    ) external {
-        if (_isNonceUsed[nonce]) {
-            revert UsedNonce(nonce);
-        }
-
-        if (ownerOf(tokenId) != _msgSender()) {
-            revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
-        }
-
-        if (!IAgentCollectionsManagerStates(collectionsManager).isSigner(newSigner)) {
-            revert NotSigner(newSigner);
-        }
-
-        address oldSigner = _agentInformationOf[tokenId].signer;
-        if (oldSigner == newSigner) {
-            revert SignerUnchanged(oldSigner);
-        }
-
-        address recoveredAddress = _recoverUpdateAgentSignerSigner(AgenticSignatureLib.UpdateAgentSignerParams({
-            tokenId: tokenId,
-            newSigner: newSigner,
-            nonce: nonce
-        }), signature);
-
-        if (!IAgentCollectionsManagerStates(collectionsManager).isSigner(recoveredAddress)) {
-            revert NotSigner(recoveredAddress);
-        }
-
-        _agentInformationOf[tokenId].signer = newSigner;
-        _isNonceUsed[nonce] = true;
-
-        emit AgentSignerUpdated(tokenId, oldSigner, newSigner);
-    }
-
     /// @dev Add the attribute key/value pair to a token. If the key already exists, its value is updated.
     /// @param tokenId The token whose attribute key is updated.
     /// @param key The attribute key to update.
     /// @param value The new value for the attribute key.
-    function addOrUpdateAgentAttribute(uint256 tokenId, string memory key, string memory value) external {
-        _requireMinted(tokenId);
-        if (ownerOf(tokenId) != _msgSender()) {
-            revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
-        }
-
+    function addOrUpdateAgentAttribute(
+        uint256 tokenId,
+        string memory key,
+        string memory value
+    ) external onlyAgentController(tokenId) {
         AgentInformation storage agentInfo = _agentInformationOf[tokenId];
 
         string memory oldValue = agentInfo.attributes.addOrUpdate(key, value);
@@ -386,13 +348,7 @@ contract AgentCollectionV1 is
     function createAddOrUpdateAgentImageProposal(
         uint256 tokenId,
         KeyValue memory image
-    ) external {
-        _requireModerator();
-        _requireMinted(tokenId);
-        if (ownerOf(tokenId) != _msgSender() && !hasRole(MODERATOR_ROLE, _msgSender())) {
-            revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
-        }
-
+    ) external onlyWhenModeratorsExist onlyAgentControllerOrModerator(tokenId) {
         bool isProposalAlreadyExistForThisAgentAndKey = false;
 
         for (uint256 i = 0; i < _addOrUpdateAgentImageProposals.length; i++) {
@@ -432,13 +388,7 @@ contract AgentCollectionV1 is
     function addOrUpdateAgentImage(
         uint256 tokenId,
         KeyValue memory image
-    ) external {
-        _requireNoModeratorOrSenderIsModerator();
-        _requireMinted(tokenId);
-        if (ownerOf(tokenId) != _msgSender() && !hasRole(MODERATOR_ROLE, _msgSender())) {
-            revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
-        }
-
+    ) external onlyWhenNoModeratorsOrSenderIsModerator onlyAgentControllerOrModerator(tokenId) {
         _addOrUpdateAgentImage(
             tokenId,
             image
@@ -491,12 +441,7 @@ contract AgentCollectionV1 is
     function removeAgentImage(
         uint256 tokenId,
         string memory key
-    ) external {
-        _requireMinted(tokenId);
-        if (ownerOf(tokenId) != _msgSender() && !hasRole(MODERATOR_ROLE, _msgSender())) {
-            revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
-        }
-
+    ) external onlyAgentControllerOrModerator(tokenId) {
         KeyValue[] storage images = _agentInformationOf[tokenId].images;
         images.remove(key);
 
@@ -507,38 +452,28 @@ contract AgentCollectionV1 is
 
     /// @dev Propose minting of a new agent token. (used if moderators setup)
     /// @param to The future owner of the token.
-    /// @param signer The signer address linked to the agent.
     /// @param role The agent role.
     /// @param name The Name of the agent.
     /// @param wallets Wallet addresses controlled by the agent.
     /// @param images A set of images describing the agent.
     /// @param attributes A set of attributes describing the agent.
     /// @param cloneOf The ID of the agent to clone (if any).
-    /// @param nonce Unique nonce used for signature replay protection.
-    /// @param signature Off-chain signature authorizing the mint.
     function createMintProposal(
         address to,
-        address signer,
         string memory role,
         string memory name,
         address[] memory wallets,
         KeyValue[] memory images,
         KeyValue[] memory attributes,
-        NullableUint256 memory cloneOf,
-        bytes32 nonce,
-        bytes memory signature
-    ) external {
-        _requireModerator();
-        _validateMint(to, signer, role, name, wallets, images, attributes, cloneOf, nonce, signature);
-
-        _isNonceUsed[nonce] = true;
+        NullableUint256 memory cloneOf
+    ) external onlyWhenModeratorsExist {
+        _validateMintInputs(name, wallets, images, cloneOf);
 
         _mintProposals.push(MintProposal({
             id: _nextProposalId,
             name: name,
             role: role,
             owner: to,
-            signer: signer,
             images: images,
             cloneOf: cloneOf,
             wallets: wallets,
@@ -548,7 +483,7 @@ contract AgentCollectionV1 is
 
         _mintProposalIndexById[_nextProposalId] = _mintProposals.length - 1;
 
-        emit MintProposalCreated(to, signer, _nextProposalId);
+        emit MintProposalCreated(to, _nextProposalId);
 
         _nextProposalId++;
     }
@@ -556,31 +491,23 @@ contract AgentCollectionV1 is
     /// @dev Mint a new agent token. (allowed when no moderators are setup or
     /// the caller is a moderator)
     /// @param to The future owner of the token.
-    /// @param signer The signer address linked to the agent.
     /// @param role The agent role.
     /// @param name The Name of the agent.
     /// @param wallets Wallet addresses controlled by the agent.
     /// @param images A set of images describing the agent.
     /// @param attributes A set of attributes describing the agent.
     /// @param cloneOf The ID of the agent to clone (if any).
-    /// @param nonce Unique nonce used for signature replay protection.
-    /// @param signature Off-chain signature authorizing the mint.
     function mint(
         address to,
-        address signer,
         string memory role,
         string memory name,
         address[] memory wallets,
         KeyValue[] memory images,
         KeyValue[] memory attributes,
-        NullableUint256 memory cloneOf,
-        bytes32 nonce,
-        bytes memory signature
-    ) external {
-        _requireNoModeratorOrSenderIsModerator();
-        _validateMint(to, signer, role, name, wallets, images, attributes, cloneOf, nonce, signature);
-        _isNonceUsed[nonce] = true;
-        _mintAgent(to, signer, _msgSender(), role, name, wallets, images, attributes, cloneOf);
+        NullableUint256 memory cloneOf
+    ) external onlyWhenNoModeratorsOrSenderIsModerator {
+        _validateMintInputs(name, wallets, images, cloneOf);
+        _mintAgent(to, _msgSender(), role, name, wallets, images, attributes, cloneOf);
     }
 
     /// @dev Mint an agent from an approved proposal.
@@ -595,7 +522,6 @@ contract AgentCollectionV1 is
 
         _mintAgent(
             proposalInfo.owner,
-            proposalInfo.signer,
             proposalInfo.creator,
             proposalInfo.role,
             proposalInfo.name,
@@ -607,24 +533,15 @@ contract AgentCollectionV1 is
         _popMintProposalAt(proposalIndex);
     }
 
-    /// @dev Internal function to validate minting parameters and signature.
-    function _validateMint(
-        address to,
-        address signer,
-        string memory role,
+    /// @dev Internal function to validate minting parameters.
+    function _validateMintInputs(
         string memory name,
         address[] memory wallets,
         KeyValue[] memory images,
-        KeyValue[] memory attributes,
-        NullableUint256 memory cloneOf,
-        bytes32 nonce,
-        bytes memory signature
+        NullableUint256 memory cloneOf
     ) internal view {
         if (!ENSUtils.isValidENSName(name)) {
             revert InvalidName(name);
-        }
-        if (_isNonceUsed[nonce]) {
-            revert UsedNonce(nonce);
         }
 
         _requireUniqueNameAndUniqueWallets(name, wallets);
@@ -635,30 +552,11 @@ contract AgentCollectionV1 is
         if (cloneOf.isSet && (cloneOf.value == 0 || cloneOf.value >= nextTokenId)) {
             revert InvalidCloneOf(cloneOf.value);
         }
-
-        address recoveredAddress = _recoverMintSigner(AgenticSignatureLib.MintParams({
-            to: to,
-            role: role,
-            name: name,
-            signer: signer,
-            images: images,
-            wallets: wallets,
-            cloneOf: cloneOf,
-            attributes: attributes,
-            nonce: nonce
-        }), signature);
-        if (!IAgentCollectionsManagerStates(collectionsManager).isSigner(recoveredAddress)) {
-            revert NotSigner(recoveredAddress);
-        }
-        if (recoveredAddress != signer) {
-            revert InvalidSigner(recoveredAddress, signer);
-        }
     }
 
     /// @dev Internal function to mint an agent NFT and store its information.
     function _mintAgent(
         address to,
-        address signer,
         address creator,
         string memory role,
         string memory name,
@@ -671,7 +569,6 @@ contract AgentCollectionV1 is
             name: name,
             role: role,
             images: images,
-            signer: signer,
             wallets: wallets,
             creator: creator,
             cloneOf: cloneOf,
@@ -682,8 +579,7 @@ contract AgentCollectionV1 is
             _walletToTokenId[wallets[i]] = nextTokenId;
         }
         _safeMint(to, nextTokenId);
-        emit Minted(to, signer, nextTokenId);
-        emit AgentSignerUpdated(nextTokenId, address(0), signer);
+        emit Minted(to, nextTokenId);
         nextTokenId++;
     }
 
@@ -693,26 +589,6 @@ contract AgentCollectionV1 is
         uint256 proposalId
     ) external onlyRole(MODERATOR_ROLE) {
         _popMintProposalAt(proposalId);
-    }
-
-    /// @dev Recover the signer used for an update agent signer request.
-    function _recoverUpdateAgentSignerSigner(
-        AgenticSignatureLib.UpdateAgentSignerParams memory params,
-        bytes memory signature
-    ) internal view returns (address) {
-        bytes32 typedDataHash = AgenticSignatureLib.hashUpdateAgentSignerParams(params);
-        bytes32 digest = _hashTypedDataV4(typedDataHash);
-        return ECDSA.recover(digest, signature);
-    }
-
-    /// @dev Recover the signer used for a mint.
-    function _recoverMintSigner(
-        AgenticSignatureLib.MintParams memory params,
-        bytes memory signature
-    ) internal view returns (address) {
-        bytes32 typedDataHash = AgenticSignatureLib.hashMintParams(params);
-        bytes32 digest = _hashTypedDataV4(typedDataHash);
-        return ECDSA.recover(digest, signature);
     }
 
     function _popAddOrUpdateAgentImageProposalAt(uint256 proposalId) private {
@@ -746,21 +622,21 @@ contract AgentCollectionV1 is
         _mintProposals.pop();
         delete _mintProposalIndexById[proposalId];
 
-        emit MintProposalRemoved(proposal.owner, proposal.signer, proposalId);
+        emit MintProposalRemoved(proposal.owner, proposalId);
     }
 
-    /// @dev Reverts if there is a moderator set and the caller is not one.
-    function _requireNoModeratorOrSenderIsModerator() internal view {
-        if (moderatorCount > 0 && !hasRole(MODERATOR_ROLE, _msgSender())) {
-            revert NotModerator(_msgSender());
+    /// @dev Returns true if `account` owns the agent NFT or is one of its registered wallets.
+    function _isAgentController(uint256 tokenId, address account) internal view returns (bool) {
+        if (ownerOf(tokenId) == account) {
+            return true;
         }
-    }
-
-    /// @dev Reverts if there is no moderator set.
-    function _requireModerator() internal view {
-        if (moderatorCount == 0) {
-            revert NoModerators();
+        address[] storage wallets = _agentInformationOf[tokenId].wallets;
+        for (uint256 i = 0; i < wallets.length; i++) {
+            if (wallets[i] == account) {
+                return true;
+            }
         }
+        return false;
     }
 
     /// @dev Reverts if name and wallets are already used and wallets are non-zero.

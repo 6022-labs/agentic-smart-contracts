@@ -7,128 +7,11 @@ export function generateRandomAddress(): string {
   return ethers.Wallet.createRandom().address;
 }
 
-export async function signMintRequest(
-  signer: HardhatEthersSigner,
-  agentCollection: AgentCollectionV1,
-  params: {
-    to: string;
-    signer: string;
-    role: string;
-    name: string;
-    wallets: string[];
-    images: { key: string; value: string }[];
-    attributes: { key: string; value: string }[];
-    cloneOf: NullableUint256Struct;
-    nonce: string;
-  }
-) {
-  if (!agentCollection) {
-    throw new Error("AgentCollection instance not set");
-  }
-
-  const domain = {
-    name: "AgentCollection",
-    version: "1",
-    chainId: (await ethers.provider.getNetwork()).chainId,
-    verifyingContract: await agentCollection.getAddress(),
-  };
-
-  const types = {
-    MintRequest: [
-      { name: "to", type: "address" },
-      { name: "signer", type: "address" },
-      { name: "roleHash", type: "bytes32" },
-      { name: "nameHash", type: "bytes32" },
-      { name: "walletsHash", type: "bytes32" },
-      { name: "imagesHash", type: "bytes32" },
-      { name: "attributesHash", type: "bytes32" },
-      { name: "cloneOfHash", type: "bytes32" },
-      { name: "nonce", type: "bytes32" },
-    ],
-  };
-
-  const walletsHash = ethers.keccak256(
-    ethers.solidityPacked(["address[]"], [params.wallets])
-  );
-  const roleHash = ethers.keccak256(ethers.toUtf8Bytes(params.role));
-  const nameHash = ethers.keccak256(ethers.toUtf8Bytes(params.name));
-  const cloneOfHash = params.cloneOf.isSet
-    ? ethers.keccak256(
-        ethers.solidityPacked(["uint256"], [params.cloneOf.value])
-      )
-    : ethers.ZeroHash;
-
-  // Hash the images array as in Solidity: keccak256(abi.encodePacked(keccak256(abi.encodePacked(key, value)), ...))
-  const imageHashes = params.images.map((img) =>
-    ethers.keccak256(
-      ethers.solidityPacked(["string", "string"], [img.key, img.value])
-    )
-  );
-  const imagesPacked = ethers.solidityPacked(["bytes32[]"], [imageHashes]);
-  const imagesHash = ethers.keccak256(imagesPacked);
-
-  // Hash the attributes array as in Solidity: keccak256(abi.encodePacked(keccak256(abi.encodePacked(key, value)), ...))
-  const attributeHashes = params.attributes.map((attr) =>
-    ethers.keccak256(
-      ethers.solidityPacked(["string", "string"], [attr.key, attr.value])
-    )
-  );
-  const attributesPacked = ethers.solidityPacked(
-    ["bytes32[]"],
-    [attributeHashes]
-  );
-  const attributesHash = ethers.keccak256(attributesPacked);
-
-  const message = {
-    to: params.to,
-    signer: params.signer,
-    roleHash,
-    nameHash,
-    walletsHash,
-    imagesHash,
-    attributesHash,
-    cloneOfHash,
-    nonce: ethers.keccak256(ethers.toUtf8Bytes(params.nonce)),
-  };
-
-  return await signer.signTypedData(domain, types, message);
-}
-
 export function generateRandomNonce(): string {
   return ethers.hexlify(ethers.randomBytes(32));
 }
 
-export async function signUpdateAgentSignerRequest(
-  signer: HardhatEthersSigner,
-  agentCollection: AgentCollectionV1,
-  params: { tokenId: string; newSigner: string; nonce: string }
-) {
-  const domain = {
-    name: "AgentCollection",
-    version: "1",
-    chainId: (await ethers.provider.getNetwork()).chainId,
-    verifyingContract: await agentCollection.getAddress(),
-  };
-
-  const types = {
-    UpdateAgentSignerRequest: [
-      { name: "tokenId", type: "uint256" },
-      { name: "newSigner", type: "address" },
-      { name: "nonce", type: "bytes32" },
-    ],
-  };
-
-  const message = {
-    tokenId: params.tokenId,
-    newSigner: params.newSigner,
-    nonce: ethers.keccak256(ethers.toUtf8Bytes(params.nonce)),
-  };
-
-  return await signer.signTypedData(domain, types, message);
-}
-
 export async function proposeAndMint(
-  signer: HardhatEthersSigner,
   collection: AgentCollectionV1,
   minter: HardhatEthersSigner,
   params: {
@@ -139,7 +22,6 @@ export async function proposeAndMint(
     images?: { key: string; value: string }[];
     attributes?: { key: string; value: string }[];
     cloneOf?: NullableUint256Struct;
-    nonce?: string;
   }
 ) {
   const {
@@ -154,33 +36,11 @@ export async function proposeAndMint(
     ],
     attributes = [{ key: "mission", value: "random mission" }],
     cloneOf = { isSet: false, value: 0n },
-    nonce = generateRandomNonce(),
   } = params;
 
-  const signature = await signMintRequest(signer, collection, {
-    to: params.to,
-    wallets,
-    signer: signer.address,
-    role,
-    name,
-    images,
-    attributes,
-    cloneOf,
-    nonce,
-  });
-
-  await collection.createMintProposal(
-    params.to,
-    signer.address,
-    role,
-    name,
-    wallets,
-    images,
-    attributes,
-    cloneOf!,
-    ethers.id(nonce),
-    signature
-  );
+  await collection
+    .connect(minter)
+    .createMintProposal(params.to, role, name, wallets, images, attributes, cloneOf!);
 
   const mintProposalsLength = await collection.mintProposalsLength();
   const proposalIndex = mintProposalsLength - BigInt(1);
@@ -210,7 +70,7 @@ export async function deployCollectionWithCreator(params: {
 }) {
   const {
     ipfsGateway = "https://ipfs.io/ipfs/",
-    name = "",
+    name = "agents",
     symbol = "AIA",
     description = `very long "description" with some 'quotes' that is only used for testing purposes............................................................................................................`,
     owner,

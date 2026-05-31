@@ -13,7 +13,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("WhenCreatingCollection", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
-  const name = "";
+  const name = "agents";
   const symbol = "AIA";
   const description = "description";
 
@@ -192,6 +192,48 @@ describe("WhenCreatingCollection", function () {
       expect(await collection.hasRole(MODERATOR_ROLE, _owner.address)).to.be
         .true;
     });
+  });
+
+  describe("Given an invalid collection name", function () {
+    let _collectionCreator: AgentCollectionCreatorV1;
+    let _collection: AgentCollectionV1;
+    let _owner: HardhatEthersSigner;
+
+    beforeEach(async function () {
+      const { owner, collectionCreator } = await loadFixture(deployCreator);
+      _owner = owner;
+      _collectionCreator = collectionCreator;
+      _collection = await ethers.getContractFactory("AgentCollectionV1").then(
+        (f) => f.attach(ethers.ZeroAddress) as AgentCollectionV1
+      );
+    });
+
+    // Collection name doubles as an ENS label (validated in initialize).
+    const invalidNames = [
+      { label: "empty", value: "" },
+      { label: "uppercase", value: "Agents" },
+      { label: "with a space", value: "my agents" },
+      { label: "leading hyphen", value: "-agents" },
+      { label: "trailing hyphen", value: "agents-" },
+      { label: "double hyphen", value: "my--agents" },
+      { label: "longer than 63 chars", value: "a".repeat(64) },
+    ];
+
+    for (const { label, value } of invalidNames) {
+      it(`Should revert with InvalidCollectionName when name is ${label}`, async function () {
+        await expect(
+          _collectionCreator.createCollection(
+            value,
+            "AIA",
+            "description",
+            _owner.address,
+            _owner.address
+          )
+        )
+          .to.be.revertedWithCustomError(_collection, "InvalidCollectionName")
+          .withArgs(value);
+      });
+    }
   });
 
   describe("Given a minimum token balance is required", function () {

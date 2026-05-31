@@ -2,10 +2,6 @@
 pragma solidity ^0.8.28;
 
 interface IAgentCollectionV1Errors {
-    /// @dev Error when the nonce has already been used.
-    /// @param nonce The nonce that was used.
-    error UsedNonce(bytes32 nonce);
-
     /// @dev Error when the name is already in use.
     /// @param name The name that is already in use.
     /// @param tokenId The token ID associated with the name.
@@ -19,26 +15,17 @@ interface IAgentCollectionV1Errors {
     /// @dev Error when the wallet address is invalid (e.g., zero address).
     error InvalidWallet();
 
-    /// @dev Error when the signer is invalid.
-    /// @param signer The actual signer address.
-    /// @param expectedSigner The expected signer address.
-    error InvalidSigner(address signer, address expectedSigner);
-
     /// @dev Error when the name is invalid.
     /// @param name The name that is not valid.
     error InvalidName(string name);
 
+    /// @dev Error when the collection name is not a valid ENS label.
+    /// @param name The collection name that is not valid.
+    error InvalidCollectionName(string name);
+
     /// @dev Error when the cloneOf is invalid.
     /// @param cloneOf The cloneOf that is not valid.
     error InvalidCloneOf(uint256 cloneOf);
-
-    /// @dev Error when the address is not a signer.
-    /// @param signer The address that is not a signer.
-    error NotSigner(address signer);
-
-    /// @dev Error when the signer is the same as the current signer.
-    /// @param signer The address that is unchanged.
-    error SignerUnchanged(address signer);
 
     /// @dev Error when no image with key `default` is present.
     error MissingDefaultImage();

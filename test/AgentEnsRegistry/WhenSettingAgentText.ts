@@ -16,7 +16,6 @@ describe("WhenSettingAgentText", function () {
   let _node: string;
   let _owner: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
-  let _agentSigner: HardhatEthersSigner;
   let _agentWallet: HardhatEthersSigner;
   let _agentControlledWallet: HardhatEthersSigner;
   let _outsider: HardhatEthersSigner;
@@ -29,7 +28,6 @@ describe("WhenSettingAgentText", function () {
     const fixture = await loadFixture(deployAgentEnsRegistryWithAgent);
     _owner = fixture.owner;
     _moderator = fixture.moderator;
-    _agentSigner = fixture.agentSigner;
     _agentWallet = fixture.agentWallet;
     _agentControlledWallet = fixture.agentControlledWallet;
     _outsider = fixture.outsider;
@@ -183,23 +181,17 @@ describe("WhenSettingAgentText", function () {
 
   describe("Given the collection is not registered with the manager", function () {
     it("Should revert with UnknownCollection", async function () {
-      const { collection: outsideCollection, collectionsManager: outsideManager } =
+      const { collection: outsideCollection } =
         await deployCollectionWithCreator({
-          name: "Outside",
+          name: "outside",
           symbol: "OUT",
           owner: _owner,
           moderator: _moderator,
         });
-      await outsideManager.grantRole(
-        await outsideManager.SIGNER_ROLE(),
-        _agentSigner.address
-      );
-      const outsideTokenId = await proposeAndMint(
-        _agentSigner,
-        outsideCollection,
-        _moderator,
-        { to: _agentWallet.address, name: AGENT_NAME }
-      );
+      const outsideTokenId = await proposeAndMint(outsideCollection, _moderator, {
+        to: _agentWallet.address,
+        name: AGENT_NAME,
+      });
 
       await expect(
         _ensRegistry

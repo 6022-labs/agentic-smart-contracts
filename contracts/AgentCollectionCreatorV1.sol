@@ -220,7 +220,6 @@ contract AgentCollectionCreatorV1 is
             description,
             admin,
             moderator,
-            collectionsManager,
             collectionsDescriptor
         );
 

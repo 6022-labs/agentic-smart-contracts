@@ -7,7 +7,6 @@ import {NullableUint256} from "./NullableUint256.sol";
 struct AgentInformation {
     string name;
     string role;
-    address signer;
     address creator;
     address[] wallets;
     KeyValue[] images;

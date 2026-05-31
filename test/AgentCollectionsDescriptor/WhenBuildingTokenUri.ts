@@ -21,12 +21,11 @@ describe("WhenBuildingTokenUri", function () {
   let _collectionsManager: AgentCollectionsManager;
 
   let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
 
   async function deployAgentCollectionDescription() {
     await reset();
 
-    const [owner, signer] = await ethers.getSigners();
+    const [owner] = await ethers.getSigners();
 
     const { collection, collectionsDescriptor, collectionsManager } =
       await deployCollectionWithCreator({
@@ -35,12 +34,8 @@ describe("WhenBuildingTokenUri", function () {
         moderator: owner,
       });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
-
     return {
       owner,
-      signer,
       collection,
       collectionsManager,
       collectionsDescriptor,
@@ -48,16 +43,10 @@ describe("WhenBuildingTokenUri", function () {
   }
 
   beforeEach(async function () {
-    const {
-      owner,
-      signer,
-      collection,
-      collectionsManager,
-      collectionsDescriptor,
-    } = await loadFixture(deployAgentCollectionDescription);
+    const { owner, collection, collectionsManager, collectionsDescriptor } =
+      await loadFixture(deployAgentCollectionDescription);
 
     _owner = owner;
-    _signer = signer;
     _collection = collection;
     _collectionsManager = collectionsManager;
     _collectionDescriptor = collectionsDescriptor;
@@ -92,7 +81,7 @@ describe("WhenBuildingTokenUri", function () {
     beforeEach(async function () {
       _tokenId = await _collection.nextTokenId();
 
-      await proposeAndMint(_signer, _collection, _owner, {
+      await proposeAndMint(_collection, _owner, {
         to: _owner.address,
         name: _name,
         role: _role,

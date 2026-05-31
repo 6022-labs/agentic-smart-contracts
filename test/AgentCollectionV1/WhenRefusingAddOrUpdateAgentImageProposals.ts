@@ -10,125 +10,118 @@ describe("WhenRefusingAddOrUpdateAgentImageProposals", function () {
 
   let _collection: AgentCollectionV1;
   let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
 
   async function deployCollection() {
     await reset();
 
-    const [owner, signer, moderator, otherAccount] = await ethers.getSigners();
+    const [owner, moderator, otherAccount] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator,
-        ipfsGateway,
-      });
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator,
+      ipfsGateway,
+    });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
-
-    return { collection, owner, signer, moderator, otherAccount };
+    return { collection, owner, moderator, otherAccount };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, moderator, otherAccount } =
-      await loadFixture(deployCollection);
+    const { collection, owner, moderator, otherAccount } = await loadFixture(
+      deployCollection
+    );
 
     _collection = collection;
     _owner = owner;
-    _signer = signer;
     _moderator = moderator;
     _otherAccount = otherAccount;
   });
 
-  describe("refuseAddOrUpdateAgentImageProposal", function () {
-    it("Should revert with 'AccessControlUnauthorizedAccount' when caller is not moderator", async function () {
-      const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
-        to: await _owner.getAddress(),
-      });
-
-      await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
-        key: "profile",
-        value: "cid1",
-      });
-
-      const { id: proposalId } =
-        await _collection.addOrUpdateAgentImageProposal(0);
-
-      await expect(
-        _collection.refuseAddOrUpdateAgentImageProposal(proposalId)
-      ).to.be.revertedWithCustomError(
-        _collection,
-        "AccessControlUnauthorizedAccount"
-      );
+  it("Should revert with 'AccessControlUnauthorizedAccount' when caller is not moderator", async function () {
+    const tokenId = await proposeAndMint(_collection, _moderator, {
+      to: await _owner.getAddress(),
     });
 
-    it("Should revert when proposal does not exist", async function () {
-      await proposeAndMint(_signer, _collection, _moderator, {
-        to: await _owner.getAddress(),
-      });
-
-      await expect(
-        _collection.connect(_moderator).refuseAddOrUpdateAgentImageProposal(0)
-      ).to.be.reverted;
+    await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+      key: "profile",
+      value: "cid1",
     });
 
-    it("Should remove and reorder proposals", async function () {
-      const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
-        to: await _owner.getAddress(),
-      });
+    const { id: proposalId } =
+      await _collection.addOrUpdateAgentImageProposal(0);
 
-      await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
-        key: "profile1",
-        value: "cid1",
-      });
+    await expect(
+      _collection.refuseAddOrUpdateAgentImageProposal(proposalId)
+    ).to.be.revertedWithCustomError(
+      _collection,
+      "AccessControlUnauthorizedAccount"
+    );
+  });
 
-      await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
-        key: "profile2",
-        value: "cid2",
-      });
+  it("Should revert when proposal does not exist", async function () {
+    await proposeAndMint(_collection, _moderator, {
+      to: await _owner.getAddress(),
+    });
 
-      expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
-        2n
-      );
+    await expect(
+      _collection.connect(_moderator).refuseAddOrUpdateAgentImageProposal(0)
+    ).to.be.reverted;
+  });
 
-      const { id: proposalId } =
-        await _collection.addOrUpdateAgentImageProposal(0);
+  it("Should remove and reorder proposals", async function () {
+    const tokenId = await proposeAndMint(_collection, _moderator, {
+      to: await _owner.getAddress(),
+    });
 
-      await _collection
+    await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+      key: "profile1",
+      value: "cid1",
+    });
+
+    await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+      key: "profile2",
+      value: "cid2",
+    });
+
+    expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+      2n
+    );
+
+    const { id: proposalId } =
+      await _collection.addOrUpdateAgentImageProposal(0);
+
+    await _collection
+      .connect(_moderator)
+      .refuseAddOrUpdateAgentImageProposal(proposalId);
+
+    expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+      1n
+    );
+
+    const proposal = await _collection.addOrUpdateAgentImageProposal(0);
+    expect(proposal.image.key).to.equal("profile2");
+  });
+
+  it("Should emit 'AgentImageProposalRemoved' event", async function () {
+    const tokenId = await proposeAndMint(_collection, _moderator, {
+      to: await _owner.getAddress(),
+    });
+
+    await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+      key: "profile",
+      value: "cid1",
+    });
+
+    const { id: proposalId } =
+      await _collection.addOrUpdateAgentImageProposal(0);
+
+    await expect(
+      _collection
         .connect(_moderator)
-        .refuseAddOrUpdateAgentImageProposal(proposalId);
-
-      expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
-        1n
-      );
-
-      const proposal = await _collection.addOrUpdateAgentImageProposal(0);
-      expect(proposal.image.key).to.equal("profile2");
-    });
-
-    it("Should emit 'AgentImageProposalRemoved' event", async function () {
-      const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
-        to: await _owner.getAddress(),
-      });
-
-      await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
-        key: "profile",
-        value: "cid1",
-      });
-
-      const { id: proposalId } =
-        await _collection.addOrUpdateAgentImageProposal(0);
-
-      await expect(
-        _collection
-          .connect(_moderator)
-          .refuseAddOrUpdateAgentImageProposal(proposalId)
-      )
-        .to.emit(_collection, "AgentImageProposalRemoved")
-        .withArgs(tokenId, "profile", 2n);
-    });
+        .refuseAddOrUpdateAgentImageProposal(proposalId)
+    )
+      .to.emit(_collection, "AgentImageProposalRemoved")
+      .withArgs(tokenId, "profile", 2n);
   });
 });

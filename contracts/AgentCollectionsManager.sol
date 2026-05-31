@@ -8,12 +8,11 @@ import {IAgentCollectionStates} from "./interfaces/IAgentCollection/IAgentCollec
 import {IAgentCollectionsManager} from "./interfaces/IAgentCollectionsManager/IAgentCollectionsManager.sol";
 
 /// @title Agentic AI collections manager
-/// @dev Manages collections and authorizes signers and creators.
+/// @dev Manages collections and authorizes creators.
 contract AgentCollectionsManager is
     AccessControl,
     IAgentCollectionsManager
 {
-    bytes32 public constant SIGNER_ROLE = keccak256("SIGNER_ROLE");
     bytes32 public constant CREATOR_ROLE = keccak256("CREATOR_ROLE");
 
     uint256 public nextCollectionId = 1;
@@ -21,16 +20,11 @@ contract AgentCollectionsManager is
     mapping(uint256 => address) public collections;
     mapping(string => uint256) public collectionIdByName;
     mapping(string => uint256) public collectionIdBySymbol;
+    mapping(address => bool) public isKnownCollection;
 
     /// @dev Deploy the manager and set the deployer as admin.
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    }
-
-    /// @dev Check if an address has the signer role.
-    /// @param signer The address to check.
-    function isSigner(address signer) external view returns (bool) {
-        return hasRole(SIGNER_ROLE, signer);
     }
 
     function moderatorOf(address account) external view returns (address[] memory) {
@@ -76,6 +70,7 @@ contract AgentCollectionsManager is
         collections[nextCollectionId] = address(newCollection);
         collectionIdByName[name] = nextCollectionId;
         collectionIdBySymbol[symbol] = nextCollectionId;
+        isKnownCollection[address(newCollection)] = true;
 
         emit CollectionCreated(
             nextCollectionId,

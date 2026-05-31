@@ -11,45 +11,41 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
   let _collection: AgentCollectionV1;
 
   let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
 
   async function deployAgentCollection() {
     await reset();
 
-    const [owner, signer, otherAccount, moderator] = await ethers.getSigners();
+    const [owner, otherAccount, moderator] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator,
-        ipfsGateway,
-      });
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator,
+      ipfsGateway,
+    });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
-
-    return { collection, owner, signer, moderator, otherAccount };
+    return { collection, owner, moderator, otherAccount };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, moderator, otherAccount } =
-      await loadFixture(deployAgentCollection);
+    const { collection, owner, moderator, otherAccount } = await loadFixture(
+      deployAgentCollection
+    );
 
     _collection = collection;
 
     _owner = owner;
-    _signer = signer;
     _moderator = moderator;
     _otherAccount = otherAccount;
   });
 
-  async function mint(to: string) {
+  async function mint(to: string, wallets?: string[]) {
     const tokenId = await _collection.nextTokenId();
 
-    await proposeAndMint(_signer, _collection, _moderator, {
+    await proposeAndMint(_collection, _moderator, {
       to,
+      ...(wallets ? { wallets } : {}),
     });
 
     return tokenId;
@@ -69,7 +65,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
     });
   });
 
-  describe("Given sender is not the owner of the token", function () {
+  describe("Given sender is neither the owner nor a wallet of the token", function () {
     it("Should revert with 'OwnableUnauthorizedAccount' error", async function () {
       const tokenId = await mint(await _owner.getAddress());
 
@@ -83,6 +79,23 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
           "OwnableUnauthorizedAccount"
         )
         .withArgs(await _otherAccount.getAddress(), tokenId);
+    });
+  });
+
+  describe("Given sender is one of the agent's wallets", function () {
+    it("Should allow the wallet to add the attribute", async function () {
+      // owner holds the NFT; _otherAccount is registered as an agent wallet.
+      const tokenId = await mint(await _owner.getAddress(), [
+        _otherAccount.address,
+      ]);
+
+      await expect(
+        _collection
+          .connect(_otherAccount)
+          .addOrUpdateAgentAttribute(tokenId, "key", "value")
+      )
+        .to.emit(_collection, "AgentAttributeUpdated")
+        .withArgs(tokenId, "key", "", "value");
     });
   });
 

@@ -10,41 +10,35 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
 
   let _collection: AgentCollectionV1;
   let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
 
   async function deployAgentCollection() {
     await reset();
 
-    const [owner, signer, moderator] = await ethers.getSigners();
+    const [owner, moderator] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator,
-        ipfsGateway,
-      });
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator,
+      ipfsGateway,
+    });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
-
-    return { collection, owner, signer, moderator };
+    return { collection, owner, moderator };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, moderator } = await loadFixture(
+    const { collection, owner, moderator } = await loadFixture(
       deployAgentCollection
     );
 
     _collection = collection;
     _owner = owner;
-    _signer = signer;
     _moderator = moderator;
   });
 
   describe("Given caller is not moderator", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' error", async function () {
-      const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+      const tokenId = await proposeAndMint(_collection, _moderator, {
         to: await _owner.getAddress(),
       });
 
@@ -70,7 +64,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
   describe("Given caller is moderator", function () {
     describe("And proposal does not exist", function () {
       it("Should revert", async function () {
-        await proposeAndMint(_signer, _collection, _moderator, {
+        await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -82,7 +76,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
 
     describe("And image key does not exist", function () {
       it("Should add the image", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -112,7 +106,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
       });
 
       it("Should emit 'AgentImageUpdated' event", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -134,7 +128,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
       });
 
       it("Should emit 'AgentImageProposalRemoved' event", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -158,7 +152,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
 
     describe("And image key exists", function () {
       it("Should update the image value", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -201,7 +195,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
       });
 
       it("Should emit 'AgentImageUpdated' event", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -236,7 +230,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
       });
 
       it("Should emit 'AgentImageProposalRemoved' event", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -273,7 +267,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
 
     describe("And proposal is executed", function () {
       it("Should not be executable twice", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -304,7 +298,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
       });
 
       it("Should reorder remaining proposals", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 

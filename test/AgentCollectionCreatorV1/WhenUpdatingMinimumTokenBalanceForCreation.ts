@@ -102,7 +102,7 @@ describe("WhenUpdatingMinimumTokenBalanceForCreation", function () {
       });
     });
 
-    describe("But token is not authorized", function () {
+    describe("And token is not authorized", function () {
       it("Should revert with 'TokenNotAuthorized' error", async function () {
         const TestErc20 = await ethers.getContractFactory("TestERC20");
         const otherToken = (await TestErc20.deploy()) as TestERC20;

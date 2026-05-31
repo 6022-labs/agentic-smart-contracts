@@ -26,7 +26,7 @@ describe("WhenUpdatingDescription", function () {
       await deployCollectionWithCreator({
         owner,
         moderator: owner,
-        name: "",
+        name: "agents",
         symbol: "AIA",
         description: "initial description",
         ipfsGateway,

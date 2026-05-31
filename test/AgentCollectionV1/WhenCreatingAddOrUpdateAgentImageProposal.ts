@@ -10,35 +10,30 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
 
   let _collection: AgentCollectionV1;
   let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
 
   async function deployAgentCollection() {
     await reset();
 
-    const [owner, signer, moderator, otherAccount] = await ethers.getSigners();
+    const [owner, moderator, otherAccount] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator,
-        ipfsGateway,
-      });
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator,
+      ipfsGateway,
+    });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
-
-    return { collection, owner, signer, moderator, otherAccount };
+    return { collection, owner, moderator, otherAccount };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, moderator, otherAccount } =
-      await loadFixture(deployAgentCollection);
+    const { collection, owner, moderator, otherAccount } = await loadFixture(
+      deployAgentCollection
+    );
 
     _collection = collection;
     _owner = owner;
-    _signer = signer;
     _moderator = moderator;
     _otherAccount = otherAccount;
   });
@@ -76,7 +71,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
 
   describe("Given sender is not owner or moderator", function () {
     it("Should revert with 'OwnableUnauthorizedAccount' error", async function () {
-      const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+      const tokenId = await proposeAndMint(_collection, _moderator, {
         to: await _owner.getAddress(),
       });
 
@@ -99,7 +94,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
   describe("Given sender is owner", function () {
     describe("And proposal key does not exist", function () {
       it("Should add the proposal", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -123,7 +118,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
       });
 
       it("Should emit 'AgentImageProposalCreated' event", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -140,7 +135,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
 
     describe("And proposal key exists", function () {
       it("Should update existing proposal for same key", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -169,10 +164,32 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
     });
   });
 
+  describe("Given sender is one of the agent's wallets", function () {
+    it("Should add the proposal", async function () {
+      // owner holds the NFT; _otherAccount is registered as an agent wallet.
+      const tokenId = await proposeAndMint(_collection, _moderator, {
+        to: await _owner.getAddress(),
+        wallets: [_otherAccount.address],
+      });
+
+      await _collection
+        .connect(_otherAccount)
+        .createAddOrUpdateAgentImageProposal(tokenId, {
+          key: "profile",
+          value: "cid1",
+        });
+
+      expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(1n);
+      const proposal = await _collection.addOrUpdateAgentImageProposal(0);
+      expect(proposal.tokenId).to.equal(tokenId);
+      expect(proposal.image.key).to.equal("profile");
+    });
+  });
+
   describe("Given caller is moderator but not owner", function () {
     describe("And proposal key does not exist", function () {
       it("Should add the proposal", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -198,7 +215,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
       });
 
       it("Should emit 'AgentImageProposalCreated' event", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -217,7 +234,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
 
     describe("And proposal key exists", function () {
       it("Should update existing proposal for same key", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 

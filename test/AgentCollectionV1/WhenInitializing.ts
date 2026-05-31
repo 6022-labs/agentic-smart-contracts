@@ -62,7 +62,6 @@ describe("WhenInitializing", function () {
           DESCRIPTION,
           admin.address,
           moderator.address,
-          collectionsManager.address,
           collectionsDescriptor.address
         )
       ).to.be.reverted;
@@ -86,7 +85,6 @@ describe("WhenInitializing", function () {
           DESCRIPTION,
           admin.address,
           moderator.address,
-          await collectionsManager.getAddress(),
           await collectionsDescriptor.getAddress()
         )
       ).to.be.reverted;

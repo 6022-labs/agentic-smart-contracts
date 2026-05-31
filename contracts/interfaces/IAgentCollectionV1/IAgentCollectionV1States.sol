@@ -6,9 +6,6 @@ import {AgentInformation} from "../../types/AgentInformation.sol";
 import {IAgentCollectionStates} from "../IAgentCollection/IAgentCollectionStates.sol";
 
 interface IAgentCollectionV1States is IAgentCollectionStates {
-    /// @dev Address of the collections manager contract.
-    function collectionsManager() external view returns (address);
-
     /// @dev Address of the collections descriptor contract.
     function collectionsDescriptor() external view returns (address);
 

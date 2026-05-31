@@ -14,10 +14,6 @@ interface IAgentCollectionStates {
     /// @param tokenId The token identifier.
     function nameOf(uint256 tokenId) external view returns (string memory);
 
-    /// @dev Get the signer address of an agent.
-    /// @param tokenId The token identifier.
-    function signerOf(uint256 tokenId) external view returns (address);
-
     /// @dev Get the role of an agent
     /// @param tokenId The token identifier.
     function roleOf(uint256 tokenId) external view returns (string memory);

@@ -10,13 +10,14 @@ import {
   URL_KEY,
   AGENT_KIND_KEY,
   AGENT_NAME,
+  COLLECTION_NAME,
 } from "./common";
+import { ethers } from "hardhat";
 
 describe("WhenInitializingAgentTexts", function () {
   let _node: string;
   let _owner: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
-  let _agentSigner: HardhatEthersSigner;
   let _agentWallet: HardhatEthersSigner;
   let _agentControlledWallet: HardhatEthersSigner;
   let _outsider: HardhatEthersSigner;
@@ -29,7 +30,6 @@ describe("WhenInitializingAgentTexts", function () {
     const fixture = await loadFixture(deployAgentEnsRegistryWithAgent);
     _owner = fixture.owner;
     _moderator = fixture.moderator;
-    _agentSigner = fixture.agentSigner;
     _agentWallet = fixture.agentWallet;
     _agentControlledWallet = fixture.agentControlledWallet;
     _outsider = fixture.outsider;
@@ -195,23 +195,17 @@ describe("WhenInitializingAgentTexts", function () {
 
   describe("Given the collection is not registered with the manager", function () {
     it("Should revert with UnknownCollection", async function () {
-      const { collection: outsideCollection, collectionsManager: outsideManager } =
+      const { collection: outsideCollection } =
         await deployCollectionWithCreator({
-          name: "Outside",
+          name: "outside",
           symbol: "OUT",
           owner: _owner,
           moderator: _moderator,
         });
-      await outsideManager.grantRole(
-        await outsideManager.SIGNER_ROLE(),
-        _agentSigner.address
-      );
-      const outsideTokenId = await proposeAndMint(
-        _agentSigner,
-        outsideCollection,
-        _moderator,
-        { to: _agentWallet.address, name: AGENT_NAME }
-      );
+      const outsideTokenId = await proposeAndMint(outsideCollection, _moderator, {
+        to: _agentWallet.address,
+        name: AGENT_NAME,
+      });
 
       await expect(
         _ensRegistry
@@ -224,6 +218,30 @@ describe("WhenInitializingAgentTexts", function () {
       )
         .to.be.revertedWithCustomError(_ensRegistry, "UnknownCollection")
         .withArgs(await outsideCollection.getAddress());
+    });
+  });
+
+  describe("Given a spoofing collection reports a registered name from an unregistered address", function () {
+    it("Should revert with UnknownCollection without trusting the spoofed name/owner", async function () {
+      // Spoofs the registered name() + owner; the manager address check blocks it.
+      const Spoof = await ethers.getContractFactory("TestERC721");
+      const spoof = await Spoof.deploy(
+        COLLECTION_NAME,
+        AGENT_NAME,
+        _agentWallet.address
+      );
+      const maliciousAddress = await spoof.getAddress();
+
+      await expect(
+        _ensRegistry
+          .connect(_agentWallet)
+          .initAgentTexts(maliciousAddress, _tokenId, runtimeRecords())
+      )
+        .to.be.revertedWithCustomError(_ensRegistry, "UnknownCollection")
+        .withArgs(maliciousAddress);
+
+      // The real agent's node must remain unprovisioned and unbound.
+      expect(await _ensRegistry.provisioned(_node)).to.equal(false);
     });
   });
 

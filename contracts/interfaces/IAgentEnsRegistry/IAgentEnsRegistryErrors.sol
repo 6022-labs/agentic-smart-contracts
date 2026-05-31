@@ -8,9 +8,6 @@ interface IAgentEnsRegistryErrors {
     /// @dev Caller is neither the agent NFT owner nor a registered agent wallet.
     error NotAgentOwnerOrWallet(address collection, uint256 tokenId, address caller);
 
-    /// @dev Agent name resolved from the collection is not a valid ENS label.
-    error InvalidLabel(string label);
-
     /// @dev `initAgentTexts` was called for an agent that is already provisioned.
     error AlreadyProvisioned(address collection, uint256 tokenId);
 
