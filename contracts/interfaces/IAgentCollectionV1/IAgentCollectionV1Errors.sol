@@ -24,6 +24,10 @@ interface IAgentCollectionV1Errors {
     /// @param parameter The name of the parameter that was the zero address.
     error ZeroAddress(string parameter);
 
+    /// @dev Error when the wallet to remove is not registered to the agent.
+    /// @param wallet The wallet that was not found.
+    error WalletNotFound(address wallet);
+
     /// @dev Error when the cloneOf is invalid.
     /// @param cloneOf The cloneOf that is not valid.
     error InvalidCloneOf(uint256 cloneOf);

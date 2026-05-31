@@ -357,6 +357,44 @@ contract AgentCollectionV1 is
         );
     }
 
+    /// @dev Add a wallet to an agent (agent controller only).
+    function addAgentWallet(
+        uint256 tokenId,
+        address wallet
+    ) external onlyAgentController(tokenId) {
+        if (wallet == address(0)) {
+            revert ZeroAddress("wallet");
+        }
+        uint256 tokenIdForWallet = _walletToTokenId[wallet];
+        if (tokenIdForWallet != 0) {
+            revert UsedWallet(wallet, tokenIdForWallet);
+        }
+
+        _agentInformationOf[tokenId].wallets.push(wallet);
+        _walletToTokenId[wallet] = tokenId;
+
+        emit AgentWalletAdded(tokenId, wallet);
+    }
+
+    /// @dev Remove a wallet from an agent (agent controller only).
+    function removeAgentWallet(
+        uint256 tokenId,
+        address wallet
+    ) external onlyAgentController(tokenId) {
+        address[] storage wallets = _agentInformationOf[tokenId].wallets;
+        uint256 length = wallets.length;
+        for (uint256 i = 0; i < length; i++) {
+            if (wallets[i] == wallet) {
+                wallets[i] = wallets[length - 1];
+                wallets.pop();
+                delete _walletToTokenId[wallet];
+                emit AgentWalletRemoved(tokenId, wallet);
+                return;
+            }
+        }
+        revert WalletNotFound(wallet);
+    }
+
     /// @dev Propose to add or update an image for a token. (used if moderators setup)
     /// @param tokenId The token affected by the proposal.
     /// @param image The key/value pair representing the image.

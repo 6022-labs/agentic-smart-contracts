@@ -22,6 +22,22 @@ interface IAgentCollectionV1Events {
         string newValue
     );
 
+    /// @dev Emitted when a wallet is added to an agent.
+    /// @param tokenId The ID of the agent token.
+    /// @param wallet The wallet added.
+    event AgentWalletAdded(
+        uint256 indexed tokenId,
+        address wallet
+    );
+
+    /// @dev Emitted when a wallet is removed from an agent.
+    /// @param tokenId The ID of the agent token.
+    /// @param wallet The wallet removed.
+    event AgentWalletRemoved(
+        uint256 indexed tokenId,
+        address wallet
+    );
+
     /// @dev Emitted when an agent image is added or updated.
     /// @param tokenId The ID of the token whose image was added or updated.
     /// @param key The key of the image.

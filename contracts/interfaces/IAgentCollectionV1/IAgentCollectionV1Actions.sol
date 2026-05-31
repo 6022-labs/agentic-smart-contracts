@@ -23,6 +23,18 @@ interface IAgentCollectionV1Actions {
         string memory value
     ) external;
 
+    /// @dev Add a wallet to an agent. Only the agent controller (owner or an
+    /// existing agent wallet) may call.
+    /// @param tokenId The agent token.
+    /// @param wallet The wallet to add.
+    function addAgentWallet(uint256 tokenId, address wallet) external;
+
+    /// @dev Remove a wallet from an agent. Only the agent controller (owner or
+    /// an existing agent wallet) may call.
+    /// @param tokenId The agent token.
+    /// @param wallet The wallet to remove.
+    function removeAgentWallet(uint256 tokenId, address wallet) external;
+
     /// @dev Propose minting of a new agent token. (used if moderators setup)
     /// @param to The future owner of the token.
     /// @param role The agent role.
