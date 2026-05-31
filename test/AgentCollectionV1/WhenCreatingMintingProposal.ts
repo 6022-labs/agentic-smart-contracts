@@ -108,6 +108,19 @@ describe("WhenCreatingMintingProposal", function () {
       });
     });
 
+    describe("Given the recipient is the zero address", function () {
+      it("Should revert with 'ZeroAddress' error", async function () {
+        await expect(
+          createMintProposal({
+            to: ethers.ZeroAddress,
+            wallets: [generateRandomAddress()],
+          })
+        )
+          .to.be.revertedWithCustomError(_collection, "ZeroAddress")
+          .withArgs("to");
+      });
+    });
+
     describe("Given a name already taken", function () {
       it("Should revert with 'UsedName' error", async function () {
         const wallets = [generateRandomAddress()];

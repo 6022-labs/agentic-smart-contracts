@@ -159,6 +159,26 @@ describe("WhenMinting", function () {
       }
     });
 
+    describe("When recipient is the zero address", function () {
+      it("Should revert with 'ZeroAddress' error", async function () {
+        await expect(
+          mint({ to: ethers.ZeroAddress, wallets: [generateRandomAddress()] })
+        )
+          .to.be.revertedWithCustomError(_collection, "ZeroAddress")
+          .withArgs("to");
+      });
+    });
+
+    describe("When a wallet is the zero address", function () {
+      it("Should revert with 'ZeroAddress' error naming the index", async function () {
+        await expect(
+          mint({ to: _otherAccount.address, wallets: [ethers.ZeroAddress] })
+        )
+          .to.be.revertedWithCustomError(_collection, "ZeroAddress")
+          .withArgs("wallets[0]");
+      });
+    });
+
     describe("Given name is already taken", function () {
       it("Should revert with 'UsedName'", async function () {
         const wallets = [generateRandomAddress()];

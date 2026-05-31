@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -480,7 +481,7 @@ contract AgentCollectionV1 is
         KeyValue[] memory attributes,
         NullableUint256 memory cloneOf
     ) external onlyWhenModeratorsExist {
-        _validateMintInputs(name, wallets, images, cloneOf);
+        _validateMintInputs(to, name, wallets, images, cloneOf);
 
         _mintProposals.push(MintProposal({
             id: _nextProposalId,
@@ -519,7 +520,7 @@ contract AgentCollectionV1 is
         KeyValue[] memory attributes,
         NullableUint256 memory cloneOf
     ) external onlyWhenNoModeratorsOrSenderIsModerator {
-        _validateMintInputs(name, wallets, images, cloneOf);
+        _validateMintInputs(to, name, wallets, images, cloneOf);
         _mintAgent(to, _msgSender(), role, name, wallets, images, attributes, cloneOf);
     }
 
@@ -548,11 +549,15 @@ contract AgentCollectionV1 is
 
     /// @dev Internal function to validate minting parameters.
     function _validateMintInputs(
+        address to,
         string memory name,
         address[] memory wallets,
         KeyValue[] memory images,
         NullableUint256 memory cloneOf
     ) internal view {
+        if (to == address(0)) {
+            revert ZeroAddress("to");
+        }
         if (!ENSUtils.isValidENSName(name)) {
             revert InvalidName(name);
         }
@@ -666,7 +671,7 @@ contract AgentCollectionV1 is
         }
         for (uint256 i = 0; i < wallets.length; i++) {
             if (wallets[i] == address(0)) {
-                revert InvalidWallet();
+                revert ZeroAddress(string.concat("wallets[", Strings.toString(i), "]"));
             }
             uint256 tokenIdForWallet = _walletToTokenId[wallets[i]];
             if (tokenIdForWallet != 0) {

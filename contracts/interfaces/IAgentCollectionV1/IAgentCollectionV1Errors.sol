@@ -12,9 +12,6 @@ interface IAgentCollectionV1Errors {
     /// @param tokenId The token ID associated with the wallet.
     error UsedWallet(address wallet, uint256 tokenId);
 
-    /// @dev Error when the wallet address is invalid (e.g., zero address).
-    error InvalidWallet();
-
     /// @dev Error when the name is invalid.
     /// @param name The name that is not valid.
     error InvalidName(string name);
