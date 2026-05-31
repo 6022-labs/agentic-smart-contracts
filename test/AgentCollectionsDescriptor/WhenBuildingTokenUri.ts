@@ -9,7 +9,6 @@ import {
 } from "../common";
 import {
   AgentCollectionV1,
-  AgentCollectionsManager,
   AgentCollectionsDescriptor,
 } from "../../typechain-types";
 
@@ -18,7 +17,6 @@ describe("WhenBuildingTokenUri", function () {
 
   let _collection: AgentCollectionV1;
   let _collectionDescriptor: AgentCollectionsDescriptor;
-  let _collectionsManager: AgentCollectionsManager;
 
   let _owner: HardhatEthersSigner;
 
@@ -27,7 +25,7 @@ describe("WhenBuildingTokenUri", function () {
 
     const [owner] = await ethers.getSigners();
 
-    const { collection, collectionsDescriptor, collectionsManager } =
+    const { collection, collectionsDescriptor } =
       await deployCollectionWithCreator({
         ipfsGateway,
         owner,
@@ -37,18 +35,17 @@ describe("WhenBuildingTokenUri", function () {
     return {
       owner,
       collection,
-      collectionsManager,
       collectionsDescriptor,
     };
   }
 
   beforeEach(async function () {
-    const { owner, collection, collectionsManager, collectionsDescriptor } =
-      await loadFixture(deployAgentCollectionDescription);
+    const { owner, collection, collectionsDescriptor } = await loadFixture(
+      deployAgentCollectionDescription,
+    );
 
     _owner = owner;
     _collection = collection;
-    _collectionsManager = collectionsManager;
     _collectionDescriptor = collectionsDescriptor;
   });
 
@@ -62,7 +59,7 @@ describe("WhenBuildingTokenUri", function () {
   describe("Given token id does not exist", function () {
     it("Should revert", async function () {
       await expect(
-        _collectionDescriptor.buildTokenURI(await _collection.getAddress(), 0)
+        _collectionDescriptor.buildTokenURI(await _collection.getAddress(), 0),
       ).to.be.reverted;
     });
   });
@@ -92,7 +89,7 @@ describe("WhenBuildingTokenUri", function () {
     it("Should return token URI as base 64 encoded JSON", async function () {
       const tokenURI = await _collectionDescriptor.buildTokenURI(
         await _collection.getAddress(),
-        _tokenId
+        _tokenId,
       );
 
       const parsedTokenURI = decodeTokenURI(tokenURI);
@@ -105,7 +102,7 @@ describe("WhenBuildingTokenUri", function () {
     it("Should contain 'name' field in token URI", async function () {
       const tokenURI = await _collectionDescriptor.buildTokenURI(
         await _collection.getAddress(),
-        _tokenId
+        _tokenId,
       );
 
       const parsedTokenURI = decodeTokenURI(tokenURI);
@@ -115,7 +112,7 @@ describe("WhenBuildingTokenUri", function () {
     it("Should contain 'description' field in token URI", async function () {
       const tokenURI = await _collectionDescriptor.buildTokenURI(
         await _collection.getAddress(),
-        _tokenId
+        _tokenId,
       );
 
       const parsedTokenURI = decodeTokenURI(tokenURI);
@@ -127,13 +124,56 @@ describe("WhenBuildingTokenUri", function () {
     it("Should contain 'image' field in token URI", async function () {
       const tokenURI = await _collectionDescriptor.buildTokenURI(
         await _collection.getAddress(),
-        _tokenId
+        _tokenId,
       );
 
       const parsedTokenURI = decodeTokenURI(tokenURI);
 
       expect(parsedTokenURI.image).to.contain(ipfsGateway);
       expect(parsedTokenURI.image).to.contain(_images[0].value);
+    });
+  });
+
+  describe("Given values contain JSON metacharacters", function () {
+    it("Should escape quotes and backslashes in the description", async function () {
+      const malicious = 'pwned","image":"x\\y"';
+      await _collection.connect(_owner).updateDescription(malicious);
+
+      const tokenId = await _collection.nextTokenId();
+      await proposeAndMint(_collection, _owner, {
+        to: _owner.address,
+        name: "agent",
+      });
+
+      const parsedTokenURI = decodeTokenURI(
+        await _collectionDescriptor.buildTokenURI(
+          await _collection.getAddress(),
+          tokenId,
+        ),
+      );
+
+      expect(parsedTokenURI.description).to.equal(malicious);
+      expect(parsedTokenURI.name).to.equal("agent");
+    });
+
+    it("Should escape quotes and backslashes in the image value", async function () {
+      const maliciousValue = 'cid","name":"pwned';
+      const tokenId = await _collection.nextTokenId();
+      await proposeAndMint(_collection, _owner, {
+        to: _owner.address,
+        name: "agent",
+        images: [{ key: "default", value: maliciousValue }],
+      });
+
+      const parsedTokenURI = decodeTokenURI(
+        await _collectionDescriptor.buildTokenURI(
+          await _collection.getAddress(),
+          tokenId,
+        ),
+      );
+
+      expect(parsedTokenURI.image).to.equal(ipfsGateway + maliciousValue);
+      expect(parsedTokenURI.name).to.equal("agent");
     });
   });
 });

@@ -45,13 +45,12 @@ contract AgentCollectionsDescriptor is
     ) external view returns (string memory) {
         IAgentCollectionStates collectionStates = IAgentCollectionStates(collection);
 
-        string memory description = collectionStates.description();
-        description = _escapeQuotes(description);
+        string memory description = _escapeJSON(collectionStates.description());
 
-        string memory agentName = collectionStates.nameOf(tokenId);
+        string memory agentName = _escapeJSON(collectionStates.nameOf(tokenId));
 
         string memory defaultImage = _getDefaultImage(collectionStates, tokenId);
-        string memory defaultImageUrl = _generateImageUrl(defaultImage);
+        string memory defaultImageUrl = _escapeJSON(_generateImageUrl(defaultImage));
 
         return
             string(
@@ -74,31 +73,35 @@ contract AgentCollectionsDescriptor is
             );
     }
 
-    function _escapeQuotes(
+    /// @dev Escape a string for safe inclusion inside a JSON string literal by
+    ///      prefixing every backslash and double-quote with a backslash. Applied
+    ///      to all dynamic values (name, description, image URL) so an
+    ///      attacker- or moderator-controlled value cannot break out of the
+    ///      metadata JSON.
+    function _escapeJSON(
         string memory value
     ) internal pure returns (string memory) {
         bytes memory valueBytes = bytes(value);
-        uint256 quotesCount = 0;
+        uint256 extraCount = 0;
         for (uint256 i = 0; i < valueBytes.length; i++) {
-            if (valueBytes[i] == '"') {
-                quotesCount++;
+            if (valueBytes[i] == '"' || valueBytes[i] == "\\") {
+                extraCount++;
             }
         }
-        if (quotesCount > 0) {
-            bytes memory escapedBytes = new bytes(
-                valueBytes.length + (quotesCount)
-            );
-            uint256 index;
-            for (uint256 i = 0; i < valueBytes.length; i++) {
-                if (valueBytes[i] == '"') {
-                    escapedBytes[index++] = "\\";
-                }
-                escapedBytes[index++] = valueBytes[i];
-            }
-            return string(escapedBytes);
+        if (extraCount == 0) {
+            return value;
         }
 
-        return value;
+        bytes memory escapedBytes = new bytes(valueBytes.length + extraCount);
+        uint256 index;
+        for (uint256 i = 0; i < valueBytes.length; i++) {
+            bytes1 char = valueBytes[i];
+            if (char == '"' || char == "\\") {
+                escapedBytes[index++] = "\\";
+            }
+            escapedBytes[index++] = char;
+        }
+        return string(escapedBytes);
     }
 
     /// @dev Retrieve the default image from the image list.
