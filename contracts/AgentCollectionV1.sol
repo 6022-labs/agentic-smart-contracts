@@ -117,6 +117,15 @@ contract AgentCollectionV1 is
         if (!ENSUtils.isValidENSName(name)) {
             revert InvalidCollectionName(name);
         }
+        if (admin == address(0)) {
+            revert ZeroAddress("admin");
+        }
+        if (moderator == address(0)) {
+            revert ZeroAddress("moderator");
+        }
+        if (initialCollectionsDescriptor == address(0)) {
+            revert ZeroAddress("initialCollectionsDescriptor");
+        }
 
         collectionsDescriptor = initialCollectionsDescriptor;
 
