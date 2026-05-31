@@ -124,4 +124,33 @@ describe("WhenRefusingAddOrUpdateAgentImageProposals", function () {
       .to.emit(_collection, "AgentImageProposalRemoved")
       .withArgs(tokenId, "profile", 2n);
   });
+
+  it("Should allow re-proposing the same key after a refusal", async function () {
+    const tokenId = await proposeAndMint(_collection, _moderator, {
+      to: await _owner.getAddress(),
+    });
+
+    await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+      key: "profile",
+      value: "cid1",
+    });
+    const { id: proposalId } =
+      await _collection.addOrUpdateAgentImageProposal(0);
+
+    await _collection
+      .connect(_moderator)
+      .refuseAddOrUpdateAgentImageProposal(proposalId);
+
+    // The (tokenId, key) dedup entry must be cleared on refusal so the key can
+    // be proposed again (otherwise the stale entry points at a popped slot).
+    await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+      key: "profile",
+      value: "cid2",
+    });
+
+    expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(1n);
+    const proposal = await _collection.addOrUpdateAgentImageProposal(0);
+    expect(proposal.image.key).to.equal("profile");
+    expect(proposal.image.value).to.equal("cid2");
+  });
 });

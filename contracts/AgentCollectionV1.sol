@@ -57,6 +57,7 @@ contract AgentCollectionV1 is
 
     AddOrUpdateAgentImageProposal[] private _addOrUpdateAgentImageProposals;
     mapping(uint256 => uint256) private _addOrUpdateAgentImageProposalIndexById;
+    mapping(uint256 => mapping(bytes32 => uint256)) private _imageProposalIdByTokenAndKey;
 
     string public description;
     uint256 public moderatorCount;
@@ -363,36 +364,31 @@ contract AgentCollectionV1 is
         uint256 tokenId,
         KeyValue memory image
     ) external onlyWhenModeratorsExist onlyAgentControllerOrModerator(tokenId) {
-        bool isProposalAlreadyExistForThisAgentAndKey = false;
+        bytes32 keyHash = keccak256(bytes(image.key));
+        uint256 existingProposalId = _imageProposalIdByTokenAndKey[tokenId][keyHash];
 
-        for (uint256 i = 0; i < _addOrUpdateAgentImageProposals.length; i++) {
-            if (
-                _addOrUpdateAgentImageProposals[i].tokenId == tokenId &&
-                keccak256(abi.encodePacked(_addOrUpdateAgentImageProposals[i].image.key)) == keccak256(abi.encodePacked(image.key))
-            ) {
-                _addOrUpdateAgentImageProposals[i].image = image;
-                isProposalAlreadyExistForThisAgentAndKey = true;
-                break;
-            }
+        if (existingProposalId != 0) {
+            uint256 existingIndex = _addOrUpdateAgentImageProposalIndexById[existingProposalId];
+            _addOrUpdateAgentImageProposals[existingIndex].image = image;
+            return;
         }
 
-        if (!isProposalAlreadyExistForThisAgentAndKey) {
-            _addOrUpdateAgentImageProposals.push(AddOrUpdateAgentImageProposal({
-                id: _nextProposalId,
-                tokenId: tokenId,
-                image: image
-            }));
+        _addOrUpdateAgentImageProposals.push(AddOrUpdateAgentImageProposal({
+            id: _nextProposalId,
+            tokenId: tokenId,
+            image: image
+        }));
 
-            _addOrUpdateAgentImageProposalIndexById[_nextProposalId] = _addOrUpdateAgentImageProposals.length - 1;
+        _addOrUpdateAgentImageProposalIndexById[_nextProposalId] = _addOrUpdateAgentImageProposals.length - 1;
+        _imageProposalIdByTokenAndKey[tokenId][keyHash] = _nextProposalId;
 
-            emit AgentImageProposalCreated(
-                tokenId,
-                image.key,
-                _nextProposalId
-            );
+        emit AgentImageProposalCreated(
+            tokenId,
+            image.key,
+            _nextProposalId
+        );
 
-            _nextProposalId++;
-        }
+        _nextProposalId++;
     }
 
     /// @dev Add or update an image for a token. (allowed when no moderators are
@@ -623,6 +619,7 @@ contract AgentCollectionV1 is
         }
         _addOrUpdateAgentImageProposals.pop();
         delete _addOrUpdateAgentImageProposalIndexById[proposalId];
+        delete _imageProposalIdByTokenAndKey[proposal.tokenId][keccak256(bytes(proposal.image.key))];
 
         emit AgentImageProposalRemoved(
             proposal.tokenId,
