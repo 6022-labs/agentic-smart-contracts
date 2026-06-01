@@ -11,7 +11,6 @@ export const COLLECTION_NAME = "agents";
 export const AGENT_NAME = "test-agent";
 
 export const URL_KEY = "url";
-export const AGENT_KIND_KEY = "agent.kind";
 
 // Computes the agent's ENS node as <AGENT_NAME>.<COLLECTION_NAME>.<chainId>.6022.eth,
 // matching `AgentEnsRegistry._resolveAgentNode`.
@@ -31,15 +30,9 @@ export async function agentNode(): Promise<string> {
   );
 }
 
-// A valid initAgentTexts batch — carries both mandatory keys.
-export function runtimeRecords(
-  url = "https://agent.example/",
-  kind = "agent-node"
-) {
-  return [
-    { key: URL_KEY, value: url },
-    { key: AGENT_KIND_KEY, value: kind },
-  ];
+// A valid initAgentTexts batch — carries the mandatory url key.
+export function runtimeRecords(url = "https://agent.example/") {
+  return [{ key: URL_KEY, value: url }];
 }
 
 export async function deploySimpleAgentEnsRegistry() {

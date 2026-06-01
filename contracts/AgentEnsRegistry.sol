@@ -19,12 +19,10 @@ import {KeyValue} from "./types/KeyValue.sol";
 ///      are derived from the agent's collection on read, so they cannot drift.
 contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
     string private constant URL_KEY = "url";
-    string private constant AGENT_KIND_KEY = "agent.kind";
     string private constant AVATAR_KEY = "avatar";
     string private constant DEFAULT_IMAGE_KEY = "default";
 
     bytes32 private constant URL_HASH = keccak256(bytes(URL_KEY));
-    bytes32 private constant AGENT_KIND_HASH = keccak256(bytes(AGENT_KIND_KEY));
     bytes32 private constant AVATAR_HASH = keccak256(bytes(AVATAR_KEY));
     bytes32 private constant DEFAULT_IMAGE_HASH = keccak256(bytes(DEFAULT_IMAGE_KEY));
 
@@ -135,25 +133,17 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
     }
 
     function _requireMandatoryKeys(KeyValue[] calldata records) internal pure {
-        bool hasUrl;
-        bool hasAgentKind;
-
         for (uint256 i = 0; i < records.length; i++) {
             if (bytes(records[i].value).length == 0) continue;
-            bytes32 keyHash = keccak256(bytes(records[i].key));
-            if (keyHash == URL_HASH) hasUrl = true;
-            else if (keyHash == AGENT_KIND_HASH) hasAgentKind = true;
+            if (keccak256(bytes(records[i].key)) == URL_HASH) return;
         }
 
-        if (!hasUrl) revert MissingRequiredKey(URL_KEY);
-        if (!hasAgentKind) revert MissingRequiredKey(AGENT_KIND_KEY);
+        revert MissingRequiredKey(URL_KEY);
     }
 
     function _requireMandatoryKey(string memory key, string memory value) internal pure {
         if (bytes(value).length > 0) return;
-        bytes32 keyHash = keccak256(bytes(key));
-        if (keyHash == URL_HASH) revert MissingRequiredKey(URL_KEY);
-        if (keyHash == AGENT_KIND_HASH) revert MissingRequiredKey(AGENT_KIND_KEY);
+        if (keccak256(bytes(key)) == URL_HASH) revert MissingRequiredKey(URL_KEY);
     }
 
     function _checkReservedKey(string memory key) internal pure {

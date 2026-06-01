@@ -8,7 +8,6 @@ import {
   agentNode,
   runtimeRecords,
   URL_KEY,
-  AGENT_KIND_KEY,
   AGENT_NAME,
   COLLECTION_NAME,
 } from "./common";
@@ -62,9 +61,6 @@ describe("WhenInitializingAgentTexts", function () {
           expect(await _ensRegistry.text(_node, URL_KEY)).to.equal(
             "https://agent.example/"
           );
-          expect(await _ensRegistry.text(_node, AGENT_KIND_KEY)).to.equal(
-            "agent-node"
-          );
         });
 
         it("Should populate agentRef so derived records can resolve", async function () {
@@ -91,13 +87,6 @@ describe("WhenInitializingAgentTexts", function () {
               _tokenId,
               URL_KEY,
               "https://agent.example/"
-            )
-            .and.to.emit(_ensRegistry, "AgentTextUpdated")
-            .withArgs(
-              _collectionAddress,
-              _tokenId,
-              AGENT_KIND_KEY,
-              "agent-node"
             );
         });
       });
@@ -141,25 +130,11 @@ describe("WhenInitializingAgentTexts", function () {
         _ensRegistry
           .connect(_agentWallet)
           .initAgentTexts(_collectionAddress, _tokenId, [
-            { key: AGENT_KIND_KEY, value: "agent-node" },
+            { key: "description", value: "An autonomous agent" },
           ])
       )
         .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
         .withArgs(URL_KEY);
-    });
-  });
-
-  describe("Given the batch is missing agent.kind", function () {
-    it("Should revert with MissingRequiredKey", async function () {
-      await expect(
-        _ensRegistry
-          .connect(_agentWallet)
-          .initAgentTexts(_collectionAddress, _tokenId, [
-            { key: URL_KEY, value: "https://agent.example/" },
-          ])
-      )
-        .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
-        .withArgs(AGENT_KIND_KEY);
     });
   });
 
@@ -170,26 +145,10 @@ describe("WhenInitializingAgentTexts", function () {
           .connect(_agentWallet)
           .initAgentTexts(_collectionAddress, _tokenId, [
             { key: URL_KEY, value: "" },
-            { key: AGENT_KIND_KEY, value: "agent-node" },
           ])
       )
         .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
         .withArgs(URL_KEY);
-    });
-  });
-
-  describe("Given agent.kind is present but has an empty value", function () {
-    it("Should revert with MissingRequiredKey", async function () {
-      await expect(
-        _ensRegistry
-          .connect(_agentWallet)
-          .initAgentTexts(_collectionAddress, _tokenId, [
-            { key: URL_KEY, value: "https://agent.example/" },
-            { key: AGENT_KIND_KEY, value: "" },
-          ])
-      )
-        .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
-        .withArgs(AGENT_KIND_KEY);
     });
   });
 

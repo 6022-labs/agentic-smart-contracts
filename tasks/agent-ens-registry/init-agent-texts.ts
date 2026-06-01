@@ -10,7 +10,7 @@ export default task("init-agent-texts")
   .addParam("tokenId", "The agent's token id")
   .addParam(
     "records",
-    "Comma-separated key=value entries; must include agent.runtime-url + agent.runtime-kind. Keys/values may not contain ',' or '='. Example: agent.runtime-url=https://x/,agent.runtime-kind=agent-node"
+    "Comma-separated key=value entries; must include url. Keys/values may not contain ',' or '='. Example: url=https://x/"
   )
   .setDescription(
     "Provision an agent's ENS subnode and seed its records in one call"

@@ -6,9 +6,9 @@ import {KeyValue} from "../../types/KeyValue.sol";
 interface IAgentEnsRegistryAgentActions {
     /// @dev Provision an agent's ENS subnode and seed its text records in one
     ///      call. Must be called before `setAgentText`. The `records` batch must
-    ///      include both `url` and `agent.kind` with
-    ///      non-empty values; the reserved `avatar` key is rejected because it
-    ///      is derived on read from the agent's `default` image. Reverts if the
+    ///      include `url` with a non-empty value; the reserved `avatar` key is
+    ///      rejected because it is derived on read from the agent's `default`
+    ///      image. Reverts if the
     ///      agent is already provisioned. Caller must own the agent NFT or be
     ///      one of the agent's registered wallets, and `collection` must be
     ///      registered with the configured manager.

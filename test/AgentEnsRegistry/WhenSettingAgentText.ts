@@ -8,7 +8,6 @@ import {
   agentNode,
   runtimeRecords,
   URL_KEY,
-  AGENT_KIND_KEY,
   AGENT_NAME,
 } from "./common";
 
@@ -132,16 +131,6 @@ describe("WhenSettingAgentText", function () {
           )
             .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
             .withArgs(URL_KEY);
-        });
-
-        it("Should revert when clearing agent.kind", async function () {
-          await expect(
-            _ensRegistry
-              .connect(getSigner())
-              .setAgentText(_collectionAddress, _tokenId, AGENT_KIND_KEY, "")
-          )
-            .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
-            .withArgs(AGENT_KIND_KEY);
         });
 
         it("Should revert with ReservedKey when writing the avatar key", async function () {
