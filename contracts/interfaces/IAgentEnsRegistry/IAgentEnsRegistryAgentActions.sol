@@ -4,14 +4,12 @@ pragma solidity ^0.8.28;
 import {KeyValue} from "../../types/KeyValue.sol";
 
 interface IAgentEnsRegistryAgentActions {
-    /// @dev Provision an agent's ENS subnode and seed its text records in one
-    ///      call. Must be called before `setAgentText`. The `records` batch must
-    ///      include `url` with a non-empty value; the reserved `avatar` key is
-    ///      rejected because it is derived on read from the agent's `default`
-    ///      image. Reverts if the
-    ///      agent is already provisioned. Caller must own the agent NFT or be
-    ///      one of the agent's registered wallets, and `collection` must be
-    ///      registered with the configured manager.
+    /// @dev Provision an agent's ENS subnode and seed its text records. Must run
+    ///      before `setAgentText` and reverts if already provisioned. `records`
+    ///      must include a non-empty `url`; the reserved `avatar` key is rejected
+    ///      (derived on read from the collection's `default` image). Caller must
+    ///      control the agent (NFT owner or registered wallet) and `collection`
+    ///      must be manager-registered.
     /// @param collection The agent collection contract address.
     /// @param tokenId The agent token identifier.
     /// @param records The initial text records (key/value pairs).
@@ -21,12 +19,9 @@ interface IAgentEnsRegistryAgentActions {
         KeyValue[] calldata records
     ) external;
 
-    /// @dev Update a single text record on an already-initialized agent subnode.
-    ///      Reverts with `NotProvisioned` if `initAgentTexts` has not been called
-    ///      for the agent. Caller must own the agent NFT or be one of the agent's
-    ///      registered wallets, `collection` must be registered with the
-    ///      configured manager, and `key` must not be the reserved `avatar` key
-    ///      (which is derived from the agent's `default` image on read).
+    /// @dev Update one text record on a provisioned subnode (reverts
+    ///      `NotProvisioned` otherwise). Same caller/collection rules as
+    ///      `initAgentTexts`; `key` may not be the reserved `avatar`.
     /// @param collection The agent collection contract address.
     /// @param tokenId The agent token identifier.
     /// @param key The text record key (e.g. "url").

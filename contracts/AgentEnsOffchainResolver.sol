@@ -10,18 +10,16 @@ import {IAgentEnsOffchainResolver} from "./interfaces/IAgentEnsOffchainResolver/
 import {SignatureVerifier} from "./libraries/SignatureVerifier.sol";
 
 /// @title Agent off-chain ENS resolver
-/// @dev ERC-3668 / ENSIP-10 resolver. `resolve` always reverts with
-///      `OffchainLookup`, pointing CCIP-Read clients at the off-chain gateway.
-///      The gateway reads agent records from `AgentEnsRegistry` on the
-///      Polygon-side chain and returns a signed response; `resolveWithProof`
-///      authenticates that response against a trusted signer set. This contract
-///      is meant to live on an ENS-bearing chain (Ethereum L1 / Sepolia).
+/// @dev ERC-3668 / ENSIP-10 resolver, deployed on an ENS-bearing chain
+///      (Ethereum L1 / Sepolia). `resolve` always reverts with `OffchainLookup`
+///      to send CCIP-Read clients to the gateway, which reads records from
+///      `AgentEnsRegistry` and returns a signed response; `resolveWithProof`
+///      checks that signature against the trusted signer set.
 contract AgentEnsOffchainResolver is AccessControl, IAgentEnsOffchainResolver {
     string[] private _urls;
     mapping(address => bool) public signers;
 
-    /// @dev Deploy with the initial gateway URL list and one trusted signer.
-    ///      Deployer becomes DEFAULT_ADMIN.
+    /// @dev Deployer becomes DEFAULT_ADMIN.
     constructor(string[] memory urls_, address signer) {
         _urls = urls_;
         signers[signer] = true;

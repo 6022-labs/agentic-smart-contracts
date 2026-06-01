@@ -13,10 +13,10 @@ import {AgentRef} from "./types/AgentRef.sol";
 import {KeyValue} from "./types/KeyValue.sol";
 
 /// @title Agent ENS registry
-/// @dev Source of truth for agent text records on this chain, read via the
-///      ENS resolver shape (`text(node, key)`, `addr(node)`) by an off-chain
-///      gateway / custom L1 resolver. `text(node, "avatar")` and `addr(node)`
-///      are derived from the agent's collection on read, so they cannot drift.
+/// @dev Source of truth for agent text records on this chain, read by an
+///      off-chain CCIP-Read gateway via the ENS resolver shape (`text`, `addr`).
+///      `avatar` and `addr` are derived from the agent's collection on read, so
+///      they cannot drift.
 contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
     string private constant URL_KEY = "url";
     string private constant AVATAR_KEY = "avatar";

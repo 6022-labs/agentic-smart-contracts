@@ -10,7 +10,7 @@ interface IAgentEnsRegistryEvents {
         string value
     );
 
-    /// @dev Emitted when an agent subnode is first provisioned under the parent node.
+    /// @dev Emitted when an agent subnode is first provisioned and bound to its NFT.
     event SubnodeProvisioned(
         address indexed collection,
         uint256 indexed tokenId,

@@ -11,22 +11,16 @@ interface IAgentEnsRegistryStates {
     /// @dev Whether a given agent subnode has been provisioned through this registry.
     function provisioned(bytes32 node) external view returns (bool);
 
-    /// @dev Reverse lookup from an agent subnode to the NFT it stands for.
-    ///      Populated when the subnode is first provisioned; returns the zero
-    ///      tuple for unprovisioned nodes.
+    /// @dev Reverse lookup from an agent subnode to its NFT; zero tuple for
+    ///      unprovisioned nodes.
     function agentRef(bytes32 node) external view returns (address collection, uint256 tokenId);
 
-    /// @dev Read a text record. Matches the ENS resolver `text` shape so an
-    ///      off-chain gateway / custom L1 resolver can read this registry
-    ///      directly. Returns the empty string for unset keys or unprovisioned
-    ///      nodes. The `avatar` key is derived on read from the agent's
-    ///      `default` image stored on its collection — it is not stored
-    ///      directly and cannot be overridden via `setAgentText`.
+    /// @dev ENS `text` shape, so a gateway can read this registry directly.
+    ///      Empty string for unset keys. `avatar` is derived on read from the
+    ///      collection's `default` image and cannot be set via `setAgentText`.
     function text(bytes32 node, string calldata key) external view returns (string memory);
 
-    /// @dev Read the agent's canonical Ethereum address. Matches the ENS
-    ///      resolver `addr` shape. Derived on read from the agent's first
-    ///      registered wallet (`walletOfByIndex(tokenId, 0)`); returns
-    ///      `address(0)` for unprovisioned nodes or agents with no wallets.
+    /// @dev ENS `addr` shape. Derived on read from the agent's first registered
+    ///      wallet; `address(0)` for unprovisioned nodes or agents with no wallet.
     function addr(bytes32 node) external view returns (address);
 }

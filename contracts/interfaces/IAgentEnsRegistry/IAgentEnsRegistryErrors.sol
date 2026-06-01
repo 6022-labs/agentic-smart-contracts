@@ -14,11 +14,11 @@ interface IAgentEnsRegistryErrors {
     /// @dev `setAgentText` was called before the agent was initialized with `initAgentTexts`.
     error NotProvisioned(address collection, uint256 tokenId);
 
-    /// @dev `initAgentTexts` did not include a required key with a non-empty value.
+    /// @dev A mandatory key (`url`) would be left unset — either missing from
+    ///      `initAgentTexts` or cleared to empty via `setAgentText`.
     error MissingRequiredKey(string key);
 
-    /// @dev Caller attempted to write a key that is resolved by the registry
-    ///      itself (e.g. `avatar`, which derives from the agent's `default`
-    ///      image) and therefore cannot be stored.
+    /// @dev Key is resolved by the registry itself (e.g. `avatar`) and cannot
+    ///      be stored.
     error ReservedKey(string key);
 }
