@@ -6,6 +6,7 @@ import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/I
 
 import {IAgentCollectionStates} from "./interfaces/IAgentCollection/IAgentCollectionStates.sol";
 import {IAgentCollectionsManager} from "./interfaces/IAgentCollectionsManager/IAgentCollectionsManager.sol";
+import {AgentCollectionInfo} from "./types/AgentCollectionInfo.sol";
 
 /// @title Agentic AI collections manager
 /// @dev Manages collections and authorizes creators.
@@ -50,6 +51,59 @@ contract AgentCollectionsManager is
         }
 
         return moderatorCollections;
+    }
+
+    /// @dev Paginated collection listing for the operator UI. Pass offset 0 to
+    /// start; `next` is the id to resume from, or 0 when exhausted.
+    function listCollections(
+        uint256 offset,
+        uint256 limit
+    ) external view returns (AgentCollectionInfo[] memory infos, uint256 next) {
+        uint256 start = offset < 1 ? 1 : offset;
+        uint256 end = start + limit;
+        if (end > nextCollectionId) {
+            end = nextCollectionId;
+        }
+        uint256 count = end > start ? end - start : 0;
+
+        infos = new AgentCollectionInfo[](count);
+        for (uint256 i = 0; i < count; i++) {
+            address collection = collections[start + i];
+            IAgentCollectionStates state = IAgentCollectionStates(collection);
+            infos[i] = AgentCollectionInfo({
+                collectionAddress: collection,
+                name: IERC721Metadata(collection).name(),
+                description: state.description(),
+                moderatorCount: state.moderatorCount(),
+                nextTokenId: state.nextTokenId()
+            });
+        }
+        next = end < nextCollectionId ? end : 0;
+    }
+
+    /// @dev Paginated search for the agent a wallet controls. Returns the first
+    /// match in [offset, offset+limit) or zeros; `next` resumes the scan.
+    function findAgentByWallet(
+        address wallet,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (address collection, uint256 tokenId, string memory name, uint256 next) {
+        uint256 start = offset < 1 ? 1 : offset;
+        uint256 end = start + limit;
+        if (end > nextCollectionId) {
+            end = nextCollectionId;
+        }
+
+        for (uint256 id = start; id < end; id++) {
+            address current = collections[id];
+            uint256 foundTokenId = IAgentCollectionStates(current).walletToTokenId(wallet);
+            if (foundTokenId != 0) {
+                return (current, foundTokenId, IAgentCollectionStates(current).nameOf(foundTokenId), 0);
+            }
+        }
+
+        next = end < nextCollectionId ? end : 0;
+        return (address(0), 0, "", next);
     }
 
     /// @dev Add a new collection.

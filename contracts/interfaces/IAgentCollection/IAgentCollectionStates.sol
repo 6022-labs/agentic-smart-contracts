@@ -7,6 +7,15 @@ interface IAgentCollectionStates {
     /// @dev Get the fact that a account is a moderator or not.
     function isModerator(address account) external view returns (bool);
 
+    /// @dev Number of moderators configured on the collection.
+    function moderatorCount() external view returns (uint256);
+
+    /// @dev Get the tokenId controlled by a wallet, or 0 if none.
+    function walletToTokenId(address wallet) external view returns (uint256);
+
+    /// @dev The next tokenId to be minted (count of minted agents + 1).
+    function nextTokenId() external view returns (uint256);
+
     /// @dev Description of the collection.
     function description() external view returns (string memory);
 
