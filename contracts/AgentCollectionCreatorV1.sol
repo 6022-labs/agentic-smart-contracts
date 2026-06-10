@@ -65,9 +65,13 @@ contract AgentCollectionCreatorV1 is
     }
 
     /// @dev Check if the account can create a collection based on its token balances.
+    ///      With no authorized token configured, creation is open to everyone.
     /// @param account Address of the account to check.
     /// @return True if the account can create a collection, false otherwise.
     function canCreateCollection(address account) public view returns (bool) {
+        if (authorizedTokensForCreation.length == 0) {
+            return true;
+        }
         return hasMinimumTokenBalanceForCreation(account) ||
             hasMinimumCollateralLockedForCreation(account);
     }
@@ -78,7 +82,8 @@ contract AgentCollectionCreatorV1 is
     function hasMinimumTokenBalanceForCreation(
         address account
     ) public view returns (bool) {
-        for (uint256 i = 0; i < authorizedTokensForCreation.length; i++) {
+        uint256 tokenCount = authorizedTokensForCreation.length;
+        for (uint256 i = 0; i < tokenCount; i++) {
             address token = authorizedTokensForCreation[i];
             uint256 requiredBalance = minimumTokenBalanceForCreation[token];
 
@@ -99,24 +104,29 @@ contract AgentCollectionCreatorV1 is
         address[] memory vaults = ICollateralController6022(collateralController6022)
             .getVaultsByOwner(account);
 
-        uint256[] memory collateralLockedByToken = new uint256[](authorizedTokensForCreation.length);
+        address[] memory tokens = authorizedTokensForCreation;
+        uint256[] memory collateralLockedByToken = new uint256[](tokens.length);
 
         for (uint256 i = 0; i < vaults.length; i++) {
             ICollateralVault6022 vault = ICollateralVault6022(vaults[i]);
-            if (vault.isDeposited() && !vault.isWithdrawn()) {
-                address wantedTokenAddress = vault.wantedTokenAddress();
-                for (uint256 j = 0; j < authorizedTokensForCreation.length; j++) {
-                    if (authorizedTokensForCreation[j] == wantedTokenAddress) {
-                        collateralLockedByToken[j] += vault.wantedAmount();
-                        break;
-                    }
-                }
+            if (!vault.isDeposited() || vault.isWithdrawn()) {
+                continue;
             }
-        }
 
-        for (uint256 i = 0; i < authorizedTokensForCreation.length; i++) {
-            if (collateralLockedByToken[i] >= minimumTokenBalanceForCreation[authorizedTokensForCreation[i]]) {
-                return true;
+            address wantedTokenAddress = vault.wantedTokenAddress();
+            if (!isAuthorizedTokenForCreation[wantedTokenAddress]) {
+                continue;
+            }
+
+            for (uint256 j = 0; j < tokens.length; j++) {
+                if (tokens[j] == wantedTokenAddress) {
+                    uint256 locked = collateralLockedByToken[j] + vault.wantedAmount();
+                    if (locked >= minimumTokenBalanceForCreation[wantedTokenAddress]) {
+                        return true;
+                    }
+                    collateralLockedByToken[j] = locked;
+                    break;
+                }
             }
         }
 
