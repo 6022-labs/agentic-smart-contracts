@@ -134,6 +134,28 @@ describe("WhenBuildingTokenUri", function () {
     });
   });
 
+  describe("Given the default image already carries a URI scheme", function () {
+    it("Should keep the image untouched instead of prepending the gateway", async function () {
+      const uriImage =
+        "ipfs://bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i";
+      const tokenId = await _collection.nextTokenId();
+      await proposeAndMint(_collection, _owner, {
+        to: _owner.address,
+        name: "agent",
+        images: [{ key: "default", value: uriImage }],
+      });
+
+      const parsedTokenURI = decodeTokenURI(
+        await _collectionDescriptor.buildTokenURI(
+          await _collection.getAddress(),
+          tokenId,
+        ),
+      );
+
+      expect(parsedTokenURI.image).to.equal(uriImage);
+    });
+  });
+
   describe("Given values contain JSON metacharacters", function () {
     it("Should escape quotes and backslashes in the description", async function () {
       const malicious = 'pwned","image":"x\\y"';

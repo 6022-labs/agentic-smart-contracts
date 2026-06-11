@@ -12,9 +12,9 @@ export const AGENT_NAME = "test-agent";
 
 export const URL_KEY = "url";
 
-// Computes the agent's ENS node as <AGENT_NAME>.<COLLECTION_NAME>.<chainId>.6022.eth,
+// Computes the agent's ENS node as <agentName>.<COLLECTION_NAME>.<chainId>.6022.eth,
 // matching `AgentEnsRegistry._resolveAgentNode`.
-export async function agentNode(): Promise<string> {
+export async function agentNode(agentName = AGENT_NAME): Promise<string> {
   const chainId = (await ethers.provider.getNetwork()).chainId.toString();
   const chainHash = ethers.keccak256(ethers.toUtf8Bytes(chainId));
   const chainNode = ethers.keccak256(
@@ -24,7 +24,7 @@ export async function agentNode(): Promise<string> {
   const collectionNode = ethers.keccak256(
     ethers.solidityPacked(["bytes32", "bytes32"], [chainNode, collectionHash])
   );
-  const labelHash = ethers.keccak256(ethers.toUtf8Bytes(AGENT_NAME));
+  const labelHash = ethers.keccak256(ethers.toUtf8Bytes(agentName));
   return ethers.keccak256(
     ethers.solidityPacked(["bytes32", "bytes32"], [collectionNode, labelHash])
   );

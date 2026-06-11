@@ -9,6 +9,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IAgentCollectionStates} from "./interfaces/IAgentCollection/IAgentCollectionStates.sol";
 import {IAgentCollectionsManagerStates} from "./interfaces/IAgentCollectionsManager/IAgentCollectionsManagerStates.sol";
 import {IAgentEnsRegistry} from "./interfaces/IAgentEnsRegistry/IAgentEnsRegistry.sol";
+import {UriUtils} from "./libraries/UriUtils.sol";
 import {AgentRef} from "./types/AgentRef.sol";
 import {KeyValue} from "./types/KeyValue.sol";
 
@@ -158,7 +159,10 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
         uint256 imagesCount = agentCollection.imagesCountOf(ref.tokenId);
         for (uint256 i = 0; i < imagesCount; i++) {
             KeyValue memory image = agentCollection.imageOfByIndex(ref.tokenId, i);
-            if (keccak256(bytes(image.key)) == DEFAULT_IMAGE_HASH) return image.value;
+            if (keccak256(bytes(image.key)) == DEFAULT_IMAGE_HASH) {
+                // ENSIP-12 avatars must be URIs; bare CIDs gain an ipfs:// prefix.
+                return UriUtils.prefixUnlessUri("ipfs://", image.value);
+            }
         }
         return "";
     }

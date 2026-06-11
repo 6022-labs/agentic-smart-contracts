@@ -6,6 +6,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
+import {UriUtils} from "./libraries/UriUtils.sol";
 import {KeyValue} from "./types/KeyValue.sol";
 import {IAgentCollectionStates} from "./interfaces/IAgentCollection/IAgentCollectionStates.sol";
 import {IAgentCollectionsDescriptor} from "./interfaces/IAgentCollectionsDescriptor/IAgentCollectionsDescriptor.sol";
@@ -130,9 +131,10 @@ contract AgentCollectionsDescriptor is
     }
 
     /// @dev Concatenate the gateway with the image hash to form an URL.
+    ///      Values that already carry a scheme pass through untouched.
     function _generateImageUrl(
         string memory image
     ) internal view returns (string memory) {
-        return string(abi.encodePacked(_ipfsGateway, image));
+        return UriUtils.prefixUnlessUri(_ipfsGateway, image);
     }
 }

@@ -17,7 +17,8 @@ interface IAgentEnsRegistryStates {
 
     /// @dev ENS `text` shape, so a gateway can read this registry directly.
     ///      Empty string for unset keys. `avatar` is derived on read from the
-    ///      collection's `default` image and cannot be set via `setAgentText`.
+    ///      collection's `default` image as an ENSIP-12 URI (bare CIDs gain an
+    ///      `ipfs://` prefix) and cannot be set via `setAgentText`.
     function text(bytes32 node, string calldata key) external view returns (string memory);
 
     /// @dev ENS `addr` shape. Derived on read from the agent's first registered
