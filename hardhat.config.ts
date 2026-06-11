@@ -25,6 +25,7 @@ import "./tasks/agent-collection-creator/update-minimum-token-balance-for-creati
 
 // AgentCollectionsDescriptor tasks
 import "./tasks/agent-collections-descriptor/build-token-uri";
+import "./tasks/agent-collections-descriptor/update-collections-descriptor";
 
 // AgentEnsRegistry tasks
 import "./tasks/agent-ens-registry/get-ens-registry-manager";
