@@ -20,8 +20,11 @@ export default task("get-ens-registry-manager")
       console.log(`Manager: ${manager}`);
     } catch (error) {
       console.error("Error reading manager:", error);
-      const iface = new hre.ethers.Interface(AgentEnsRegistry__factory.abi);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      console.error(error, iface.parseError((error as any).data));
+      const revertData = (error as any).data;
+      if (typeof revertData === "string" && revertData.length > 2) {
+        const iface = new hre.ethers.Interface(AgentEnsRegistry__factory.abi);
+        console.error(iface.parseError(revertData));
+      }
     }
   });

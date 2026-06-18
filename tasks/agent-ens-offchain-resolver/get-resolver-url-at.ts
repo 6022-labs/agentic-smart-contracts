@@ -21,10 +21,13 @@ export default task("get-resolver-url-at")
       console.log(`urls[${index}] = ${url}`);
     } catch (error) {
       console.error("Error reading url:", error);
-      const iface = new hre.ethers.Interface(
-        AgentEnsOffchainResolver__factory.abi
-      );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      console.error(error, iface.parseError((error as any).data));
+      const revertData = (error as any).data;
+      if (typeof revertData === "string" && revertData.length > 2) {
+        const iface = new hre.ethers.Interface(
+          AgentEnsOffchainResolver__factory.abi
+        );
+        console.error(iface.parseError(revertData));
+      }
     }
   });

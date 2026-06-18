@@ -12,34 +12,37 @@ export default task("get-agent-wallets")
     const { collectionAddress, collectionTokenId } = taskArgs;
 
     console.log(
-      `Getting agent wallets for collection at address: ${collectionAddress}, token ID: ${collectionTokenId}`
+      `Getting agent wallets for collection at address: ${collectionAddress}, token ID: ${collectionTokenId}`,
     );
 
     const agentCollection = (await hre.ethers.getContractAt(
       "AgentCollectionV1",
-      collectionAddress
+      collectionAddress,
     )) as unknown as AgentCollectionV1;
 
     try {
       const walletsCount = await agentCollection.walletsCountOf(
-        collectionTokenId
+        collectionTokenId,
       );
       console.log(
-        `Wallets count of token ID ${collectionTokenId}: ${walletsCount}`
+        `Wallets count of token ID ${collectionTokenId}: ${walletsCount}`,
       );
 
       for (let i = 0; i < walletsCount; i++) {
         const wallet = await agentCollection.walletOfByIndex(
           collectionTokenId,
-          i
+          i,
         );
         console.log(`Wallet ${i}: ${wallet}`);
       }
     } catch (error) {
       console.error("Error getting agent wallets:", error);
 
-      const iface = new hre.ethers.Interface(AgentCollectionV1__factory.abi);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      console.error(error, iface.parseError((error as any).data));
+      const revertData = (error as any).data;
+      if (typeof revertData === "string" && revertData.length > 2) {
+        const iface = new hre.ethers.Interface(AgentCollectionV1__factory.abi);
+        console.error(iface.parseError(revertData));
+      }
     }
   });

@@ -25,10 +25,13 @@ export default task("get-resolver-supports-interface")
       console.log(`supportsInterface(${interfaceId}) = ${supported}`);
     } catch (error) {
       console.error("Error reading supportsInterface:", error);
-      const iface = new hre.ethers.Interface(
-        AgentEnsOffchainResolver__factory.abi
-      );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      console.error(error, iface.parseError((error as any).data));
+      const revertData = (error as any).data;
+      if (typeof revertData === "string" && revertData.length > 2) {
+        const iface = new hre.ethers.Interface(
+          AgentEnsOffchainResolver__factory.abi
+        );
+        console.error(iface.parseError(revertData));
+      }
     }
   });

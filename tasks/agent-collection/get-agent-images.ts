@@ -12,34 +12,37 @@ export default task("get-agent-images")
     const { collectionAddress, collectionTokenId } = taskArgs;
 
     console.log(
-      `Getting agent images for collection at address: ${collectionAddress}, token ID: ${collectionTokenId}`
+      `Getting agent images for collection at address: ${collectionAddress}, token ID: ${collectionTokenId}`,
     );
 
     const agentCollection = (await hre.ethers.getContractAt(
       "AgentCollectionV1",
-      collectionAddress
+      collectionAddress,
     )) as unknown as AgentCollectionV1;
 
     try {
       const imagesCount = await agentCollection.imagesCountOf(
-        collectionTokenId
+        collectionTokenId,
       );
       console.log(
-        `Image count of token ID ${collectionTokenId}: ${imagesCount}`
+        `Image count of token ID ${collectionTokenId}: ${imagesCount}`,
       );
 
       for (let i = 0; i < imagesCount; i++) {
         const image = await agentCollection.imageOfByIndex(
           collectionTokenId,
-          i
+          i,
         );
         console.log(`Image ${i}: ${image}`);
       }
     } catch (error) {
       console.error("Error getting agent images:", error);
 
-      const iface = new hre.ethers.Interface(AgentCollectionV1__factory.abi);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      console.error(error, iface.parseError((error as any).data));
+      const revertData = (error as any).data;
+      if (typeof revertData === "string" && revertData.length > 2) {
+        const iface = new hre.ethers.Interface(AgentCollectionV1__factory.abi);
+        console.error(iface.parseError(revertData));
+      }
     }
   });

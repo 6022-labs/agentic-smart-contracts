@@ -12,18 +12,18 @@ export default task("get-agent-description")
     const { collectionAddress, collectionTokenId } = taskArgs;
 
     console.log(
-      `Getting agent description for collection at address: ${collectionAddress}, token ID: ${collectionTokenId}`
+      `Getting agent description for collection at address: ${collectionAddress}, token ID: ${collectionTokenId}`,
     );
 
     const agentCollection = (await hre.ethers.getContractAt(
       "AgentCollectionV1",
-      collectionAddress
+      collectionAddress,
     )) as unknown as AgentCollectionV1;
 
     try {
       const description = await agentCollection.tokenURI(collectionTokenId);
       console.log(
-        `Token URI for token ID ${collectionTokenId}: ${description}`
+        `Token URI for token ID ${collectionTokenId}: ${description}`,
       );
 
       // Decode base64 and parse JSON
@@ -32,13 +32,16 @@ export default task("get-agent-description")
       const metadata = JSON.parse(jsonStr);
 
       console.log(
-        `Agent description for token ID ${collectionTokenId}: ${metadata.description}`
+        `Agent description for token ID ${collectionTokenId}: ${metadata.description}`,
       );
     } catch (error) {
       console.error("Error getting agent description:", error);
 
-      const iface = new hre.ethers.Interface(AgentCollectionV1__factory.abi);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      console.error(error, iface.parseError((error as any).data));
+      const revertData = (error as any).data;
+      if (typeof revertData === "string" && revertData.length > 2) {
+        const iface = new hre.ethers.Interface(AgentCollectionV1__factory.abi);
+        console.error(iface.parseError(revertData));
+      }
     }
   });

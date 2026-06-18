@@ -11,24 +11,27 @@ export default task("get-collection-description")
     const { collectionAddress } = taskArgs;
 
     console.log(
-      `Getting collection description for address: ${collectionAddress}`
+      `Getting collection description for address: ${collectionAddress}`,
     );
 
     const agentCollection = (await hre.ethers.getContractAt(
       "AgentCollectionV1",
-      collectionAddress
+      collectionAddress,
     )) as unknown as AgentCollectionV1;
 
     try {
       const description = await agentCollection.description();
       console.log(
-        `Description of collection at ${collectionAddress}: ${description}`
+        `Description of collection at ${collectionAddress}: ${description}`,
       );
     } catch (error) {
       console.error("Error getting collection description:", error);
 
-      const iface = new hre.ethers.Interface(AgentCollectionV1__factory.abi);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      console.error(error, iface.parseError((error as any).data));
+      const revertData = (error as any).data;
+      if (typeof revertData === "string" && revertData.length > 2) {
+        const iface = new hre.ethers.Interface(AgentCollectionV1__factory.abi);
+        console.error(iface.parseError(revertData));
+      }
     }
   });
