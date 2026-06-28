@@ -23,9 +23,7 @@ import "./tasks/agent-collections-manager/add-signer-to-manager";
 import "./tasks/agent-collections-manager/remove-creator-from-manager";
 
 // AgentCollectionCreator tasks
-import "./tasks/agent-collection-creator/add-authorized-token-for-creation";
 import "./tasks/agent-collection-creator/create-collection";
-import "./tasks/agent-collection-creator/update-minimum-token-balance-for-creation";
 
 // AgentCollectionsDescriptor tasks
 import "./tasks/agent-collections-descriptor/build-token-uri";
@@ -81,9 +79,7 @@ const config: HardhatUserConfig = {
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
       url: "https://polygon-mainnet.g.alchemy.com/v2/" + alchemyKey,
-      agentic: {
-        collateralController: "0xf6643c07f03a7a8c98aac2ab3d08c03e47b5731c",
-      },
+      agentic: {},
       ensRegistry: {
         parentNode:
           "0x9ec94752dcac587079728bde5f535457f7aa0bbe0b088555bca6d40cfcc78197",
@@ -98,9 +94,7 @@ const config: HardhatUserConfig = {
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
       url: "https://polygon-amoy.g.alchemy.com/v2/" + alchemyKey,
-      agentic: {
-        collateralController: "0x33CCF04be6e83e6b94A0ebb6777bCa44A492CfB1",
-      },
+      agentic: {},
       ensRegistry: {
         parentNode:
           "0x9ec94752dcac587079728bde5f535457f7aa0bbe0b088555bca6d40cfcc78197",
@@ -115,9 +109,7 @@ const config: HardhatUserConfig = {
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
       url: "https://rpc.testnet.citrea.xyz",
-      agentic: {
-        collateralController: "0x349f760fe5C407829e931B3d53D1e2a5f4C69848",
-      },
+      agentic: {},
     },
     ethereum: {
       gas: "auto",

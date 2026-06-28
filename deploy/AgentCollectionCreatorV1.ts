@@ -23,7 +23,6 @@ const deploy: DeployFunction = async (hre) => {
       manager.address,
       descriptor.address,
       implementation.address,
-      agentic.collateralController,
     ],
     log: true,
     skipIfAlreadyDeployed: true,

@@ -90,28 +90,15 @@ export async function deployCollectionWithCreator(params: {
   const Collection = await ethers.getContractFactory("AgentCollectionV1");
   const collectionImplementation = await Collection.deploy();
 
-  const TestErc20 = await ethers.getContractFactory("TestERC20");
-  const testErc20 = await TestErc20.deploy();
-
-  const CollateralController = await ethers.getContractFactory(
-    "TestCollateralController6022"
-  );
-  const collateralController = await CollateralController.deploy();
-
   const CollectionCreator = await ethers.getContractFactory(
     "AgentCollectionCreatorV1"
   );
   const collectionCreator = await CollectionCreator.deploy(
     await collectionsManager.getAddress(),
     await collectionsDescriptor.getAddress(),
-    await collectionImplementation.getAddress(),
-    await collateralController.getAddress()
+    await collectionImplementation.getAddress()
   );
 
-  await collectionCreator.addAuthorizedTokenForCreation(
-    await testErc20.getAddress(),
-    0n
-  );
   await collectionsManager.grantRole(
     await collectionsManager.CREATOR_ROLE(),
     await collectionCreator.getAddress()
@@ -134,7 +121,6 @@ export async function deployCollectionWithCreator(params: {
     collection,
     collectionCreator,
     collectionsManager,
-    collateralController,
     collectionsDescriptor,
   };
 }

@@ -1,7 +1,6 @@
 import "hardhat/types/config";
 
 export interface AgenticConfig {
-  collateralController: string;
   ipfsGateway?: string;
 }
 
