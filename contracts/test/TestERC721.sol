@@ -37,11 +37,7 @@ contract TestERC721 {
         return _spoofedAgentName;
     }
 
-    function walletsCountOf(uint256) external pure returns (uint256) {
+    function addressToTokenId(string memory, string memory) external pure returns (uint256) {
         return 0;
-    }
-
-    function walletOfByIndex(uint256, uint256) external pure returns (address) {
-        return address(0);
     }
 }

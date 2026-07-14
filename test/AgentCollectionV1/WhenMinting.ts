@@ -3,8 +3,16 @@ import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
-import { generateRandomAddress, deployCollectionWithCreator } from "../common";
+import {
+  AgentAddressStruct,
+  NullableUint256Struct,
+} from "../../typechain-types/contracts/AgentCollectionV1";
+import {
+  generateRandomAddress,
+  evmAddresses,
+  btcAddresses,
+  deployCollectionWithCreator,
+} from "../common";
 
 describe("WhenMinting", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -32,22 +40,22 @@ describe("WhenMinting", function () {
       to: string;
       role?: string;
       name?: string;
-      wallets: string[];
+      addresses: AgentAddressStruct[];
       images?: { key: string; value: string }[];
       attributes?: { key: string; value: string }[];
       cloneOf?: NullableUint256Struct;
     },
-    caller?: HardhatEthersSigner
+    caller?: HardhatEthersSigner,
   ) {
     const collection = caller ? _collection.connect(caller) : _collection;
     return collection.mint(
       args.to,
       args.role ?? DEFAULT_ROLE,
       args.name ?? DEFAULT_NAME,
-      args.wallets,
+      args.addresses,
       args.images ?? DEFAULT_IMAGES,
       args.attributes ?? DEFAULT_ATTRIBUTES,
-      args.cloneOf ?? DEFAULT_CLONE_OF
+      args.cloneOf ?? DEFAULT_CLONE_OF,
     );
   }
 
@@ -67,7 +75,7 @@ describe("WhenMinting", function () {
 
   beforeEach(async function () {
     const { collection, owner, otherAccount } = await loadFixture(
-      deployCollection
+      deployCollection,
     );
 
     _owner = owner;
@@ -86,9 +94,12 @@ describe("WhenMinting", function () {
       it("Should revert with 'NotModerator' error", async function () {
         await expect(
           mint(
-            { to: _otherAccount.address, wallets: [generateRandomAddress()] },
-            _otherAccount
-          )
+            {
+              to: _otherAccount.address,
+              addresses: evmAddresses(generateRandomAddress()),
+            },
+            _otherAccount,
+          ),
         ).to.be.revertedWithCustomError(_collection, "NotModerator");
       });
     });
@@ -98,20 +109,23 @@ describe("WhenMinting", function () {
         let nextTokenId = await _collection.nextTokenId();
         await mint({
           to: _otherAccount.address,
-          wallets: [generateRandomAddress()],
+          addresses: evmAddresses(generateRandomAddress()),
         });
 
-        const cloneOf: NullableUint256Struct = { isSet: true, value: nextTokenId };
+        const cloneOf: NullableUint256Struct = {
+          isSet: true,
+          value: nextTokenId,
+        };
         nextTokenId = await _collection.nextTokenId();
         await mint({
           to: _otherAccount.address,
           name: "cloned-agent",
-          wallets: [generateRandomAddress()],
+          addresses: evmAddresses(generateRandomAddress()),
           cloneOf,
         });
 
         expect(await _collection.ownerOf(nextTokenId)).to.equal(
-          _otherAccount.address
+          _otherAccount.address,
         );
       });
 
@@ -119,10 +133,10 @@ describe("WhenMinting", function () {
         const nextTokenId = await _collection.nextTokenId();
         await mint({
           to: _otherAccount.address,
-          wallets: [generateRandomAddress()],
+          addresses: evmAddresses(generateRandomAddress()),
         });
         expect(await _collection.ownerOf(nextTokenId)).to.equal(
-          _otherAccount.address
+          _otherAccount.address,
         );
       });
     });
@@ -133,7 +147,7 @@ describe("WhenMinting", function () {
       await revokeModerator();
     });
 
-    describe("When name is invalid ens", function () {
+    describe("Given an invalid ens name", function () {
       // Agent name must be a valid ENS label (see ENSUtils.isValidENSName).
       const invalidNames = [
         { label: "empty", value: "" },
@@ -150,8 +164,8 @@ describe("WhenMinting", function () {
             mint({
               to: _otherAccount.address,
               name: value,
-              wallets: [generateRandomAddress()],
-            })
+              addresses: evmAddresses(generateRandomAddress()),
+            }),
           )
             .to.be.revertedWithCustomError(_collection, "InvalidName")
             .withArgs(value);
@@ -159,54 +173,108 @@ describe("WhenMinting", function () {
       }
     });
 
-    describe("When recipient is the zero address", function () {
+    describe("Given the recipient is the zero address", function () {
       it("Should revert with 'ZeroAddress' error", async function () {
         await expect(
-          mint({ to: ethers.ZeroAddress, wallets: [generateRandomAddress()] })
+          mint({
+            to: ethers.ZeroAddress,
+            addresses: evmAddresses(generateRandomAddress()),
+          }),
         )
           .to.be.revertedWithCustomError(_collection, "ZeroAddress")
           .withArgs("to");
       });
     });
 
-    describe("When a wallet is the zero address", function () {
-      it("Should revert with 'ZeroAddress' error naming the index", async function () {
+    describe("Given an evm address value is the zero address", function () {
+      it("Should revert with 'InvalidEvmAddressValue' error", async function () {
         await expect(
-          mint({ to: _otherAccount.address, wallets: [ethers.ZeroAddress] })
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(ethers.ZeroAddress),
+          }),
         )
-          .to.be.revertedWithCustomError(_collection, "ZeroAddress")
-          .withArgs("wallets[0]");
+          .to.be.revertedWithCustomError(_collection, "InvalidEvmAddressValue")
+          .withArgs(ethers.ZeroAddress);
+      });
+    });
+
+    describe("Given an evm address value is malformed hex", function () {
+      it("Should revert with 'InvalidEvmAddressValue' error", async function () {
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses("not-an-address"),
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "InvalidEvmAddressValue")
+          .withArgs("not-an-address");
+      });
+    });
+
+    describe("Given no evm address", function () {
+      it("Should revert with 'MissingEvmAddress' error", async function () {
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: btcAddresses("bc1qexampleonly"),
+          }),
+        ).to.be.revertedWithCustomError(_collection, "MissingEvmAddress");
       });
     });
 
     describe("Given name is already taken", function () {
       it("Should revert with 'UsedName'", async function () {
-        const wallets = [generateRandomAddress()];
         const tokenId = await _collection.nextTokenId();
-        await mint({ to: _otherAccount.address, wallets });
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
 
         await expect(
           mint({
             to: _otherAccount.address,
-            wallets: [generateRandomAddress()],
-          })
+            addresses: evmAddresses(generateRandomAddress()),
+          }),
         )
           .to.be.revertedWithCustomError(_collection, "UsedName")
           .withArgs(DEFAULT_NAME, tokenId);
       });
     });
 
-    describe("Given wallet is already taken", function () {
-      it("Should revert with 'UsedWallet'", async function () {
-        const wallets = [generateRandomAddress()];
+    describe("Given an evm address is already taken", function () {
+      it("Should revert with 'UsedAgentAddress'", async function () {
+        const wallet = generateRandomAddress();
         const tokenId = await _collection.nextTokenId();
-        await mint({ to: _otherAccount.address, name: DEFAULT_NAME + "-1", wallets });
+        await mint({
+          to: _otherAccount.address,
+          name: DEFAULT_NAME + "-1",
+          addresses: evmAddresses(wallet),
+        });
 
         await expect(
-          mint({ to: _otherAccount.address, name: DEFAULT_NAME + "-2", wallets })
+          mint({
+            to: _otherAccount.address,
+            name: DEFAULT_NAME + "-2",
+            addresses: evmAddresses(wallet),
+          }),
         )
-          .to.be.revertedWithCustomError(_collection, "UsedWallet")
-          .withArgs(wallets[0], tokenId);
+          .to.be.revertedWithCustomError(_collection, "UsedAgentAddress")
+          .withArgs("evm", wallet.toLowerCase(), tokenId);
+      });
+    });
+
+    describe("Given the address list repeats an entry", function () {
+      it("Should revert with 'UsedAgentAddress' and tokenId 0", async function () {
+        const wallet = generateRandomAddress();
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(wallet, wallet),
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "UsedAgentAddress")
+          .withArgs("evm", wallet.toLowerCase(), 0n);
       });
     });
 
@@ -215,9 +283,9 @@ describe("WhenMinting", function () {
         await expect(
           mint({
             to: _otherAccount.address,
-            wallets: [generateRandomAddress()],
+            addresses: evmAddresses(generateRandomAddress()),
             cloneOf: { isSet: true, value: 0n },
-          })
+          }),
         )
           .to.be.revertedWithCustomError(_collection, "InvalidCloneOf")
           .withArgs(0);
@@ -229,9 +297,9 @@ describe("WhenMinting", function () {
         await expect(
           mint({
             to: _otherAccount.address,
-            wallets: [generateRandomAddress()],
+            addresses: evmAddresses(generateRandomAddress()),
             cloneOf: { isSet: true, value: 9999n },
-          })
+          }),
         )
           .to.be.revertedWithCustomError(_collection, "InvalidCloneOf")
           .withArgs(9999);
@@ -243,9 +311,9 @@ describe("WhenMinting", function () {
         await expect(
           mint({
             to: _otherAccount.address,
-            wallets: [generateRandomAddress()],
+            addresses: evmAddresses(generateRandomAddress()),
             images: [{ key: "profile", value: "cid1" }],
-          })
+          }),
         ).to.be.revertedWithCustomError(_collection, "MissingDefaultImage");
       });
     });
@@ -256,24 +324,30 @@ describe("WhenMinting", function () {
         await expect(_collection.ownerOf(nextTokenId)).to.be.reverted;
 
         await mint(
-          { to: _otherAccount.address, wallets: [generateRandomAddress()] },
-          _otherAccount
+          {
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+          },
+          _otherAccount,
         );
 
-        const cloneOf: NullableUint256Struct = { isSet: true, value: nextTokenId };
+        const cloneOf: NullableUint256Struct = {
+          isSet: true,
+          value: nextTokenId,
+        };
         nextTokenId = await _collection.nextTokenId();
         await mint(
           {
             to: _otherAccount.address,
             name: "cloned-agent",
-            wallets: [generateRandomAddress()],
+            addresses: evmAddresses(generateRandomAddress()),
             cloneOf,
           },
-          _otherAccount
+          _otherAccount,
         );
 
         expect(await _collection.ownerOf(nextTokenId)).to.equal(
-          _otherAccount.address
+          _otherAccount.address,
         );
       });
 
@@ -282,12 +356,15 @@ describe("WhenMinting", function () {
         await expect(_collection.ownerOf(nextTokenId)).to.be.reverted;
 
         await mint(
-          { to: _otherAccount.address, wallets: [generateRandomAddress()] },
-          _otherAccount
+          {
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+          },
+          _otherAccount,
         );
 
         expect(await _collection.ownerOf(nextTokenId)).to.equal(
-          _otherAccount.address
+          _otherAccount.address,
         );
       });
 
@@ -295,10 +372,10 @@ describe("WhenMinting", function () {
         const nextTokenId = await _collection.nextTokenId();
         await mint({
           to: _otherAccount.address,
-          wallets: [generateRandomAddress()],
+          addresses: evmAddresses(generateRandomAddress()),
         });
         expect(await _collection.ownerOf(nextTokenId)).to.equal(
-          _otherAccount.address
+          _otherAccount.address,
         );
       });
 
@@ -306,30 +383,53 @@ describe("WhenMinting", function () {
         const before = await _collection.nextTokenId();
         await mint({
           to: _otherAccount.address,
-          wallets: [generateRandomAddress()],
+          addresses: evmAddresses(generateRandomAddress()),
         });
         expect(await _collection.nextTokenId()).to.equal(before + BigInt(1));
       });
 
       it("Should assign agent addresses to the token", async function () {
-        const wallets = [generateRandomAddress()];
+        const wallet = generateRandomAddress();
         const nextTokenId = await _collection.nextTokenId();
-        await mint({ to: _otherAccount.address, wallets });
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(wallet),
+        });
 
-        const walletCount = await _collection.walletsCountOf(nextTokenId);
-        expect(walletCount).to.equal(wallets.length);
-        for (let i = 0; i < walletCount; i++) {
-          expect(wallets).to.include(
-            await _collection.walletOfByIndex(nextTokenId, i)
-          );
-        }
+        expect(await _collection.addressesCountOf(nextTokenId)).to.equal(1n);
+        expect(await _collection.addressToTokenId("evm", wallet)).to.equal(
+          nextTokenId,
+        );
+      });
+
+      it("Should store canonicalized addresses (evm lowercased, non-evm verbatim)", async function () {
+        const wallet = generateRandomAddress();
+        const btcValue = "bc1QVerbatimValue";
+        const nextTokenId = await _collection.nextTokenId();
+        await mint({
+          to: _otherAccount.address,
+          addresses: [...evmAddresses(wallet), ...btcAddresses(btcValue)],
+        });
+
+        expect(await _collection.addressesCountOf(nextTokenId)).to.equal(2n);
+
+        const information = await _collection.informationOf(nextTokenId);
+        expect(
+          information.addresses.map((entry) => [
+            entry.addressType,
+            entry.value,
+          ]),
+        ).to.deep.equal([
+          ["evm", wallet.toLowerCase()],
+          ["btc", btcValue],
+        ]);
       });
 
       it("Should assign name to the token", async function () {
         const nextTokenId = await _collection.nextTokenId();
         await mint({
           to: _otherAccount.address,
-          wallets: [generateRandomAddress()],
+          addresses: evmAddresses(generateRandomAddress()),
         });
         expect(await _collection.nameOf(nextTokenId)).to.equal(DEFAULT_NAME);
       });
@@ -338,7 +438,7 @@ describe("WhenMinting", function () {
         const nextTokenId = await _collection.nextTokenId();
         await mint({
           to: _otherAccount.address,
-          wallets: [generateRandomAddress()],
+          addresses: evmAddresses(generateRandomAddress()),
         });
 
         const imageCount = await _collection.imagesCountOf(nextTokenId);
@@ -353,11 +453,14 @@ describe("WhenMinting", function () {
       it("Should assign creator (the caller) to the token", async function () {
         const nextTokenId = await _collection.nextTokenId();
         await mint(
-          { to: _otherAccount.address, wallets: [generateRandomAddress()] },
-          _otherAccount
+          {
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+          },
+          _otherAccount,
         );
         expect(await _collection.creatorOf(nextTokenId)).to.equal(
-          _otherAccount.address
+          _otherAccount.address,
         );
       });
 
@@ -365,7 +468,7 @@ describe("WhenMinting", function () {
         const nextTokenId = await _collection.nextTokenId();
         await mint({
           to: _otherAccount.address,
-          wallets: [generateRandomAddress()],
+          addresses: evmAddresses(generateRandomAddress()),
         });
         expect(await _collection.roleOf(nextTokenId)).to.equal(DEFAULT_ROLE);
       });
@@ -374,19 +477,22 @@ describe("WhenMinting", function () {
         const nextTokenId = await _collection.nextTokenId();
         await mint({
           to: _otherAccount.address,
-          wallets: [generateRandomAddress()],
+          addresses: evmAddresses(generateRandomAddress()),
         });
         expect(await _collection.nameToTokenId(DEFAULT_NAME)).to.be.equal(
-          nextTokenId
+          nextTokenId,
         );
       });
 
-      it("Should assign token id to wallet", async function () {
-        const wallets = [generateRandomAddress()];
+      it("Should assign token id to evm address", async function () {
+        const wallet = generateRandomAddress();
         const nextTokenId = await _collection.nextTokenId();
-        await mint({ to: _otherAccount.address, wallets });
-        expect(await _collection.walletToTokenId(wallets[0])).to.be.equal(
-          nextTokenId
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(wallet),
+        });
+        expect(await _collection.addressToTokenId("evm", wallet)).to.be.equal(
+          nextTokenId,
         );
       });
 
@@ -395,8 +501,8 @@ describe("WhenMinting", function () {
         await expect(
           mint({
             to: _otherAccount.address,
-            wallets: [generateRandomAddress()],
-          })
+            addresses: evmAddresses(generateRandomAddress()),
+          }),
         )
           .to.emit(_collection, "Minted")
           .withArgs(_otherAccount.address, nextTokenId);

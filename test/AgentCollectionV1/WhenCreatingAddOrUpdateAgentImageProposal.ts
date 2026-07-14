@@ -1,7 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
-import { proposeAndMint, deployCollectionWithCreator } from "../common";
+import {
+  proposeAndMint,
+  evmAddresses,
+  deployCollectionWithCreator,
+} from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -29,7 +33,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
 
   beforeEach(async function () {
     const { collection, owner, moderator, otherAccount } = await loadFixture(
-      deployAgentCollection
+      deployAgentCollection,
     );
 
     _collection = collection;
@@ -51,7 +55,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
         _collection.createAddOrUpdateAgentImageProposal(1n, {
           key: "profile",
           value: "cid1",
-        })
+        }),
       ).to.be.revertedWithCustomError(_collection, "NoModerators");
     });
   });
@@ -62,7 +66,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
         _collection.createAddOrUpdateAgentImageProposal(1n, {
           key: "profile",
           value: "cid1",
-        })
+        }),
       )
         .to.be.revertedWithCustomError(_collection, "ERC721NonexistentToken")
         .withArgs(1n);
@@ -81,11 +85,11 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
           .createAddOrUpdateAgentImageProposal(tokenId, {
             key: "profile",
             value: "cid1",
-          })
+          }),
       )
         .to.be.revertedWithCustomError(
           _collection,
-          "OwnableUnauthorizedAccount"
+          "OwnableUnauthorizedAccount",
         )
         .withArgs(await _otherAccount.getAddress(), tokenId);
     });
@@ -99,7 +103,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
         });
 
         expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
-          0n
+          0n,
         );
 
         await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
@@ -108,7 +112,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
         });
 
         expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
-          1n
+          1n,
         );
 
         const proposal = await _collection.addOrUpdateAgentImageProposal(0);
@@ -126,7 +130,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
           _collection.createAddOrUpdateAgentImageProposal(tokenId, {
             key: "profile",
             value: "cid1",
-          })
+          }),
         )
           .to.emit(_collection, "AgentImageProposalCreated")
           .withArgs(tokenId, "profile", 2n);
@@ -145,7 +149,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
         });
 
         expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
-          1n
+          1n,
         );
 
         await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
@@ -154,7 +158,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
         });
 
         expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
-          1n
+          1n,
         );
 
         const proposal = await _collection.addOrUpdateAgentImageProposal(0);
@@ -169,7 +173,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
       // owner holds the NFT; _otherAccount is registered as an agent wallet.
       const tokenId = await proposeAndMint(_collection, _moderator, {
         to: await _owner.getAddress(),
-        wallets: [_otherAccount.address],
+        addresses: evmAddresses(_otherAccount.address),
       });
 
       await _collection
@@ -179,7 +183,9 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
           value: "cid1",
         });
 
-      expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(1n);
+      expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+        1n,
+      );
       const proposal = await _collection.addOrUpdateAgentImageProposal(0);
       expect(proposal.tokenId).to.equal(tokenId);
       expect(proposal.image.key).to.equal("profile");
@@ -194,7 +200,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
         });
 
         expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
-          0n
+          0n,
         );
 
         await _collection
@@ -205,7 +211,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
           });
 
         expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
-          1n
+          1n,
         );
 
         const proposal = await _collection.addOrUpdateAgentImageProposal(0);
@@ -225,7 +231,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
             .createAddOrUpdateAgentImageProposal(tokenId, {
               key: "profile",
               value: "cid1",
-            })
+            }),
         )
           .to.emit(_collection, "AgentImageProposalCreated")
           .withArgs(tokenId, "profile", 2n);
@@ -239,7 +245,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
         });
 
         expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
-          0n
+          0n,
         );
 
         await _collection
@@ -250,7 +256,7 @@ describe("WhenCreatingAddOrUpdateAgentImageProposal", function () {
           });
 
         expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
-          1n
+          1n,
         );
 
         const proposal = await _collection.addOrUpdateAgentImageProposal(0);

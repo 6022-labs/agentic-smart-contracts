@@ -10,10 +10,12 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 
 import {ENSUtils} from "./libraries/ENSUtils.sol";
 import {KeyValueLib} from "./libraries/KeyValueLib.sol";
+import {AgentAddressLib} from "./libraries/AgentAddressLib.sol";
 
 import {KeyValue} from "./types/KeyValue.sol";
 import {NullableUint256} from "./types/NullableUint256.sol";
 import {AgentInformation} from "./types/AgentInformation.sol";
+import {AgentAddress, EVM_TYPE} from "./types/AgentAddress.sol";
 import {IAgentCollectionV1} from "./interfaces/IAgentCollectionV1/IAgentCollectionV1.sol";
 import {IAgentCollectionsDescriptorActions} from "./interfaces/IAgentCollectionsDescriptor/IAgentCollectionsDescriptorActions.sol";
 
@@ -23,10 +25,10 @@ struct MintProposal {
     string role;
     address owner;
     address creator;
-    address[] wallets;
     KeyValue[] images;
     KeyValue[] attributes;
     NullableUint256 cloneOf;
+    AgentAddress[] addresses;
 }
 
 struct AddOrUpdateAgentImageProposal {
@@ -43,11 +45,13 @@ contract AgentCollectionV1 is
     IAgentCollectionV1
 {
     using KeyValueLib for KeyValue[];
+    using AgentAddressLib for AgentAddress;
+    using AgentAddressLib for AgentAddress[];
 
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
 
     mapping(string => uint256) private _nameToTokenId;
-    mapping(address => uint256) private _walletToTokenId;
+    mapping(string => mapping(string => uint256)) private _addressToTokenId;
     mapping(uint256 => AgentInformation) private _agentInformationOf;
 
     uint256 private _nextProposalId;
@@ -69,7 +73,7 @@ contract AgentCollectionV1 is
         _disableInitializers();
     }
 
-    /// @dev Reverts if the caller is neither the agent owner nor one of its wallets.
+    /// @dev Reverts if the caller is neither the agent owner nor one of its evm addresses.
     modifier onlyAgentController(uint256 tokenId) {
         if (!_isAgentController(tokenId, _msgSender())) {
             revert OwnableUnauthorizedAccount(_msgSender(), tokenId);
@@ -269,21 +273,21 @@ contract AgentCollectionV1 is
         return _agentInformationOf[tokenId].images[index];
     }
 
-    /// @dev Get the number of agent wallets of an agent.
+    /// @dev Get the number of typed addresses of an agent.
     /// @param tokenId The token identifier.
-    function walletsCountOf(uint256 tokenId) external view returns (uint256) {
+    function addressesCountOf(uint256 tokenId) external view returns (uint256) {
         _requireMinted(tokenId);
 
-        return _agentInformationOf[tokenId].wallets.length;
+        return _agentInformationOf[tokenId].addresses.length;
     }
 
-    /// @dev Get a specific agent wallet by its index.
+    /// @dev Get a specific typed address of an agent by its index.
     /// @param tokenId The token identifier.
-    /// @param index The index of the wallet.
-    function walletOfByIndex(uint256 tokenId, uint256 index) external view returns (address) {
+    /// @param index The index of the address.
+    function addressOfByIndex(uint256 tokenId, uint256 index) external view returns (AgentAddress memory) {
         _requireMinted(tokenId);
 
-        return _agentInformationOf[tokenId].wallets[index];
+        return _agentInformationOf[tokenId].addresses[index];
     }
 
     /// @dev Get the number of attributes of an agent.
@@ -309,10 +313,17 @@ contract AgentCollectionV1 is
         return _nameToTokenId[name];
     }
 
-    /// @dev Get the token ID associated to the agent wallet.
-    /// @param wallet The wallet address of the agent.
-    function walletToTokenId(address wallet) external view returns (uint256) {
-        return _walletToTokenId[wallet];
+    /// @dev Get the token ID associated to a typed address, or 0 if none.
+    /// @param addressType The type of the address ("evm", "btc", ...).
+    /// @param value The address value (evm values accepted in any casing).
+    function addressToTokenId(string memory addressType, string memory value) external view returns (uint256) {
+        if (Strings.equal(addressType, EVM_TYPE)) {
+            (bool success, address parsed) = Strings.tryParseAddress(value);
+            if (success) {
+                value = Strings.toHexString(parsed);
+            }
+        }
+        return _addressToTokenId[addressType][value];
     }
 
     /// @dev Number of pending mint proposals.
@@ -357,42 +368,60 @@ contract AgentCollectionV1 is
         );
     }
 
-    /// @dev Add a wallet to an agent (agent controller only).
-    function addAgentWallet(
+    /// @dev Add a typed address to an agent (agent controller only).
+    function addAgentAddress(
         uint256 tokenId,
-        address wallet
+        string memory addressType,
+        string memory value
     ) external onlyAgentController(tokenId) {
-        if (wallet == address(0)) {
-            revert ZeroAddress("wallet");
-        }
-        uint256 tokenIdForWallet = _walletToTokenId[wallet];
-        if (tokenIdForWallet != 0) {
-            revert UsedWallet(wallet, tokenIdForWallet);
+        (AgentAddress memory canonical, ) =
+            AgentAddress({
+                addressType: addressType,
+                value: value
+            }).validateAndCanonicalize();
+
+        uint256 tokenIdForAddress = _addressToTokenId[canonical.addressType][canonical.value];
+        if (tokenIdForAddress != 0) {
+            revert UsedAgentAddress(canonical.addressType, canonical.value, tokenIdForAddress);
         }
 
-        _agentInformationOf[tokenId].wallets.push(wallet);
-        _walletToTokenId[wallet] = tokenId;
+        _agentInformationOf[tokenId].addresses.push(canonical);
+        _addressToTokenId[canonical.addressType][canonical.value] = tokenId;
 
-        emit AgentWalletAdded(tokenId, wallet);
+        emit AgentAddressAdded(tokenId, canonical.addressType, canonical.value);
     }
 
-    /// @dev Remove a wallet from an agent (agent controller only).
-    function removeAgentWallet(
+    /// @dev Remove a typed address from an agent (agent controller only).
+    function removeAgentAddress(
         uint256 tokenId,
-        address wallet
+        string memory addressType,
+        string memory value
     ) external onlyAgentController(tokenId) {
-        address[] storage wallets = _agentInformationOf[tokenId].wallets;
-        uint256 length = wallets.length;
+        (AgentAddress memory canonical, ) =
+            AgentAddress({
+                addressType: addressType,
+                value: value
+            }).validateAndCanonicalize();
+
+        if (_addressToTokenId[canonical.addressType][canonical.value] != tokenId) {
+            revert AgentAddressNotFound(canonical.addressType, canonical.value);
+        }
+
+        AgentAddress[] storage addresses = _agentInformationOf[tokenId].addresses;
+        uint256 length = addresses.length;
         for (uint256 i = 0; i < length; i++) {
-            if (wallets[i] == wallet) {
-                wallets[i] = wallets[length - 1];
-                wallets.pop();
-                delete _walletToTokenId[wallet];
-                emit AgentWalletRemoved(tokenId, wallet);
-                return;
+            if (
+                Strings.equal(addresses[i].addressType, canonical.addressType) &&
+                Strings.equal(addresses[i].value, canonical.value)
+            ) {
+                addresses[i] = addresses[length - 1];
+                addresses.pop();
+                break;
             }
         }
-        revert WalletNotFound(wallet);
+        delete _addressToTokenId[canonical.addressType][canonical.value];
+
+        emit AgentAddressRemoved(tokenId, canonical.addressType, canonical.value);
     }
 
     /// @dev Propose to add or update an image for a token. (used if moderators setup)
@@ -502,7 +531,7 @@ contract AgentCollectionV1 is
     /// @param to The future owner of the token.
     /// @param role The agent role.
     /// @param name The Name of the agent.
-    /// @param wallets Wallet addresses controlled by the agent.
+    /// @param addresses Typed addresses controlled by the agent (at least one evm).
     /// @param images A set of images describing the agent.
     /// @param attributes A set of attributes describing the agent.
     /// @param cloneOf The ID of the agent to clone (if any).
@@ -510,12 +539,13 @@ contract AgentCollectionV1 is
         address to,
         string memory role,
         string memory name,
-        address[] memory wallets,
+        AgentAddress[] memory addresses,
         KeyValue[] memory images,
         KeyValue[] memory attributes,
         NullableUint256 memory cloneOf
     ) external onlyWhenModeratorsExist {
-        _validateMintInputs(to, name, wallets, images, cloneOf);
+        AgentAddress[] memory canonical = addresses.canonicalizeAndRequireEvm();
+        _validateMintInputs(to, name, canonical, images, cloneOf);
 
         _mintProposals.push(MintProposal({
             id: _nextProposalId,
@@ -524,7 +554,7 @@ contract AgentCollectionV1 is
             owner: to,
             images: images,
             cloneOf: cloneOf,
-            wallets: wallets,
+            addresses: canonical,
             creator: _msgSender(),
             attributes: attributes
         }));
@@ -541,7 +571,7 @@ contract AgentCollectionV1 is
     /// @param to The future owner of the token.
     /// @param role The agent role.
     /// @param name The Name of the agent.
-    /// @param wallets Wallet addresses controlled by the agent.
+    /// @param addresses Typed addresses controlled by the agent (at least one evm).
     /// @param images A set of images describing the agent.
     /// @param attributes A set of attributes describing the agent.
     /// @param cloneOf The ID of the agent to clone (if any).
@@ -549,13 +579,14 @@ contract AgentCollectionV1 is
         address to,
         string memory role,
         string memory name,
-        address[] memory wallets,
+        AgentAddress[] memory addresses,
         KeyValue[] memory images,
         KeyValue[] memory attributes,
         NullableUint256 memory cloneOf
     ) external onlyWhenNoModeratorsOrSenderIsModerator {
-        _validateMintInputs(to, name, wallets, images, cloneOf);
-        _mintAgent(to, _msgSender(), role, name, wallets, images, attributes, cloneOf);
+        AgentAddress[] memory canonical = addresses.canonicalizeAndRequireEvm();
+        _validateMintInputs(to, name, canonical, images, cloneOf);
+        _mintAgent(to, _msgSender(), role, name, canonical, images, attributes, cloneOf);
     }
 
     /// @dev Mint an agent from an approved proposal.
@@ -566,14 +597,14 @@ contract AgentCollectionV1 is
         uint256 proposalIndex = _mintProposalIndexById[proposalId];
         MintProposal memory proposalInfo = _mintProposals[proposalIndex];
 
-        _requireUniqueNameAndUniqueWallets(proposalInfo.name, proposalInfo.wallets);
+        _requireUniqueNameAndUniqueAddresses(proposalInfo.name, proposalInfo.addresses);
 
         _mintAgent(
             proposalInfo.owner,
             proposalInfo.creator,
             proposalInfo.role,
             proposalInfo.name,
-            proposalInfo.wallets,
+            proposalInfo.addresses,
             proposalInfo.images,
             proposalInfo.attributes,
             proposalInfo.cloneOf
@@ -581,11 +612,11 @@ contract AgentCollectionV1 is
         _popMintProposalAt(proposalId);
     }
 
-    /// @dev Internal function to validate minting parameters.
+    /// @dev Internal function to validate minting parameters (addresses must already be canonical).
     function _validateMintInputs(
         address to,
         string memory name,
-        address[] memory wallets,
+        AgentAddress[] memory addresses,
         KeyValue[] memory images,
         NullableUint256 memory cloneOf
     ) internal view {
@@ -596,7 +627,7 @@ contract AgentCollectionV1 is
             revert InvalidName(name);
         }
 
-        _requireUniqueNameAndUniqueWallets(name, wallets);
+        _requireUniqueNameAndUniqueAddresses(name, addresses);
 
         if (!images.containKey("default")) {
             revert MissingDefaultImage();
@@ -606,13 +637,13 @@ contract AgentCollectionV1 is
         }
     }
 
-    /// @dev Internal function to mint an agent NFT and store its information.
+    /// @dev Internal function to mint an agent NFT and store its information (addresses must already be canonical).
     function _mintAgent(
         address to,
         address creator,
         string memory role,
         string memory name,
-        address[] memory wallets,
+        AgentAddress[] memory addresses,
         KeyValue[] memory images,
         KeyValue[] memory attributes,
         NullableUint256 memory cloneOf
@@ -623,14 +654,14 @@ contract AgentCollectionV1 is
             name: name,
             role: role,
             images: images,
-            wallets: wallets,
+            addresses: addresses,
             creator: creator,
             cloneOf: cloneOf,
             attributes: attributes
         });
         _nameToTokenId[name] = tokenId;
-        for (uint256 i = 0; i < wallets.length; i++) {
-            _walletToTokenId[wallets[i]] = tokenId;
+        for (uint256 i = 0; i < addresses.length; i++) {
+            _addressToTokenId[addresses[i].addressType][addresses[i].value] = tokenId;
         }
         nextTokenId = tokenId + 1;
 
@@ -681,36 +712,33 @@ contract AgentCollectionV1 is
         emit MintProposalRemoved(proposal.owner, proposalId);
     }
 
-    /// @dev Returns true if `account` owns the agent NFT or is one of its registered wallets.
+    /// @dev Returns true if `account` owns the agent NFT or is one of its evm addresses.
     function _isAgentController(uint256 tokenId, address account) internal view returns (bool) {
-        if (ownerOf(tokenId) == account) {
-            return true;
-        }
-        address[] storage wallets = _agentInformationOf[tokenId].wallets;
-        for (uint256 i = 0; i < wallets.length; i++) {
-            if (wallets[i] == account) {
-                return true;
-            }
-        }
-        return false;
+        return ownerOf(tokenId) == account ||
+            _addressToTokenId[EVM_TYPE][Strings.toHexString(account)] == tokenId;
     }
 
-    /// @dev Reverts if name and wallets are already used and wallets are non-zero.
-    function _requireUniqueNameAndUniqueWallets(
+    /// @dev Reverts if the name or any canonical address is already used, or the list repeats an address.
+    function _requireUniqueNameAndUniqueAddresses(
         string memory name,
-        address[] memory wallets
+        AgentAddress[] memory addresses
     ) internal view {
         uint256 tokenIdForName = _nameToTokenId[name];
         if (tokenIdForName != 0) {
             revert UsedName(name, tokenIdForName);
         }
-        for (uint256 i = 0; i < wallets.length; i++) {
-            if (wallets[i] == address(0)) {
-                revert ZeroAddress(string.concat("wallets[", Strings.toString(i), "]"));
+        for (uint256 i = 0; i < addresses.length; i++) {
+            uint256 tokenIdForAddress = _addressToTokenId[addresses[i].addressType][addresses[i].value];
+            if (tokenIdForAddress != 0) {
+                revert UsedAgentAddress(addresses[i].addressType, addresses[i].value, tokenIdForAddress);
             }
-            uint256 tokenIdForWallet = _walletToTokenId[wallets[i]];
-            if (tokenIdForWallet != 0) {
-                revert UsedWallet(wallets[i], tokenIdForWallet);
+            for (uint256 j = 0; j < i; j++) {
+                if (
+                    Strings.equal(addresses[j].addressType, addresses[i].addressType) &&
+                    Strings.equal(addresses[j].value, addresses[i].value)
+                ) {
+                    revert UsedAgentAddress(addresses[i].addressType, addresses[i].value, 0);
+                }
             }
         }
     }

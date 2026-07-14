@@ -3,7 +3,11 @@ import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { proposeAndMint, deployCollectionWithCreator } from "../common";
+import {
+  proposeAndMint,
+  evmAddresses,
+  deployCollectionWithCreator,
+} from "../common";
 
 describe("WhenRemovingImage", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -167,7 +171,7 @@ describe("WhenRemovingImage", function () {
     it("Should remove the image", async function () {
       const tokenId = await proposeAndMint(_collection, _moderator, {
         to: await _owner.getAddress(),
-        wallets: [_otherAccount.address],
+        addresses: evmAddresses(_otherAccount.address),
         images: [
           { key: "default", value: "bafybeidefault" },
           { key: "profile", value: "bafybeiprofile" },

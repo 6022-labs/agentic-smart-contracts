@@ -34,7 +34,4 @@ interface IAgentCollectionV1States is IAgentCollectionStates {
     /// @param name The name of the agent.
     function nameToTokenId(string memory name) external view returns (uint256);
 
-    /// @dev Get the token ID associated to the agent wallet.
-    /// @param wallet The wallet address of the agent.
-    function walletToTokenId(address wallet) external view returns (uint256);
 }

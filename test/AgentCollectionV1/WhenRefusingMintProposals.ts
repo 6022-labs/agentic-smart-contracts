@@ -4,7 +4,11 @@ import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
-import { generateRandomAddress, deployCollectionWithCreator } from "../common";
+import {
+  generateRandomAddress,
+  evmAddresses,
+  deployCollectionWithCreator,
+} from "../common";
 
 describe("WhenRefusingMintProposals", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -39,7 +43,7 @@ describe("WhenRefusingMintProposals", function () {
 
   beforeEach(async function () {
     const { collection, moderator, otherAccount } = await loadFixture(
-      deployCollection
+      deployCollection,
     );
 
     _collection = collection;
@@ -52,10 +56,10 @@ describe("WhenRefusingMintProposals", function () {
       _otherAccount.address,
       DEFAULT_ROLE,
       name,
-      [generateRandomAddress()],
+      evmAddresses(generateRandomAddress()),
       DEFAULT_IMAGES,
       DEFAULT_ATTRIBUTES,
-      DEFAULT_CLONE_OF
+      DEFAULT_CLONE_OF,
     );
   }
 
@@ -65,10 +69,10 @@ describe("WhenRefusingMintProposals", function () {
     const { id: proposalId } = await _collection.mintProposal(0);
 
     await expect(
-      _collection.refuseMintProposal(proposalId)
+      _collection.refuseMintProposal(proposalId),
     ).to.be.revertedWithCustomError(
       _collection,
-      "AccessControlUnauthorizedAccount"
+      "AccessControlUnauthorizedAccount",
     );
   });
 
@@ -98,9 +102,7 @@ describe("WhenRefusingMintProposals", function () {
 
     const { id: proposalId } = await _collection.mintProposal(0);
 
-    await expect(
-      _collection.connect(_moderator).refuseMintProposal(proposalId)
-    )
+    await expect(_collection.connect(_moderator).refuseMintProposal(proposalId))
       .to.emit(_collection, "MintProposalRemoved")
       .withArgs(_otherAccount.address, 1n);
   });

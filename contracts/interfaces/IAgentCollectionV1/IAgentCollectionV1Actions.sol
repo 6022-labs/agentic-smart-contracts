@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {KeyValue} from "../../types/KeyValue.sol";
+import {AgentAddress} from "../../types/AgentAddress.sol";
 import {NullableUint256} from "../../types/NullableUint256.sol";
 
 interface IAgentCollectionV1Actions {
@@ -23,23 +24,25 @@ interface IAgentCollectionV1Actions {
         string memory value
     ) external;
 
-    /// @dev Add a wallet to an agent. Only the agent controller (owner or an
-    /// existing agent wallet) may call.
+    /// @dev Add a typed address to an agent. Only the agent controller (owner
+    /// or an existing evm agent address) may call.
     /// @param tokenId The agent token.
-    /// @param wallet The wallet to add.
-    function addAgentWallet(uint256 tokenId, address wallet) external;
+    /// @param addressType The type of the address to add ("evm", "btc", ...).
+    /// @param value The value of the address to add.
+    function addAgentAddress(uint256 tokenId, string memory addressType, string memory value) external;
 
-    /// @dev Remove a wallet from an agent. Only the agent controller (owner or
-    /// an existing agent wallet) may call.
+    /// @dev Remove a typed address from an agent. Only the agent controller
+    /// (owner or an existing evm agent address) may call.
     /// @param tokenId The agent token.
-    /// @param wallet The wallet to remove.
-    function removeAgentWallet(uint256 tokenId, address wallet) external;
+    /// @param addressType The type of the address to remove.
+    /// @param value The value of the address to remove.
+    function removeAgentAddress(uint256 tokenId, string memory addressType, string memory value) external;
 
     /// @dev Propose minting of a new agent token. (used if moderators setup)
     /// @param to The future owner of the token.
     /// @param role The agent role.
     /// @param name The Name of the agent.
-    /// @param wallets Wallet addresses controlled by the agent.
+    /// @param addresses Typed addresses controlled by the agent (at least one evm).
     /// @param images A set of images describing the agent.
     /// @param attributes A set of attributes describing the agent.
     /// @param cloneOf The ID of the agent to clone (if any).
@@ -47,7 +50,7 @@ interface IAgentCollectionV1Actions {
         address to,
         string memory role,
         string memory name,
-        address[] memory wallets,
+        AgentAddress[] memory addresses,
         KeyValue[] memory images,
         KeyValue[] memory attributes,
         NullableUint256 memory cloneOf
@@ -58,7 +61,7 @@ interface IAgentCollectionV1Actions {
     /// @param to The future owner of the token.
     /// @param role The agent role.
     /// @param name The Name of the agent.
-    /// @param wallets Wallet addresses controlled by the agent.
+    /// @param addresses Typed addresses controlled by the agent (at least one evm).
     /// @param images A set of images describing the agent.
     /// @param attributes A set of attributes describing the agent.
     /// @param cloneOf The ID of the agent to clone (if any).
@@ -66,7 +69,7 @@ interface IAgentCollectionV1Actions {
         address to,
         string memory role,
         string memory name,
-        address[] memory wallets,
+        AgentAddress[] memory addresses,
         KeyValue[] memory images,
         KeyValue[] memory attributes,
         NullableUint256 memory cloneOf

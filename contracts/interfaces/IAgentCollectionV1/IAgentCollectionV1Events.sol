@@ -22,20 +22,24 @@ interface IAgentCollectionV1Events {
         string newValue
     );
 
-    /// @dev Emitted when a wallet is added to an agent.
+    /// @dev Emitted when a typed address is added to an agent.
     /// @param tokenId The ID of the agent token.
-    /// @param wallet The wallet added.
-    event AgentWalletAdded(
+    /// @param addressType The type of the address added.
+    /// @param value The canonical value of the address added.
+    event AgentAddressAdded(
         uint256 indexed tokenId,
-        address wallet
+        string addressType,
+        string value
     );
 
-    /// @dev Emitted when a wallet is removed from an agent.
+    /// @dev Emitted when a typed address is removed from an agent.
     /// @param tokenId The ID of the agent token.
-    /// @param wallet The wallet removed.
-    event AgentWalletRemoved(
+    /// @param addressType The type of the address removed.
+    /// @param value The canonical value of the address removed.
+    event AgentAddressRemoved(
         uint256 indexed tokenId,
-        address wallet
+        string addressType,
+        string value
     );
 
     /// @dev Emitted when an agent image is added or updated.

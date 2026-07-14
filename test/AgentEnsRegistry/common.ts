@@ -4,6 +4,7 @@ import {
   generateRandomAddress,
   deployCollectionWithCreator,
   proposeAndMint,
+  evmAddresses,
 } from "../common";
 
 export const PARENT_NODE = ethers.namehash("6022.eth");
@@ -51,8 +52,8 @@ export async function deploySimpleAgentEnsRegistry() {
 export async function deployAgentEnsRegistryWithAgent() {
   await reset();
 
-  // agentWallet owns the NFT; agentControlledWallet is registered in the
-  // agent's AgentInformation.wallets so it can also write records.
+  // agentWallet owns the NFT; agentControlledWallet is registered as an evm
+  // address of the agent so it can also write records.
   const [owner, moderator, agentWallet, outsider, agentControlledWallet] =
     await ethers.getSigners();
 
@@ -65,7 +66,7 @@ export async function deployAgentEnsRegistryWithAgent() {
   const tokenId = await proposeAndMint(collection, moderator, {
     to: agentWallet.address,
     name: AGENT_NAME,
-    wallets: [agentControlledWallet.address],
+    addresses: evmAddresses(agentControlledWallet.address),
   });
 
   const Registry = await ethers.getContractFactory("AgentEnsRegistry");

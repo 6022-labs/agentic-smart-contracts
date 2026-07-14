@@ -1,10 +1,21 @@
 import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { NullableUint256Struct } from "../typechain-types/contracts/AgentCollectionV1";
+import {
+  AgentAddressStruct,
+  NullableUint256Struct,
+} from "../typechain-types/contracts/AgentCollectionV1";
 
 export function generateRandomAddress(): string {
   return ethers.Wallet.createRandom().address;
+}
+
+export function evmAddresses(...wallets: string[]): AgentAddressStruct[] {
+  return wallets.map((value) => ({ addressType: "evm", value }));
+}
+
+export function btcAddresses(...values: string[]): AgentAddressStruct[] {
+  return values.map((value) => ({ addressType: "btc", value }));
 }
 
 export function generateRandomNonce(): string {
@@ -16,7 +27,7 @@ export async function proposeAndMint(
   minter: HardhatEthersSigner,
   params: {
     to: string;
-    wallets?: string[];
+    addresses?: AgentAddressStruct[];
     role?: string;
     name?: string;
     images?: { key: string; value: string }[];
@@ -25,7 +36,7 @@ export async function proposeAndMint(
   }
 ) {
   const {
-    wallets = [generateRandomAddress()],
+    addresses = [{ addressType: "evm", value: generateRandomAddress() }],
     role = "facilitator",
     name = "test-agent",
     images = [
@@ -40,7 +51,15 @@ export async function proposeAndMint(
 
   await collection
     .connect(minter)
-    .createMintProposal(params.to, role, name, wallets, images, attributes, cloneOf!);
+    .createMintProposal(
+      params.to,
+      role,
+      name,
+      addresses,
+      images,
+      attributes,
+      cloneOf!
+    );
 
   const mintProposalsLength = await collection.mintProposalsLength();
   const proposalIndex = mintProposalsLength - BigInt(1);

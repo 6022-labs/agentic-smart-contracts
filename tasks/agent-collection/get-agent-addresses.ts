@@ -4,15 +4,15 @@ import {
   AgentCollectionV1__factory,
 } from "../../typechain-types";
 
-export default task("get-agent-wallets")
+export default task("get-agent-addresses")
   .addParam("collectionAddress", "The address of the collection")
   .addParam("collectionTokenId", "The token ID of the agent")
-  .setDescription("Get the wallets of an agent")
+  .setDescription("Get the typed addresses of an agent")
   .setAction(async (taskArgs, hre) => {
     const { collectionAddress, collectionTokenId } = taskArgs;
 
     console.log(
-      `Getting agent wallets for collection at address: ${collectionAddress}, token ID: ${collectionTokenId}`,
+      `Getting agent addresses for collection at address: ${collectionAddress}, token ID: ${collectionTokenId}`,
     );
 
     const agentCollection = (await hre.ethers.getContractAt(
@@ -21,22 +21,24 @@ export default task("get-agent-wallets")
     )) as unknown as AgentCollectionV1;
 
     try {
-      const walletsCount = await agentCollection.walletsCountOf(
+      const addressesCount = await agentCollection.addressesCountOf(
         collectionTokenId,
       );
       console.log(
-        `Wallets count of token ID ${collectionTokenId}: ${walletsCount}`,
+        `Addresses count of token ID ${collectionTokenId}: ${addressesCount}`,
       );
 
-      for (let i = 0; i < walletsCount; i++) {
-        const wallet = await agentCollection.walletOfByIndex(
+      for (let i = 0; i < addressesCount; i++) {
+        const agentAddress = await agentCollection.addressOfByIndex(
           collectionTokenId,
           i,
         );
-        console.log(`Wallet ${i}: ${wallet}`);
+        console.log(
+          `Address ${i}: ${agentAddress.addressType} ${agentAddress.value}`,
+        );
       }
     } catch (error) {
-      console.error("Error getting agent wallets:", error);
+      console.error("Error getting agent addresses:", error);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const revertData = (error as any).data;

@@ -7,10 +7,11 @@ interface IAgentCollectionV1Errors {
     /// @param tokenId The token ID associated with the name.
     error UsedName(string name, uint256 tokenId);
 
-    /// @dev Error when the wallet is already in use.
-    /// @param wallet The wallet that is already in use.
-    /// @param tokenId The token ID associated with the wallet.
-    error UsedWallet(address wallet, uint256 tokenId);
+    /// @dev Error when the typed address is already in use (tokenId 0 = duplicate within the submitted list).
+    /// @param addressType The type of the address that is already in use.
+    /// @param value The canonical value of the address that is already in use.
+    /// @param tokenId The token ID associated with the address.
+    error UsedAgentAddress(string addressType, string value, uint256 tokenId);
 
     /// @dev Error when the name is invalid.
     /// @param name The name that is not valid.
@@ -24,9 +25,10 @@ interface IAgentCollectionV1Errors {
     /// @param parameter The name of the parameter that was the zero address.
     error ZeroAddress(string parameter);
 
-    /// @dev Error when the wallet to remove is not registered to the agent.
-    /// @param wallet The wallet that was not found.
-    error WalletNotFound(address wallet);
+    /// @dev Error when the typed address to remove is not registered to the agent.
+    /// @param addressType The type of the address that was not found.
+    /// @param value The canonical value of the address that was not found.
+    error AgentAddressNotFound(string addressType, string value);
 
     /// @dev Error when the cloneOf is invalid.
     /// @param cloneOf The cloneOf that is not valid.

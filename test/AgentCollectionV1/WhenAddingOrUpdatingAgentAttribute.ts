@@ -3,7 +3,11 @@ import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { proposeAndMint, deployCollectionWithCreator } from "../common";
+import {
+  proposeAndMint,
+  evmAddresses,
+  deployCollectionWithCreator,
+} from "../common";
 
 describe("WhenAddingOrUpdatingAgentAttribute", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -30,7 +34,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
 
   beforeEach(async function () {
     const { collection, owner, moderator, otherAccount } = await loadFixture(
-      deployAgentCollection
+      deployAgentCollection,
     );
 
     _collection = collection;
@@ -45,7 +49,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
 
     await proposeAndMint(_collection, _moderator, {
       to,
-      ...(wallets ? { wallets } : {}),
+      ...(wallets ? { addresses: evmAddresses(...wallets) } : {}),
     });
 
     return tokenId;
@@ -58,7 +62,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
       await expect(
         _collection
           .connect(_owner)
-          .addOrUpdateAgentAttribute(tokenId, "key", "value")
+          .addOrUpdateAgentAttribute(tokenId, "key", "value"),
       )
         .to.be.revertedWithCustomError(_collection, "ERC721NonexistentToken")
         .withArgs(tokenId);
@@ -72,11 +76,11 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
       await expect(
         _collection
           .connect(_otherAccount)
-          .addOrUpdateAgentAttribute(tokenId, "key", "value")
+          .addOrUpdateAgentAttribute(tokenId, "key", "value"),
       )
         .to.be.revertedWithCustomError(
           _collection,
-          "OwnableUnauthorizedAccount"
+          "OwnableUnauthorizedAccount",
         )
         .withArgs(await _otherAccount.getAddress(), tokenId);
     });
@@ -92,7 +96,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
       await expect(
         _collection
           .connect(_otherAccount)
-          .addOrUpdateAgentAttribute(tokenId, "key", "value")
+          .addOrUpdateAgentAttribute(tokenId, "key", "value"),
       )
         .to.emit(_collection, "AgentAttributeUpdated")
         .withArgs(tokenId, "key", "", "value");
@@ -128,7 +132,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
       await expect(
         _collection
           .connect(_owner)
-          .addOrUpdateAgentAttribute(tokenId, ATTRIBUTE_KEY, ATTRIBUTE_VALUE)
+          .addOrUpdateAgentAttribute(tokenId, ATTRIBUTE_KEY, ATTRIBUTE_VALUE),
       )
         .to.emit(_collection, "AgentAttributeUpdated")
         .withArgs(tokenId, ATTRIBUTE_KEY, "", ATTRIBUTE_VALUE);
@@ -148,7 +152,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
         .addOrUpdateAgentAttribute(
           tokenId,
           ATTRIBUTE_KEY,
-          EXISTING_ATTRIBUTE_VALUE
+          EXISTING_ATTRIBUTE_VALUE,
         );
 
       await _collection
@@ -175,7 +179,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
         .addOrUpdateAgentAttribute(
           tokenId,
           ATTRIBUTE_KEY,
-          EXISTING_ATTRIBUTE_VALUE
+          EXISTING_ATTRIBUTE_VALUE,
         );
 
       await expect(
@@ -184,15 +188,15 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
           .addOrUpdateAgentAttribute(
             tokenId,
             ATTRIBUTE_KEY,
-            NEW_ATTRIBUTE_VALUE
-          )
+            NEW_ATTRIBUTE_VALUE,
+          ),
       )
         .to.emit(_collection, "AgentAttributeUpdated")
         .withArgs(
           tokenId,
           ATTRIBUTE_KEY,
           EXISTING_ATTRIBUTE_VALUE,
-          NEW_ATTRIBUTE_VALUE
+          NEW_ATTRIBUTE_VALUE,
         );
     });
   });

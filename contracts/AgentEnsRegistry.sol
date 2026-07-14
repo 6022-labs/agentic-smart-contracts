@@ -12,6 +12,7 @@ import {IAgentEnsRegistry} from "./interfaces/IAgentEnsRegistry/IAgentEnsRegistr
 import {UriUtils} from "./libraries/UriUtils.sol";
 import {AgentRef} from "./types/AgentRef.sol";
 import {KeyValue} from "./types/KeyValue.sol";
+import {AgentAddress, EVM_TYPE} from "./types/AgentAddress.sol";
 
 /// @title Agent ENS registry
 /// @dev Source of truth for agent text records on this chain, read by an
@@ -98,8 +99,14 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
         if (ref.collection == address(0)) return address(0);
 
         IAgentCollectionStates agentCollection = IAgentCollectionStates(ref.collection);
-        if (agentCollection.walletsCountOf(ref.tokenId) == 0) return address(0);
-        return agentCollection.walletOfByIndex(ref.tokenId, 0);
+        uint256 addressesCount = agentCollection.addressesCountOf(ref.tokenId);
+        for (uint256 i = 0; i < addressesCount; i++) {
+            AgentAddress memory agentAddress = agentCollection.addressOfByIndex(ref.tokenId, i);
+            if (Strings.equal(agentAddress.addressType, EVM_TYPE)) {
+                return Strings.parseAddress(agentAddress.value);
+            }
+        }
+        return address(0);
     }
 
     function setManager(address newManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -173,13 +180,6 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
         address account
     ) internal view returns (bool) {
         if (IERC721(collection).ownerOf(tokenId) == account) return true;
-        IAgentCollectionStates agentCollection = IAgentCollectionStates(collection);
-        uint256 walletCount = agentCollection.walletsCountOf(tokenId);
-
-        for (uint256 i = 0; i < walletCount; i++) {
-            if (agentCollection.walletOfByIndex(tokenId, i) == account) return true;
-        }
-
-        return false;
+        return IAgentCollectionStates(collection).addressToTokenId(EVM_TYPE, Strings.toHexString(account)) == tokenId;
     }
 }

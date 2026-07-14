@@ -7,7 +7,12 @@ import {
   AgentCollectionsManager,
   AgentCollectionV1,
 } from "../../typechain-types";
-import { deployCollectionWithCreator, generateRandomAddress } from "../common";
+import {
+  deployCollectionWithCreator,
+  generateRandomAddress,
+  evmAddresses,
+  btcAddresses,
+} from "../common";
 
 const DEFAULT_IMAGES = [
   {
@@ -17,8 +22,9 @@ const DEFAULT_IMAGES = [
 ];
 const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
 const NO_CLONE = { isSet: false, value: 0n };
+const BTC_VALUE = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
 
-describe("WhenFindingAgentByWallet", function () {
+describe("WhenFindingAgentByAddress", function () {
   let _creator: AgentCollectionCreatorV1;
   let _manager: AgentCollectionsManager;
   let _collection: AgentCollectionV1;
@@ -41,7 +47,7 @@ describe("WhenFindingAgentByWallet", function () {
     _collection = collection;
   });
 
-  describe("Given a wallet controls an agent", function () {
+  describe("Given an evm address controls an agent", function () {
     it("Should return its collection, tokenId and name", async function () {
       const wallet = generateRandomAddress();
       const tokenId = await _collection.nextTokenId();
@@ -51,14 +57,14 @@ describe("WhenFindingAgentByWallet", function () {
           _owner.address,
           "facilitator",
           "alpha-agent",
-          [wallet],
+          evmAddresses(wallet),
           DEFAULT_IMAGES,
           DEFAULT_ATTRIBUTES,
           NO_CLONE
         );
 
       const [collection, foundTokenId, name, next] =
-        await _manager.findAgentByWallet(wallet, 0, 10);
+        await _manager.findAgentByAddress("evm", wallet, 0, 10);
 
       expect(collection).to.equal(await _collection.getAddress());
       expect(foundTokenId).to.equal(tokenId);
@@ -86,14 +92,15 @@ describe("WhenFindingAgentByWallet", function () {
           _owner.address,
           "facilitator",
           "beta-agent",
-          [wallet],
+          evmAddresses(wallet),
           DEFAULT_IMAGES,
           DEFAULT_ATTRIBUTES,
           NO_CLONE
         );
 
       // First page (collection 1 only) misses it and resumes at 2.
-      const [missCollection, , , next] = await _manager.findAgentByWallet(
+      const [missCollection, , , next] = await _manager.findAgentByAddress(
+        "evm",
         wallet,
         0,
         1
@@ -101,15 +108,52 @@ describe("WhenFindingAgentByWallet", function () {
       expect(missCollection).to.equal(ethers.ZeroAddress);
       expect(next).to.equal(2n);
 
-      const [hitCollection] = await _manager.findAgentByWallet(wallet, next, 10);
+      const [hitCollection] = await _manager.findAgentByAddress(
+        "evm",
+        wallet,
+        next,
+        10
+      );
       expect(hitCollection).to.equal(await secondCollection.getAddress());
     });
   });
 
-  describe("Given a wallet controls no agent", function () {
+  describe("Given a btc address belongs to an agent", function () {
+    it("Should return its collection, tokenId and name", async function () {
+      const tokenId = await _collection.nextTokenId();
+      await _collection
+        .connect(_owner)
+        .mint(
+          _owner.address,
+          "facilitator",
+          "alpha-agent",
+          [
+            ...evmAddresses(generateRandomAddress()),
+            ...btcAddresses(BTC_VALUE),
+          ],
+          DEFAULT_IMAGES,
+          DEFAULT_ATTRIBUTES,
+          NO_CLONE
+        );
+
+      const [collection, foundTokenId, name] =
+        await _manager.findAgentByAddress("btc", BTC_VALUE, 0, 10);
+
+      expect(collection).to.equal(await _collection.getAddress());
+      expect(foundTokenId).to.equal(tokenId);
+      expect(name).to.equal("alpha-agent");
+    });
+  });
+
+  describe("Given an address belongs to no agent", function () {
     it("Should return zero values", async function () {
       const [collection, tokenId, name, next] =
-        await _manager.findAgentByWallet(generateRandomAddress(), 0, 10);
+        await _manager.findAgentByAddress(
+          "evm",
+          generateRandomAddress(),
+          0,
+          10
+        );
 
       expect(collection).to.equal(ethers.ZeroAddress);
       expect(tokenId).to.equal(0n);

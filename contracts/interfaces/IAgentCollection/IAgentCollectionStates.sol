@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {KeyValue} from "../../types/KeyValue.sol";
+import {AgentAddress} from "../../types/AgentAddress.sol";
 
 interface IAgentCollectionStates {
     /// @dev Get the fact that a account is a moderator or not.
@@ -10,8 +11,10 @@ interface IAgentCollectionStates {
     /// @dev Number of moderators configured on the collection.
     function moderatorCount() external view returns (uint256);
 
-    /// @dev Get the tokenId controlled by a wallet, or 0 if none.
-    function walletToTokenId(address wallet) external view returns (uint256);
+    /// @dev Get the token ID associated to a typed address, or 0 if none.
+    /// @param addressType The type of the address ("evm", "btc", ...).
+    /// @param value The address value (evm values accepted in any casing).
+    function addressToTokenId(string memory addressType, string memory value) external view returns (uint256);
 
     /// @dev The next tokenId to be minted (count of minted agents + 1).
     function nextTokenId() external view returns (uint256);
@@ -36,12 +39,12 @@ interface IAgentCollectionStates {
     /// @param index The index of the image.
     function imageOfByIndex(uint256 tokenId, uint256 index) external view returns (KeyValue memory);
 
-    /// @dev Get the number of agent wallets of an agent.
+    /// @dev Get the number of typed addresses of an agent.
     /// @param tokenId The token identifier.
-    function walletsCountOf(uint256 tokenId) external view returns (uint256);
+    function addressesCountOf(uint256 tokenId) external view returns (uint256);
 
-    /// @dev Get a specific agent wallet by its index.
+    /// @dev Get a specific typed address of an agent by its index.
     /// @param tokenId The token identifier.
-    /// @param index The index of the wallet.
-    function walletOfByIndex(uint256 tokenId, uint256 index) external view returns (address);
+    /// @param index The index of the address.
+    function addressOfByIndex(uint256 tokenId, uint256 index) external view returns (AgentAddress memory);
 }

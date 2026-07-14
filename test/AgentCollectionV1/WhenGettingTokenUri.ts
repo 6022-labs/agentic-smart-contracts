@@ -6,6 +6,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   decodeTokenURI,
   proposeAndMint,
+  evmAddresses,
   generateRandomAddress,
   deployCollectionWithCreator,
 } from "../common";
@@ -36,7 +37,7 @@ describe("WhenGettingTokenUri", function () {
 
   beforeEach(async function () {
     const { owner, AgentCollection } = await loadFixture(
-      deployAgentCollectionDescription
+      deployAgentCollectionDescription,
     );
 
     _owner = owner;
@@ -60,7 +61,7 @@ describe("WhenGettingTokenUri", function () {
 
       await proposeAndMint(_collection, _owner, {
         to: _owner.address,
-        wallets: _wallets,
+        addresses: evmAddresses(..._wallets),
         role: _role,
         name: _name,
         images: _images,

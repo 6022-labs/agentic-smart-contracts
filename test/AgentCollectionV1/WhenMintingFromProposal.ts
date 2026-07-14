@@ -2,11 +2,15 @@ import { expect } from "chai";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
+import {
+  AgentAddressStruct,
+  NullableUint256Struct,
+} from "../../typechain-types/contracts/AgentCollectionV1";
 import { ethers } from "hardhat";
 import {
   proposeAndMint,
   generateRandomAddress,
+  evmAddresses,
   deployCollectionWithCreator,
 } from "../common";
 
@@ -32,17 +36,17 @@ describe("WhenMintingFromProposal", function () {
 
   function createMintProposal(
     name: string,
-    wallets: string[],
-    to: string
+    addresses: AgentAddressStruct[],
+    to: string,
   ) {
     return _collection.createMintProposal(
       to,
       DEFAULT_ROLE,
       name,
-      wallets,
+      addresses,
       DEFAULT_IMAGES,
       DEFAULT_ATTRIBUTES,
-      DEFAULT_CLONE_OF
+      DEFAULT_CLONE_OF,
     );
   }
 
@@ -62,7 +66,7 @@ describe("WhenMintingFromProposal", function () {
 
   beforeEach(async function () {
     const { collection, owner, otherAccount } = await loadFixture(
-      deployAgentCollection
+      deployAgentCollection,
     );
 
     _collection = collection;
@@ -74,20 +78,20 @@ describe("WhenMintingFromProposal", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' error", async function () {
       await createMintProposal(
         DEFAULT_NAME,
-        [generateRandomAddress()],
-        _otherAccount.address
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
 
       const length = await _collection.mintProposalsLength();
       const { id: proposalId } = await _collection.mintProposal(
-        length - BigInt(1)
+        length - BigInt(1),
       );
 
       await expect(
-        _collection.connect(_otherAccount).mintFromProposal(proposalId)
+        _collection.connect(_otherAccount).mintFromProposal(proposalId),
       ).to.be.revertedWithCustomError(
         _collection,
-        "AccessControlUnauthorizedAccount"
+        "AccessControlUnauthorizedAccount",
       );
     });
   });
@@ -96,20 +100,22 @@ describe("WhenMintingFromProposal", function () {
     it("Should revert", async function () {
       const length = await _collection.mintProposalsLength();
       await expect(
-        _collection.connect(_owner).mintFromProposal(length + BigInt(1))
+        _collection.connect(_owner).mintFromProposal(length + BigInt(1)),
       ).to.be.reverted;
     });
   });
 
   describe("Given multiple minting proposals share the same name", function () {
     it("Should revert minting the second proposal with 'UsedName' error", async function () {
-      const wallets = [generateRandomAddress()];
-
-      await createMintProposal(DEFAULT_NAME, wallets, _otherAccount.address);
       await createMintProposal(
         DEFAULT_NAME,
-        [generateRandomAddress()],
-        _otherAccount.address
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
+      await createMintProposal(
+        DEFAULT_NAME,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
 
       const { id: proposalId } = await _collection.mintProposal(0);
@@ -123,19 +129,19 @@ describe("WhenMintingFromProposal", function () {
     });
   });
 
-  describe("Given multiple minting proposals share the same wallet", function () {
-    it("Should revert minting the second proposal with 'UsedWallet' error", async function () {
-      const wallets = [generateRandomAddress()];
+  describe("Given multiple minting proposals share the same evm address", function () {
+    it("Should revert minting the second proposal with 'UsedAgentAddress' error", async function () {
+      const wallet = generateRandomAddress();
 
       await createMintProposal(
         DEFAULT_NAME + "-1",
-        wallets,
-        _otherAccount.address
+        evmAddresses(wallet),
+        _otherAccount.address,
       );
       await createMintProposal(
         DEFAULT_NAME + "-2",
-        wallets,
-        _otherAccount.address
+        evmAddresses(wallet),
+        _otherAccount.address,
       );
 
       const { id: proposalId } = await _collection.mintProposal(0);
@@ -144,8 +150,8 @@ describe("WhenMintingFromProposal", function () {
       await _collection.connect(_owner).mintFromProposal(proposalId);
 
       await expect(_collection.connect(_owner).mintFromProposal(proposalId))
-        .to.be.revertedWithCustomError(_collection, "UsedWallet")
-        .withArgs(wallets[0], tokenId);
+        .to.be.revertedWithCustomError(_collection, "UsedAgentAddress")
+        .withArgs("evm", wallet.toLowerCase(), tokenId);
     });
   });
 
@@ -153,12 +159,12 @@ describe("WhenMintingFromProposal", function () {
     it("Should assign the owner of the token", async function () {
       const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets: [generateRandomAddress()],
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
       });
 
       expect(await _collection.ownerOf(tokenId)).to.equal(
-        _otherAccount.address
+        _otherAccount.address,
       );
     });
 
@@ -168,12 +174,12 @@ describe("WhenMintingFromProposal", function () {
 
       await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets: [generateRandomAddress()],
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME_1,
       });
 
       expect(await _collection.ownerOf(nextTokenId)).to.equal(
-        _otherAccount.address
+        _otherAccount.address,
       );
     });
 
@@ -181,33 +187,30 @@ describe("WhenMintingFromProposal", function () {
       const before = await _collection.nextTokenId();
       await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets: [generateRandomAddress()],
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME_1,
       });
       expect(await _collection.nextTokenId()).to.equal(before + BigInt(1));
     });
 
     it("Should assign agent addresses to the token", async function () {
-      const wallets = [generateRandomAddress()];
+      const wallet = generateRandomAddress();
       const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets,
+        addresses: evmAddresses(wallet),
         name: DEFAULT_NAME,
       });
 
-      const walletCount = await _collection.walletsCountOf(tokenId);
-      expect(walletCount).to.equal(wallets.length);
-      for (let i = 0; i < walletCount; i++) {
-        expect(wallets).to.include(
-          await _collection.walletOfByIndex(tokenId, i)
-        );
-      }
+      expect(await _collection.addressesCountOf(tokenId)).to.equal(1n);
+      expect(await _collection.addressToTokenId("evm", wallet)).to.equal(
+        tokenId,
+      );
     });
 
     it("Should assign name to the token", async function () {
       const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets: [generateRandomAddress()],
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
       });
       expect(await _collection.nameOf(tokenId)).to.equal(DEFAULT_NAME);
@@ -216,7 +219,7 @@ describe("WhenMintingFromProposal", function () {
     it("Should assign images to the token", async function () {
       const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets: [generateRandomAddress()],
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
       });
 
@@ -232,12 +235,12 @@ describe("WhenMintingFromProposal", function () {
     it("Should assign creator (the proposal creator) to the token", async function () {
       await createMintProposal(
         DEFAULT_NAME,
-        [generateRandomAddress()],
-        _otherAccount.address
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
       const length = await _collection.mintProposalsLength();
       const { id: proposalId } = await _collection.mintProposal(
-        length - BigInt(1)
+        length - BigInt(1),
       );
       const tokenId = await _collection.nextTokenId();
       await _collection.connect(_owner).mintFromProposal(proposalId);
@@ -249,7 +252,7 @@ describe("WhenMintingFromProposal", function () {
     it("Should assign role to the token", async function () {
       const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets: [generateRandomAddress()],
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
       });
       expect(await _collection.roleOf(tokenId)).to.equal(DEFAULT_ROLE);
@@ -258,32 +261,36 @@ describe("WhenMintingFromProposal", function () {
     it("Should assign token id to name", async function () {
       const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets: [generateRandomAddress()],
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
       });
-      expect(await _collection.nameToTokenId(DEFAULT_NAME)).to.be.equal(tokenId);
+      expect(await _collection.nameToTokenId(DEFAULT_NAME)).to.be.equal(
+        tokenId,
+      );
     });
 
-    it("Should assign token id to wallet", async function () {
-      const wallets = [generateRandomAddress()];
+    it("Should assign token id to evm address", async function () {
+      const wallet = generateRandomAddress();
       const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets,
+        addresses: evmAddresses(wallet),
         name: DEFAULT_NAME,
       });
-      expect(await _collection.walletToTokenId(wallets[0])).to.be.equal(tokenId);
+      expect(await _collection.addressToTokenId("evm", wallet)).to.be.equal(
+        tokenId,
+      );
     });
 
     it("Should emit 'Minted' event", async function () {
       const tokenId = await _collection.nextTokenId();
       await createMintProposal(
         DEFAULT_NAME,
-        [generateRandomAddress()],
-        _otherAccount.address
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
       const length = await _collection.mintProposalsLength();
       const { id: proposalId } = await _collection.mintProposal(
-        length - BigInt(1)
+        length - BigInt(1),
       );
 
       await expect(_collection.connect(_owner).mintFromProposal(proposalId))
@@ -294,8 +301,8 @@ describe("WhenMintingFromProposal", function () {
     it("Should emit 'MintProposalRemoved' event", async function () {
       await createMintProposal(
         DEFAULT_NAME,
-        [generateRandomAddress()],
-        _otherAccount.address
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
       const index = (await _collection.mintProposalsLength()) - BigInt(1);
       const { id: proposalId } = await _collection.mintProposal(index);
@@ -308,29 +315,31 @@ describe("WhenMintingFromProposal", function () {
     it("Should decrease proposals length", async function () {
       await createMintProposal(
         DEFAULT_NAME,
-        [generateRandomAddress()],
-        _otherAccount.address
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
       const lengthBefore = await _collection.mintProposalsLength();
       const { id: proposalId } = await _collection.mintProposal(
-        lengthBefore - BigInt(1)
+        lengthBefore - BigInt(1),
       );
 
       await _collection.connect(_owner).mintFromProposal(proposalId);
 
       expect(await _collection.mintProposalsLength()).to.eq(
-        lengthBefore - BigInt(1)
+        lengthBefore - BigInt(1),
       );
     });
 
     it("Should reorder remaining proposals", async function () {
-      const wallets = [generateRandomAddress()];
-
-      await createMintProposal(DEFAULT_NAME_1, wallets, _otherAccount.address);
+      await createMintProposal(
+        DEFAULT_NAME_1,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
       await createMintProposal(
         DEFAULT_NAME_2,
-        [generateRandomAddress()],
-        _otherAccount.address
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
 
       expect(await _collection.mintProposalsLength()).to.eq(2n);
@@ -347,13 +356,13 @@ describe("WhenMintingFromProposal", function () {
     it("Should remove only the applied proposal when applying out of order", async function () {
       await createMintProposal(
         DEFAULT_NAME_1,
-        [generateRandomAddress()],
-        _otherAccount.address
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
       await createMintProposal(
         DEFAULT_NAME_2,
-        [generateRandomAddress()],
-        _otherAccount.address
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
 
       // Apply the SECOND proposal (id at index 1), not the first.

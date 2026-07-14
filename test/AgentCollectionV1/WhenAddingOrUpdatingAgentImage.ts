@@ -1,7 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
-import { proposeAndMint, deployCollectionWithCreator } from "../common";
+import {
+  proposeAndMint,
+  evmAddresses,
+  deployCollectionWithCreator,
+} from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -120,7 +124,7 @@ describe("WhenAddingOrUpdatingAgentImage", function () {
       beforeEach(async function () {
         tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
-          wallets: [_otherAccount.address],
+          addresses: evmAddresses(_otherAccount.address),
         });
         await revokeModerator();
       });

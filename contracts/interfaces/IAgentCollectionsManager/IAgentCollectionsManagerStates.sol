@@ -15,11 +15,12 @@ interface IAgentCollectionsManagerStates {
         uint256 limit
     ) external view returns (AgentCollectionInfo[] memory infos, uint256 next);
 
-    /// @dev Paginated search for the agent a wallet controls. Scans ids
+    /// @dev Paginated search for the agent a typed address belongs to. Scans ids
     /// [offset, offset+limit); returns the match (collection != address(0)) with
     /// its tokenId + name, else zeros. `next` resumes the scan, or 0 when exhausted.
-    function findAgentByWallet(
-        address wallet,
+    function findAgentByAddress(
+        string memory addressType,
+        string memory value,
         uint256 offset,
         uint256 limit
     ) external view returns (address collection, uint256 tokenId, string memory name, uint256 next);

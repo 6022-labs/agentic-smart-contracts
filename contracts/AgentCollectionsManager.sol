@@ -81,10 +81,11 @@ contract AgentCollectionsManager is
         next = end < nextCollectionId ? end : 0;
     }
 
-    /// @dev Paginated search for the agent a wallet controls. Returns the first
-    /// match in [offset, offset+limit) or zeros; `next` resumes the scan.
-    function findAgentByWallet(
-        address wallet,
+    /// @dev Paginated search for the agent a typed address belongs to. Returns
+    /// the first match in [offset, offset+limit) or zeros; `next` resumes the scan.
+    function findAgentByAddress(
+        string memory addressType,
+        string memory value,
         uint256 offset,
         uint256 limit
     ) external view returns (address collection, uint256 tokenId, string memory name, uint256 next) {
@@ -96,7 +97,7 @@ contract AgentCollectionsManager is
 
         for (uint256 id = start; id < end; id++) {
             address current = collections[id];
-            uint256 foundTokenId = IAgentCollectionStates(current).walletToTokenId(wallet);
+            uint256 foundTokenId = IAgentCollectionStates(current).addressToTokenId(addressType, value);
             if (foundTokenId != 0) {
                 return (current, foundTokenId, IAgentCollectionStates(current).nameOf(foundTokenId), 0);
             }

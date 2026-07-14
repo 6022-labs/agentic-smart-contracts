@@ -5,17 +5,17 @@ import "hardhat-deploy";
 import "./deploy-config/types";
 
 // AgentCollection tasks
-import "./tasks/agent-collection/add-agent-wallet";
+import "./tasks/agent-collection/add-agent-address";
 import "./tasks/agent-collection/add-moderator-to-collection";
 import "./tasks/agent-collection/get-agent-attributes";
 import "./tasks/agent-collection/get-agent-description";
 import "./tasks/agent-collection/get-agent-images";
-import "./tasks/agent-collection/get-agent-wallets";
+import "./tasks/agent-collection/get-agent-addresses";
 import "./tasks/agent-collection/get-collection-description";
 import "./tasks/agent-collection/get-name-of";
 import "./tasks/agent-collection/get-owner-of";
-import "./tasks/agent-collection/get-wallet-token-id";
-import "./tasks/agent-collection/remove-agent-wallet";
+import "./tasks/agent-collection/get-address-token-id";
+import "./tasks/agent-collection/remove-agent-address";
 
 // AgentCollectionsManager tasks
 import "./tasks/agent-collections-manager/add-creator-to-manager";
