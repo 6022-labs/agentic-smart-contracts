@@ -59,7 +59,7 @@ describe("WhenInitializingAgentTexts", function () {
 
           expect(await _ensRegistry.provisioned(_node)).to.equal(true);
           expect(await _ensRegistry.text(_node, URL_KEY)).to.equal(
-            "https://agent.example/"
+            "https://agent.example/",
           );
         });
 
@@ -77,7 +77,7 @@ describe("WhenInitializingAgentTexts", function () {
           await expect(
             _ensRegistry
               .connect(getSigner())
-              .initAgentTexts(_collectionAddress, _tokenId, runtimeRecords())
+              .initAgentTexts(_collectionAddress, _tokenId, runtimeRecords()),
           )
             .to.emit(_ensRegistry, "SubnodeProvisioned")
             .withArgs(_collectionAddress, _tokenId, _node, AGENT_NAME)
@@ -86,7 +86,7 @@ describe("WhenInitializingAgentTexts", function () {
               _collectionAddress,
               _tokenId,
               URL_KEY,
-              "https://agent.example/"
+              "https://agent.example/",
             );
         });
       });
@@ -101,7 +101,7 @@ describe("WhenInitializingAgentTexts", function () {
           .initAgentTexts(_collectionAddress, _tokenId, [
             ...runtimeRecords(),
             { key: "avatar", value: "ipfs://override" },
-          ])
+          ]),
       )
         .to.be.revertedWithCustomError(_ensRegistry, "ReservedKey")
         .withArgs("avatar");
@@ -117,7 +117,7 @@ describe("WhenInitializingAgentTexts", function () {
       await expect(
         _ensRegistry
           .connect(_agentWallet)
-          .initAgentTexts(_collectionAddress, _tokenId, runtimeRecords())
+          .initAgentTexts(_collectionAddress, _tokenId, runtimeRecords()),
       )
         .to.be.revertedWithCustomError(_ensRegistry, "AlreadyProvisioned")
         .withArgs(_collectionAddress, _tokenId);
@@ -131,7 +131,7 @@ describe("WhenInitializingAgentTexts", function () {
           .connect(_agentWallet)
           .initAgentTexts(_collectionAddress, _tokenId, [
             { key: "description", value: "An autonomous agent" },
-          ])
+          ]),
       )
         .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
         .withArgs(URL_KEY);
@@ -145,10 +145,41 @@ describe("WhenInitializingAgentTexts", function () {
           .connect(_agentWallet)
           .initAgentTexts(_collectionAddress, _tokenId, [
             { key: URL_KEY, value: "" },
-          ])
+          ]),
       )
         .to.be.revertedWithCustomError(_ensRegistry, "MissingRequiredKey")
         .withArgs(URL_KEY);
+    });
+  });
+
+  describe("Given the batch repeats a key", function () {
+    it("Should revert with DuplicateKey and leave the node unprovisioned", async function () {
+      await expect(
+        _ensRegistry
+          .connect(_agentWallet)
+          .initAgentTexts(_collectionAddress, _tokenId, [
+            { key: URL_KEY, value: "https://agent.example/" },
+            { key: URL_KEY, value: "" },
+          ]),
+      )
+        .to.be.revertedWithCustomError(_ensRegistry, "DuplicateKey")
+        .withArgs(URL_KEY);
+
+      expect(await _ensRegistry.provisioned(_node)).to.equal(false);
+    });
+
+    it("Should revert with DuplicateKey for a repeated non-url key too", async function () {
+      await expect(
+        _ensRegistry
+          .connect(_agentWallet)
+          .initAgentTexts(_collectionAddress, _tokenId, [
+            { key: URL_KEY, value: "https://agent.example/" },
+            { key: "description", value: "first" },
+            { key: "description", value: "second" },
+          ]),
+      )
+        .to.be.revertedWithCustomError(_ensRegistry, "DuplicateKey")
+        .withArgs("description");
     });
   });
 
@@ -161,10 +192,14 @@ describe("WhenInitializingAgentTexts", function () {
           owner: _owner,
           moderator: _moderator,
         });
-      const outsideTokenId = await proposeAndMint(outsideCollection, _moderator, {
-        to: _agentWallet.address,
-        name: AGENT_NAME,
-      });
+      const outsideTokenId = await proposeAndMint(
+        outsideCollection,
+        _moderator,
+        {
+          to: _agentWallet.address,
+          name: AGENT_NAME,
+        },
+      );
 
       await expect(
         _ensRegistry
@@ -172,8 +207,8 @@ describe("WhenInitializingAgentTexts", function () {
           .initAgentTexts(
             await outsideCollection.getAddress(),
             outsideTokenId,
-            runtimeRecords()
-          )
+            runtimeRecords(),
+          ),
       )
         .to.be.revertedWithCustomError(_ensRegistry, "UnknownCollection")
         .withArgs(await outsideCollection.getAddress());
@@ -187,14 +222,14 @@ describe("WhenInitializingAgentTexts", function () {
       const spoof = await Spoof.deploy(
         COLLECTION_NAME,
         AGENT_NAME,
-        _agentWallet.address
+        _agentWallet.address,
       );
       const maliciousAddress = await spoof.getAddress();
 
       await expect(
         _ensRegistry
           .connect(_agentWallet)
-          .initAgentTexts(maliciousAddress, _tokenId, runtimeRecords())
+          .initAgentTexts(maliciousAddress, _tokenId, runtimeRecords()),
       )
         .to.be.revertedWithCustomError(_ensRegistry, "UnknownCollection")
         .withArgs(maliciousAddress);
@@ -209,7 +244,7 @@ describe("WhenInitializingAgentTexts", function () {
       await expect(
         _ensRegistry
           .connect(_outsider)
-          .initAgentTexts(_collectionAddress, _tokenId, runtimeRecords())
+          .initAgentTexts(_collectionAddress, _tokenId, runtimeRecords()),
       )
         .to.be.revertedWithCustomError(_ensRegistry, "NotAgentOwnerOrWallet")
         .withArgs(_collectionAddress, _tokenId, _outsider.address);

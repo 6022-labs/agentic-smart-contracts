@@ -21,4 +21,7 @@ interface IAgentEnsRegistryErrors {
     /// @dev Key is resolved by the registry itself (e.g. `avatar`) and cannot
     ///      be stored.
     error ReservedKey(string key);
+
+    /// @dev The same key appears more than once in an `initAgentTexts` batch.
+    error DuplicateKey(string key);
 }

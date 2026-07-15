@@ -60,6 +60,7 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
     ) external onlyAgentController(collection, tokenId) {
         (bytes32 node, string memory label) = _resolveAgentNode(collection, tokenId);
         if (provisioned[node]) revert AlreadyProvisioned(collection, tokenId);
+        _requireNoDuplicateKeys(records);
         _requireMandatoryKeys(records);
 
         provisioned[node] = true;
@@ -140,10 +141,25 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
         node = keccak256(abi.encodePacked(collectionNode, keccak256(bytes(label))));
     }
 
-    function _requireMandatoryKeys(KeyValue[] calldata records) internal pure {
+    /// @dev Reverts if any key appears twice; keeps `initAgentTexts` writes unambiguous.
+    function _requireNoDuplicateKeys(KeyValue[] calldata records) internal pure {
         for (uint256 i = 0; i < records.length; i++) {
-            if (bytes(records[i].value).length == 0) continue;
-            if (keccak256(bytes(records[i].key)) == URL_HASH) return;
+            bytes32 keyHash = keccak256(bytes(records[i].key));
+            for (uint256 j = 0; j < i; j++) {
+                if (keccak256(bytes(records[j].key)) == keyHash) {
+                    revert DuplicateKey(records[i].key);
+                }
+            }
+        }
+    }
+
+    function _requireMandatoryKeys(KeyValue[] calldata records) internal pure {
+        // Keys are unique here (see _requireNoDuplicateKeys), so the url record is the effective one.
+        for (uint256 i = 0; i < records.length; i++) {
+            if (keccak256(bytes(records[i].key)) == URL_HASH) {
+                if (bytes(records[i].value).length == 0) revert MissingRequiredKey(URL_KEY);
+                return;
+            }
         }
 
         revert MissingRequiredKey(URL_KEY);
