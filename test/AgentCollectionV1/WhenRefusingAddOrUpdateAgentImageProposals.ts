@@ -59,14 +59,36 @@ describe("WhenRefusingAddOrUpdateAgentImageProposals", function () {
     );
   });
 
-  it("Should revert when proposal does not exist", async function () {
+  it("Should revert with 'ProposalNotFound' when no image proposals exist", async function () {
     await proposeAndMint(_collection, _moderator, {
       to: await _owner.getAddress(),
     });
 
     await expect(
       _collection.connect(_moderator).refuseAddOrUpdateAgentImageProposal(0)
-    ).to.be.reverted;
+    )
+      .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+      .withArgs(0);
+  });
+
+  it("Should revert with 'ProposalNotFound' for a bogus id while a live proposal exists (not refuse index 0)", async function () {
+    const tokenId = await proposeAndMint(_collection, _moderator, {
+      to: await _owner.getAddress(),
+    });
+
+    await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+      key: "profile",
+      value: "cid1",
+    });
+
+    await expect(
+      _collection.connect(_moderator).refuseAddOrUpdateAgentImageProposal(9999)
+    )
+      .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+      .withArgs(9999);
+
+    // The live proposal must still be pending.
+    expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(1n);
   });
 
   it("Should remove and reorder proposals", async function () {

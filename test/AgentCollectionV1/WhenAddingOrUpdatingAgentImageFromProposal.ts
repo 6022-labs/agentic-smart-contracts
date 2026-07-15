@@ -63,14 +63,41 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
 
   describe("Given caller is moderator", function () {
     describe("And proposal does not exist", function () {
-      it("Should revert", async function () {
+      it("Should revert with 'ProposalNotFound' when no image proposals exist", async function () {
         await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
-        return expect(
+        await expect(
           _collection.connect(_moderator).addOrUpdateAgentImageFromProposal(0)
-        ).to.be.reverted;
+        )
+          .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+          .withArgs(0);
+      });
+
+      it("Should revert with 'ProposalNotFound' for a bogus id while a live proposal exists (not apply index 0)", async function () {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
+          to: await _owner.getAddress(),
+        });
+
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+          key: "profile",
+          value: "cid1",
+        });
+
+        await expect(
+          _collection
+            .connect(_moderator)
+            .addOrUpdateAgentImageFromProposal(9999)
+        )
+          .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+          .withArgs(9999);
+
+        // The live proposal must be untouched and the image not applied.
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          1n
+        );
+        expect(await _collection.imagesCountOf(tokenId)).to.equal(1);
       });
     });
 

@@ -136,11 +136,10 @@ describe("WhenCreatingMintingProposal", function () {
           addresses: evmAddresses(generateRandomAddress()),
         });
 
-        const length = await _collection.mintProposalsLength();
+        const index = (await _collection.mintProposalsLength()) - BigInt(1);
+        const { id: proposalId } = await _collection.mintProposal(index);
         const tokenId = await _collection.nextTokenId();
-        await _collection
-          .connect(_moderator)
-          .mintFromProposal(length - BigInt(1));
+        await _collection.connect(_moderator).mintFromProposal(proposalId);
 
         await expect(
           createMintProposal({
@@ -162,11 +161,10 @@ describe("WhenCreatingMintingProposal", function () {
           addresses: evmAddresses(wallet),
         });
 
-        const length = await _collection.mintProposalsLength();
+        const index = (await _collection.mintProposalsLength()) - BigInt(1);
+        const { id: proposalId } = await _collection.mintProposal(index);
         const tokenId = await _collection.nextTokenId();
-        await _collection
-          .connect(_moderator)
-          .mintFromProposal(length - BigInt(1));
+        await _collection.connect(_moderator).mintFromProposal(proposalId);
 
         await expect(
           createMintProposal({
@@ -253,10 +251,9 @@ describe("WhenCreatingMintingProposal", function () {
           addresses: evmAddresses(generateRandomAddress()),
         });
 
-        const length = await _collection.mintProposalsLength();
-        await _collection
-          .connect(_moderator)
-          .mintFromProposal(length - BigInt(1));
+        const index = (await _collection.mintProposalsLength()) - BigInt(1);
+        const { id: proposalId } = await _collection.mintProposal(index);
+        await _collection.connect(_moderator).mintFromProposal(proposalId);
 
         const cloneOf: NullableUint256Struct = {
           isSet: true,

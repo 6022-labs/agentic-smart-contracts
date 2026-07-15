@@ -76,9 +76,22 @@ describe("WhenRefusingMintProposals", function () {
     );
   });
 
-  it("Should revert when proposal does not exist", async function () {
-    await expect(_collection.connect(_moderator).refuseMintProposal(0)).to.be
-      .reverted;
+  it("Should revert with 'ProposalNotFound' when no proposals exist", async function () {
+    await expect(_collection.connect(_moderator).refuseMintProposal(0))
+      .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+      .withArgs(0);
+  });
+
+  it("Should revert with 'ProposalNotFound' for a bogus id while a live proposal exists (not refuse index 0)", async function () {
+    await createMintProposal("agent1");
+
+    await expect(_collection.connect(_moderator).refuseMintProposal(9999))
+      .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+      .withArgs(9999);
+
+    // The live proposal must still be pending.
+    expect(await _collection.mintProposalsLength()).to.eq(1n);
+    expect((await _collection.mintProposal(0)).name).to.equal("agent1");
   });
 
   it("Should remove and reorder proposals", async function () {

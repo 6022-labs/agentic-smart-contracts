@@ -435,7 +435,7 @@ contract AgentCollectionV1 is
         uint256 existingProposalId = _imageProposalIdByTokenAndKey[tokenId][keyHash];
 
         if (existingProposalId != 0) {
-            uint256 existingIndex = _addOrUpdateAgentImageProposalIndexById[existingProposalId];
+            uint256 existingIndex = _imageProposalIndexOf(existingProposalId);
             _addOrUpdateAgentImageProposals[existingIndex].image = image;
             return;
         }
@@ -446,7 +446,7 @@ contract AgentCollectionV1 is
             image: image
         }));
 
-        _addOrUpdateAgentImageProposalIndexById[_nextProposalId] = _addOrUpdateAgentImageProposals.length - 1;
+        _addOrUpdateAgentImageProposalIndexById[_nextProposalId] = _addOrUpdateAgentImageProposals.length;
         _imageProposalIdByTokenAndKey[tokenId][keyHash] = _nextProposalId;
 
         emit AgentImageProposalCreated(
@@ -477,7 +477,7 @@ contract AgentCollectionV1 is
     function addOrUpdateAgentImageFromProposal(
         uint256 proposalId
     ) external onlyRole(MODERATOR_ROLE) {
-        uint256 proposalIndex = _addOrUpdateAgentImageProposalIndexById[proposalId];
+        uint256 proposalIndex = _imageProposalIndexOf(proposalId);
         AddOrUpdateAgentImageProposal memory proposalInfo = _addOrUpdateAgentImageProposals[proposalIndex];
 
         _addOrUpdateAgentImage(
@@ -559,7 +559,7 @@ contract AgentCollectionV1 is
             attributes: attributes
         }));
 
-        _mintProposalIndexById[_nextProposalId] = _mintProposals.length - 1;
+        _mintProposalIndexById[_nextProposalId] = _mintProposals.length;
 
         emit MintProposalCreated(to, _nextProposalId);
 
@@ -594,7 +594,7 @@ contract AgentCollectionV1 is
     function mintFromProposal(
         uint256 proposalId
     ) external onlyRole(MODERATOR_ROLE) {
-        uint256 proposalIndex = _mintProposalIndexById[proposalId];
+        uint256 proposalIndex = _mintProposalIndexOf(proposalId);
         MintProposal memory proposalInfo = _mintProposals[proposalIndex];
 
         _requireUniqueNameAndUniqueAddresses(proposalInfo.name, proposalInfo.addresses);
@@ -678,13 +678,13 @@ contract AgentCollectionV1 is
     }
 
     function _popAddOrUpdateAgentImageProposalAt(uint256 proposalId) private {
-        uint256 index = _addOrUpdateAgentImageProposalIndexById[proposalId];
+        uint256 index = _imageProposalIndexOf(proposalId);
 
         AddOrUpdateAgentImageProposal memory proposal = _addOrUpdateAgentImageProposals[index];
         uint256 lastIndex = _addOrUpdateAgentImageProposals.length - 1;
         if (index != lastIndex) {
             _addOrUpdateAgentImageProposals[index] = _addOrUpdateAgentImageProposals[lastIndex];
-            _addOrUpdateAgentImageProposalIndexById[_addOrUpdateAgentImageProposals[index].id] = index;
+            _addOrUpdateAgentImageProposalIndexById[_addOrUpdateAgentImageProposals[index].id] = index + 1;
         }
         _addOrUpdateAgentImageProposals.pop();
         delete _addOrUpdateAgentImageProposalIndexById[proposalId];
@@ -698,18 +698,36 @@ contract AgentCollectionV1 is
     }
 
     function _popMintProposalAt(uint256 proposalId) private {
-        uint256 index = _mintProposalIndexById[proposalId];
+        uint256 index = _mintProposalIndexOf(proposalId);
 
         MintProposal memory proposal = _mintProposals[index];
         uint256 lastIndex = _mintProposals.length - 1;
         if (index != lastIndex) {
             _mintProposals[index] = _mintProposals[lastIndex];
-            _mintProposalIndexById[_mintProposals[index].id] = index;
+            _mintProposalIndexById[_mintProposals[index].id] = index + 1;
         }
         _mintProposals.pop();
         delete _mintProposalIndexById[proposalId];
 
         emit MintProposalRemoved(proposal.owner, proposalId);
+    }
+
+    /// @dev Resolves a mint proposal id to its array index, reverting if none exists.
+    function _mintProposalIndexOf(uint256 proposalId) private view returns (uint256) {
+        uint256 stored = _mintProposalIndexById[proposalId];
+        if (stored == 0) {
+            revert ProposalNotFound(proposalId);
+        }
+        return stored - 1;
+    }
+
+    /// @dev Resolves an image proposal id to its array index, reverting if none exists.
+    function _imageProposalIndexOf(uint256 proposalId) private view returns (uint256) {
+        uint256 stored = _addOrUpdateAgentImageProposalIndexById[proposalId];
+        if (stored == 0) {
+            revert ProposalNotFound(proposalId);
+        }
+        return stored - 1;
     }
 
     /// @dev Returns true if `account` owns the agent NFT or is one of its evm addresses.

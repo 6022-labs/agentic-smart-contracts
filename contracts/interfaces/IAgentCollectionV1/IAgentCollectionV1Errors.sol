@@ -48,4 +48,8 @@ interface IAgentCollectionV1Errors {
     /// @dev Error when the caller is not a moderator but moderators are set.
     /// @param sender The address that attempted the action.
     error NotModerator(address sender);
+
+    /// @dev Error when no pending proposal exists for the given id.
+    /// @param proposalId The proposal id that was not found.
+    error ProposalNotFound(uint256 proposalId);
 }

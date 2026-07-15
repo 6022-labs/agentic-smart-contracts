@@ -97,11 +97,60 @@ describe("WhenMintingFromProposal", function () {
   });
 
   describe("Given proposal does not exist", function () {
-    it("Should revert", async function () {
-      const length = await _collection.mintProposalsLength();
+    it("Should revert with 'ProposalNotFound' when no proposals exist", async function () {
+      await expect(_collection.connect(_owner).mintFromProposal(1))
+        .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+        .withArgs(1);
+    });
+
+    it("Should revert with 'ProposalNotFound' for a bogus id while a live proposal exists (not mint index 0)", async function () {
+      await createMintProposal(
+        DEFAULT_NAME,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
+
+      const lengthBefore = await _collection.mintProposalsLength();
+
+      // Bogus id must revert, NOT silently mint the proposal at index 0.
+      await expect(_collection.connect(_owner).mintFromProposal(9999))
+        .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+        .withArgs(9999);
+      // Id 0 is never a valid proposal id (ids start at 1).
+      await expect(_collection.connect(_owner).mintFromProposal(0))
+        .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+        .withArgs(0);
+
+      // The live proposal is untouched.
+      expect(await _collection.mintProposalsLength()).to.eq(lengthBefore);
+    });
+
+    it("Should revert with 'ProposalNotFound' when re-applying an already-consumed id", async function () {
+      await createMintProposal(
+        DEFAULT_NAME_1,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
+      await createMintProposal(
+        DEFAULT_NAME_2,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
+
+      // Consume the first proposal; its swap-and-pop moves NAME_2 into index 0.
+      const { id: firstProposalId } = await _collection.mintProposal(0);
+      await _collection.connect(_owner).mintFromProposal(firstProposalId);
+
+      // Re-applying the consumed id must revert, NOT mint whatever now sits at index 0.
       await expect(
-        _collection.connect(_owner).mintFromProposal(length + BigInt(1)),
-      ).to.be.reverted;
+        _collection.connect(_owner).mintFromProposal(firstProposalId),
+      )
+        .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+        .withArgs(firstProposalId);
+
+      // The surviving NAME_2 proposal is still pending and still applicable by its own id.
+      expect(await _collection.mintProposalsLength()).to.eq(1n);
+      expect((await _collection.mintProposal(0)).name).to.equal(DEFAULT_NAME_2);
     });
   });
 
@@ -118,12 +167,15 @@ describe("WhenMintingFromProposal", function () {
         _otherAccount.address,
       );
 
-      const { id: proposalId } = await _collection.mintProposal(0);
+      const { id: firstProposalId } = await _collection.mintProposal(0);
+      const { id: secondProposalId } = await _collection.mintProposal(1);
       const tokenId = await _collection.nextTokenId();
 
-      await _collection.connect(_owner).mintFromProposal(proposalId);
+      await _collection.connect(_owner).mintFromProposal(firstProposalId);
 
-      await expect(_collection.connect(_owner).mintFromProposal(proposalId))
+      await expect(
+        _collection.connect(_owner).mintFromProposal(secondProposalId),
+      )
         .to.be.revertedWithCustomError(_collection, "UsedName")
         .withArgs(DEFAULT_NAME, tokenId);
     });
@@ -144,12 +196,15 @@ describe("WhenMintingFromProposal", function () {
         _otherAccount.address,
       );
 
-      const { id: proposalId } = await _collection.mintProposal(0);
+      const { id: firstProposalId } = await _collection.mintProposal(0);
+      const { id: secondProposalId } = await _collection.mintProposal(1);
       const tokenId = await _collection.nextTokenId();
 
-      await _collection.connect(_owner).mintFromProposal(proposalId);
+      await _collection.connect(_owner).mintFromProposal(firstProposalId);
 
-      await expect(_collection.connect(_owner).mintFromProposal(proposalId))
+      await expect(
+        _collection.connect(_owner).mintFromProposal(secondProposalId),
+      )
         .to.be.revertedWithCustomError(_collection, "UsedAgentAddress")
         .withArgs("evm", wallet.toLowerCase(), tokenId);
     });
