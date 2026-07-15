@@ -74,33 +74,64 @@ contract AgentCollectionsDescriptor is
             );
     }
 
-    /// @dev Escape a string for safe inclusion inside a JSON string literal by
-    ///      prefixing every backslash and double-quote with a backslash. Applied
-    ///      to all dynamic values (name, description, image URL) so an
-    ///      attacker- or moderator-controlled value cannot break out of the
-    ///      metadata JSON.
+    /// @dev Escape a string for safe inclusion inside a JSON string literal:
+    ///      backslash-escape `"` and `\`, use short escapes for `\b \t \n \f \r`,
+    ///      and `\u00XX` for any other control character < 0x20 (RFC 8259).
+    ///      Applied to all dynamic values (name, description, image URL) so an
+    ///      attacker- or moderator-controlled value cannot break out of — or
+    ///      produce invalid — the metadata JSON.
     function _escapeJSON(
         string memory value
     ) internal pure returns (string memory) {
         bytes memory valueBytes = bytes(value);
         uint256 extraCount = 0;
         for (uint256 i = 0; i < valueBytes.length; i++) {
-            if (valueBytes[i] == '"' || valueBytes[i] == "\\") {
-                extraCount++;
+            uint8 c = uint8(valueBytes[i]);
+            if (c == 0x22 || c == 0x5c) {
+                extraCount += 1;
+            } else if (c == 0x08 || c == 0x09 || c == 0x0a || c == 0x0c || c == 0x0d) {
+                extraCount += 1;
+            } else if (c < 0x20) {
+                extraCount += 5;
             }
         }
         if (extraCount == 0) {
             return value;
         }
 
+        bytes memory hexDigits = "0123456789abcdef";
         bytes memory escapedBytes = new bytes(valueBytes.length + extraCount);
         uint256 index;
         for (uint256 i = 0; i < valueBytes.length; i++) {
-            bytes1 char = valueBytes[i];
-            if (char == '"' || char == "\\") {
+            uint8 c = uint8(valueBytes[i]);
+            if (c == 0x22 || c == 0x5c) {
                 escapedBytes[index++] = "\\";
+                escapedBytes[index++] = valueBytes[i];
+            } else if (c == 0x08) {
+                escapedBytes[index++] = "\\";
+                escapedBytes[index++] = "b";
+            } else if (c == 0x09) {
+                escapedBytes[index++] = "\\";
+                escapedBytes[index++] = "t";
+            } else if (c == 0x0a) {
+                escapedBytes[index++] = "\\";
+                escapedBytes[index++] = "n";
+            } else if (c == 0x0c) {
+                escapedBytes[index++] = "\\";
+                escapedBytes[index++] = "f";
+            } else if (c == 0x0d) {
+                escapedBytes[index++] = "\\";
+                escapedBytes[index++] = "r";
+            } else if (c < 0x20) {
+                escapedBytes[index++] = "\\";
+                escapedBytes[index++] = "u";
+                escapedBytes[index++] = "0";
+                escapedBytes[index++] = "0";
+                escapedBytes[index++] = hexDigits[c >> 4];
+                escapedBytes[index++] = hexDigits[c & 0x0f];
+            } else {
+                escapedBytes[index++] = valueBytes[i];
             }
-            escapedBytes[index++] = char;
         }
         return string(escapedBytes);
     }
