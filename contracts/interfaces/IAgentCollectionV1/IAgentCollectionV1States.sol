@@ -30,6 +30,12 @@ interface IAgentCollectionV1States is IAgentCollectionStates {
     /// @param index The index of the attribute.
     function attributeOfByIndex(uint256 tokenId, uint256 index) external view returns (KeyValue memory);
 
+    /// @dev Get the value of a specific attribute of an agent by its key, or the
+    ///      empty string if unset.
+    /// @param tokenId The token identifier.
+    /// @param key The attribute key.
+    function attributeOfByKey(uint256 tokenId, string memory key) external view returns (string memory);
+
     /// @dev Get the token ID associated to the agent name.
     /// @param name The name of the agent.
     function nameToTokenId(string memory name) external view returns (uint256);

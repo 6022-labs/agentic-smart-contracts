@@ -47,7 +47,6 @@ describe("WhenGettingTokenUri", function () {
   describe("Given token id exists", function () {
     let _tokenId: bigint;
     let _name: string = "test-agent";
-    let _role: string = "facilitator";
     let _images = [
       {
         key: "default",
@@ -62,7 +61,6 @@ describe("WhenGettingTokenUri", function () {
       await proposeAndMint(_collection, _owner, {
         to: _owner.address,
         addresses: evmAddresses(..._wallets),
-        role: _role,
         name: _name,
         images: _images,
       });

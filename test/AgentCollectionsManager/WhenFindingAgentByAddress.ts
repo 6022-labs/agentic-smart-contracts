@@ -20,7 +20,10 @@ const DEFAULT_IMAGES = [
     value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
   },
 ];
-const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
+const DEFAULT_ATTRIBUTES = [
+  { key: "role", value: "facilitator" },
+  { key: "mission", value: "random mission" },
+];
 const NO_CLONE = { isSet: false, value: 0n };
 const BTC_VALUE = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4";
 
@@ -55,7 +58,6 @@ describe("WhenFindingAgentByAddress", function () {
         .connect(_owner)
         .mint(
           _owner.address,
-          "facilitator",
           "alpha-agent",
           evmAddresses(wallet),
           DEFAULT_IMAGES,
@@ -90,7 +92,6 @@ describe("WhenFindingAgentByAddress", function () {
         .connect(_owner)
         .mint(
           _owner.address,
-          "facilitator",
           "beta-agent",
           evmAddresses(wallet),
           DEFAULT_IMAGES,
@@ -125,7 +126,6 @@ describe("WhenFindingAgentByAddress", function () {
         .connect(_owner)
         .mint(
           _owner.address,
-          "facilitator",
           "alpha-agent",
           [
             ...evmAddresses(generateRandomAddress()),

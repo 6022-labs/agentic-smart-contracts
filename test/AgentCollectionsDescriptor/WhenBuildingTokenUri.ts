@@ -93,7 +93,6 @@ describe("WhenBuildingTokenUri", function () {
   describe("Given token id exists", function () {
     let _tokenId: bigint;
     const _name = "agent";
-    const _role = "facilitator";
     const _images = [
       {
         key: "default",
@@ -107,7 +106,6 @@ describe("WhenBuildingTokenUri", function () {
       await proposeAndMint(_collection, _owner, {
         to: _owner.address,
         name: _name,
-        role: _role,
         images: _images,
       });
     });

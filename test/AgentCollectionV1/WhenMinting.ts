@@ -25,7 +25,10 @@ describe("WhenMinting", function () {
       value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
     },
   ];
-  const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
+  const DEFAULT_ATTRIBUTES = [
+    { key: "role", value: DEFAULT_ROLE },
+    { key: "mission", value: "random mission" },
+  ];
   const DEFAULT_NAME = "test-agent";
   const INVALID_NAME = "Invalid_Name";
 
@@ -38,7 +41,6 @@ describe("WhenMinting", function () {
   function mint(
     args: {
       to: string;
-      role?: string;
       name?: string;
       addresses: AgentAddressStruct[];
       images?: { key: string; value: string }[];
@@ -50,7 +52,6 @@ describe("WhenMinting", function () {
     const collection = caller ? _collection.connect(caller) : _collection;
     return collection.mint(
       args.to,
-      args.role ?? DEFAULT_ROLE,
       args.name ?? DEFAULT_NAME,
       args.addresses,
       args.images ?? DEFAULT_IMAGES,
@@ -318,6 +319,69 @@ describe("WhenMinting", function () {
       });
     });
 
+    describe("Given the role attribute is missing", function () {
+      it("Should revert with 'MissingRequiredKey'", async function () {
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [{ key: "mission", value: "random mission" }],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "MissingRequiredKey")
+          .withArgs("role");
+      });
+    });
+
+    describe("Given the role attribute is empty", function () {
+      it("Should revert with 'MissingRequiredKey'", async function () {
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [{ key: "role", value: "" }],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "MissingRequiredKey")
+          .withArgs("role");
+      });
+    });
+
+    describe("Given the attributes list repeats a key", function () {
+      it("Should revert with 'DuplicateKey'", async function () {
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [
+              { key: "role", value: DEFAULT_ROLE },
+              { key: "mission", value: "a" },
+              { key: "mission", value: "b" },
+            ],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "DuplicateKey")
+          .withArgs("mission");
+      });
+    });
+
+    describe("Given the attributes list repeats the mandatory key", function () {
+      it("Should revert with 'DuplicateKey'", async function () {
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [
+              { key: "role", value: "" },
+              { key: "role", value: DEFAULT_ROLE },
+            ],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "DuplicateKey")
+          .withArgs("role");
+      });
+    });
+
     describe("Given valid mint parameters", function () {
       it("Should allow anybody to mint (cloneOf set)", async function () {
         let nextTokenId = await _collection.nextTokenId();
@@ -450,6 +514,51 @@ describe("WhenMinting", function () {
         }
       });
 
+      it("Should assign attributes to the token", async function () {
+        const nextTokenId = await _collection.nextTokenId();
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
+
+        const attributeCount = await _collection.attributesCountOf(nextTokenId);
+        expect(attributeCount).to.equal(DEFAULT_ATTRIBUTES.length);
+        for (let i = 0; i < attributeCount; i++) {
+          const attributeOf = await _collection.attributeOfByIndex(
+            nextTokenId,
+            i,
+          );
+          expect(attributeOf[0]).to.be.equal(DEFAULT_ATTRIBUTES[i].key);
+          expect(attributeOf[1]).to.be.equal(DEFAULT_ATTRIBUTES[i].value);
+        }
+      });
+
+      it("Should return attribute values from 'attributeOfByKey'", async function () {
+        const nextTokenId = await _collection.nextTokenId();
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
+
+        for (const attribute of DEFAULT_ATTRIBUTES) {
+          expect(
+            await _collection.attributeOfByKey(nextTokenId, attribute.key),
+          ).to.equal(attribute.value);
+        }
+      });
+
+      it("Should return an empty string from 'attributeOfByKey' for an unset key", async function () {
+        const nextTokenId = await _collection.nextTokenId();
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
+
+        expect(
+          await _collection.attributeOfByKey(nextTokenId, "does-not-exist"),
+        ).to.equal("");
+      });
+
       it("Should assign creator (the caller) to the token", async function () {
         const nextTokenId = await _collection.nextTokenId();
         await mint(
@@ -470,7 +579,9 @@ describe("WhenMinting", function () {
           to: _otherAccount.address,
           addresses: evmAddresses(generateRandomAddress()),
         });
-        expect(await _collection.roleOf(nextTokenId)).to.equal(DEFAULT_ROLE);
+        expect(
+          await _collection.attributeOfByKey(nextTokenId, "role"),
+        ).to.equal(DEFAULT_ROLE);
       });
 
       it("Should assign token id to name", async function () {

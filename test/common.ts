@@ -28,7 +28,6 @@ export async function proposeAndMint(
   params: {
     to: string;
     addresses?: AgentAddressStruct[];
-    role?: string;
     name?: string;
     images?: { key: string; value: string }[];
     attributes?: { key: string; value: string }[];
@@ -37,7 +36,6 @@ export async function proposeAndMint(
 ) {
   const {
     addresses = [{ addressType: "evm", value: generateRandomAddress() }],
-    role = "facilitator",
     name = "test-agent",
     images = [
       {
@@ -45,7 +43,10 @@ export async function proposeAndMint(
         value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
       },
     ],
-    attributes = [{ key: "mission", value: "random mission" }],
+    attributes = [
+      { key: "role", value: "facilitator" },
+      { key: "mission", value: "random mission" },
+    ],
     cloneOf = { isSet: false, value: 0n },
   } = params;
 
@@ -53,7 +54,6 @@ export async function proposeAndMint(
     .connect(minter)
     .createMintProposal(
       params.to,
-      role,
       name,
       addresses,
       images,

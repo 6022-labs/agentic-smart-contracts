@@ -6,13 +6,16 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
-import {IAgentCollectionStates} from "./interfaces/IAgentCollection/IAgentCollectionStates.sol";
-import {IAgentCollectionsManagerStates} from "./interfaces/IAgentCollectionsManager/IAgentCollectionsManagerStates.sol";
-import {IAgentEnsRegistry} from "./interfaces/IAgentEnsRegistry/IAgentEnsRegistry.sol";
-import {UriUtils} from "./libraries/UriUtils.sol";
 import {AgentRef} from "./types/AgentRef.sol";
 import {KeyValue} from "./types/KeyValue.sol";
 import {AgentAddress, EVM_TYPE} from "./types/AgentAddress.sol";
+
+import {UriUtils} from "./libraries/UriUtils.sol";
+import {KeyValueLib} from "./libraries/KeyValueLib.sol";
+
+import {IAgentEnsRegistry} from "./interfaces/IAgentEnsRegistry/IAgentEnsRegistry.sol";
+import {IAgentCollectionStates} from "./interfaces/IAgentCollection/IAgentCollectionStates.sol";
+import {IAgentCollectionsManagerStates} from "./interfaces/IAgentCollectionsManager/IAgentCollectionsManagerStates.sol";
 
 /// @title Agent ENS registry
 /// @dev Source of truth for agent text records on this chain, read by an
@@ -20,11 +23,12 @@ import {AgentAddress, EVM_TYPE} from "./types/AgentAddress.sol";
 ///      `avatar` and `addr` are derived from the agent's collection on read, so
 ///      they cannot drift.
 contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
+    using KeyValueLib for KeyValue[];
+
     string private constant URL_KEY = "url";
     string private constant AVATAR_KEY = "avatar";
     string private constant DEFAULT_IMAGE_KEY = "default";
 
-    bytes32 private constant URL_HASH = keccak256(bytes(URL_KEY));
     bytes32 private constant AVATAR_HASH = keccak256(bytes(AVATAR_KEY));
     bytes32 private constant DEFAULT_IMAGE_HASH = keccak256(bytes(DEFAULT_IMAGE_KEY));
 
@@ -60,8 +64,8 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
     ) external onlyAgentController(collection, tokenId) {
         (bytes32 node, string memory label) = _resolveAgentNode(collection, tokenId);
         if (provisioned[node]) revert AlreadyProvisioned(collection, tokenId);
-        _requireNoDuplicateKeys(records);
-        _requireMandatoryKeys(records);
+        records.requireNoDuplicateKeys();
+        records.requireMandatoryKey(URL_KEY);
 
         provisioned[node] = true;
         agentRef[node] = AgentRef(collection, tokenId);
@@ -84,7 +88,7 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
         if (!provisioned[node]) revert NotProvisioned(collection, tokenId);
 
         _checkReservedKey(key);
-        _requireMandatoryKey(key, value);
+        KeyValueLib.requireNotClearing(key, value, URL_KEY);
 
         _texts[node][key] = value;
         emit AgentTextUpdated(collection, tokenId, key, value);
@@ -139,35 +143,6 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
         );
 
         node = keccak256(abi.encodePacked(collectionNode, keccak256(bytes(label))));
-    }
-
-    /// @dev Reverts if any key appears twice; keeps `initAgentTexts` writes unambiguous.
-    function _requireNoDuplicateKeys(KeyValue[] calldata records) internal pure {
-        for (uint256 i = 0; i < records.length; i++) {
-            bytes32 keyHash = keccak256(bytes(records[i].key));
-            for (uint256 j = 0; j < i; j++) {
-                if (keccak256(bytes(records[j].key)) == keyHash) {
-                    revert DuplicateKey(records[i].key);
-                }
-            }
-        }
-    }
-
-    function _requireMandatoryKeys(KeyValue[] calldata records) internal pure {
-        // Keys are unique here (see _requireNoDuplicateKeys), so the url record is the effective one.
-        for (uint256 i = 0; i < records.length; i++) {
-            if (keccak256(bytes(records[i].key)) == URL_HASH) {
-                if (bytes(records[i].value).length == 0) revert MissingRequiredKey(URL_KEY);
-                return;
-            }
-        }
-
-        revert MissingRequiredKey(URL_KEY);
-    }
-
-    function _requireMandatoryKey(string memory key, string memory value) internal pure {
-        if (bytes(value).length > 0) return;
-        if (keccak256(bytes(key)) == URL_HASH) revert MissingRequiredKey(URL_KEY);
     }
 
     function _checkReservedKey(string memory key) internal pure {

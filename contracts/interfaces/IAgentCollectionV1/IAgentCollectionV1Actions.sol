@@ -15,6 +15,7 @@ interface IAgentCollectionV1Actions {
     ) external;
 
     /// @dev Add the attribute key/value pair to a token. If the key already exists, its value is updated.
+    ///      Clearing a mandatory key to an empty value reverts.
     /// @param tokenId The token whose attribute key is updated.
     /// @param key The attribute key to update.
     /// @param value The new value for the attribute key.
@@ -40,15 +41,13 @@ interface IAgentCollectionV1Actions {
 
     /// @dev Propose minting of a new agent token. (used if moderators setup)
     /// @param to The future owner of the token.
-    /// @param role The agent role.
     /// @param name The Name of the agent.
     /// @param addresses Typed addresses controlled by the agent (at least one evm).
     /// @param images A set of images describing the agent.
-    /// @param attributes A set of attributes describing the agent.
+    /// @param attributes A set of attributes describing the agent (unique keys; must satisfy the mandatory-key requirements).
     /// @param cloneOf The ID of the agent to clone (if any).
     function createMintProposal(
         address to,
-        string memory role,
         string memory name,
         AgentAddress[] memory addresses,
         KeyValue[] memory images,
@@ -59,15 +58,13 @@ interface IAgentCollectionV1Actions {
     /// @dev Mint a new agent token. (allowed when no moderators are setup or
     /// the caller is a moderator)
     /// @param to The future owner of the token.
-    /// @param role The agent role.
     /// @param name The Name of the agent.
     /// @param addresses Typed addresses controlled by the agent (at least one evm).
     /// @param images A set of images describing the agent.
-    /// @param attributes A set of attributes describing the agent.
+    /// @param attributes A set of attributes describing the agent (unique keys; must satisfy the mandatory-key requirements).
     /// @param cloneOf The ID of the agent to clone (if any).
     function mint(
         address to,
-        string memory role,
         string memory name,
         AgentAddress[] memory addresses,
         KeyValue[] memory images,

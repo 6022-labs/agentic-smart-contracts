@@ -139,6 +139,72 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
     });
   });
 
+  describe("Given the mandatory attribute is cleared to empty", function () {
+    it("Should revert with 'MissingRequiredKey'", async function () {
+      const tokenId = await mint(await _owner.getAddress());
+
+      await expect(
+        _collection
+          .connect(_owner)
+          .addOrUpdateAgentAttribute(tokenId, "role", ""),
+      )
+        .to.be.revertedWithCustomError(_collection, "MissingRequiredKey")
+        .withArgs("role");
+    });
+  });
+
+  describe("Given a non-mandatory attribute is cleared to empty", function () {
+    it("Should update the attribute", async function () {
+      const tokenId = await mint(await _owner.getAddress());
+
+      await _collection
+        .connect(_owner)
+        .addOrUpdateAgentAttribute(tokenId, "mission", "");
+
+      const information = await _collection.informationOf(tokenId);
+      const attribute = information.attributes.find((a) => a.key === "mission");
+      expect(attribute?.value).to.equal("");
+    });
+
+    it("Should emit 'AgentAttributeUpdated' event", async function () {
+      const tokenId = await mint(await _owner.getAddress());
+
+      await expect(
+        await _collection
+          .connect(_owner)
+          .addOrUpdateAgentAttribute(tokenId, "mission", ""),
+      )
+        .to.emit(_collection, "AgentAttributeUpdated")
+        .withArgs(tokenId, "mission", "random mission", "");
+    });
+  });
+
+  describe("Given the mandatory attribute is updated to a new non-empty value", function () {
+    it("Should update the attribute", async function () {
+      const tokenId = await mint(await _owner.getAddress());
+
+      await _collection
+        .connect(_owner)
+        .addOrUpdateAgentAttribute(tokenId, "role", "new-role");
+
+      expect(await _collection.attributeOfByKey(tokenId, "role")).to.equal(
+        "new-role",
+      );
+    });
+
+    it("Should emit 'AgentAttributeUpdated' event", async function () {
+      const tokenId = await mint(await _owner.getAddress());
+
+      await expect(
+        _collection
+          .connect(_owner)
+          .addOrUpdateAgentAttribute(tokenId, "role", "new-role"),
+      )
+        .to.emit(_collection, "AgentAttributeUpdated")
+        .withArgs(tokenId, "role", "facilitator", "new-role");
+    });
+  });
+
   describe("Given attribute key is already defined", function () {
     const ATTRIBUTE_KEY = "existing-key";
     const EXISTING_ATTRIBUTE_VALUE = "existing-value";

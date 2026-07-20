@@ -22,7 +22,6 @@ import {IAgentCollectionsDescriptorActions} from "./interfaces/IAgentCollections
 struct MintProposal {
     uint256 id;
     string name;
-    string role;
     address owner;
     address creator;
     KeyValue[] images;
@@ -49,6 +48,7 @@ contract AgentCollectionV1 is
     using AgentAddressLib for AgentAddress[];
 
     bytes32 public constant MODERATOR_ROLE = keccak256("MODERATOR_ROLE");
+    string private constant ROLE_KEY = "role";
 
     mapping(string => uint256) private _nameToTokenId;
     mapping(string => mapping(string => uint256)) private _addressToTokenId;
@@ -240,14 +240,6 @@ contract AgentCollectionV1 is
         return _agentInformationOf[tokenId].creator;
     }
 
-    /// @dev Get the role of an agent
-    /// @param tokenId The token identifier.
-    function roleOf(uint256 tokenId) external view returns (string memory) {
-        _requireMinted(tokenId);
-
-        return _agentInformationOf[tokenId].role;
-    }
-
     /// @dev Get the name of an agent
     /// @param tokenId The token identifier.
     function nameOf(uint256 tokenId) external view returns (string memory) {
@@ -307,6 +299,16 @@ contract AgentCollectionV1 is
         return _agentInformationOf[tokenId].attributes[index];
     }
 
+    /// @dev Get the value of a specific attribute of an agent by its key, or the
+    ///      empty string if unset.
+    /// @param tokenId The token identifier.
+    /// @param key The attribute key.
+    function attributeOfByKey(uint256 tokenId, string memory key) external view returns (string memory) {
+        _requireMinted(tokenId);
+
+        return _agentInformationOf[tokenId].attributes.get(key);
+    }
+
     /// @dev Get the token ID associated to the agent name.
     /// @param name The name of the agent.
     function nameToTokenId(string memory name) external view returns (uint256) {
@@ -357,6 +359,8 @@ contract AgentCollectionV1 is
         string memory key,
         string memory value
     ) external onlyAgentController(tokenId) {
+        KeyValueLib.requireNotClearing(key, value, ROLE_KEY);
+
         AgentInformation storage agentInfo = _agentInformationOf[tokenId];
 
         string memory oldValue = agentInfo.attributes.addOrUpdate(key, value);
@@ -529,15 +533,13 @@ contract AgentCollectionV1 is
 
     /// @dev Propose minting of a new agent token. (used if moderators setup)
     /// @param to The future owner of the token.
-    /// @param role The agent role.
     /// @param name The Name of the agent.
     /// @param addresses Typed addresses controlled by the agent (at least one evm).
     /// @param images A set of images describing the agent.
-    /// @param attributes A set of attributes describing the agent.
+    /// @param attributes A set of attributes describing the agent (unique keys; must satisfy the mandatory-key requirements).
     /// @param cloneOf The ID of the agent to clone (if any).
     function createMintProposal(
         address to,
-        string memory role,
         string memory name,
         AgentAddress[] memory addresses,
         KeyValue[] memory images,
@@ -545,12 +547,11 @@ contract AgentCollectionV1 is
         NullableUint256 memory cloneOf
     ) external onlyWhenModeratorsExist {
         AgentAddress[] memory canonical = addresses.canonicalizeAndRequireEvm();
-        _validateMintInputs(to, name, canonical, images, cloneOf);
+        _validateMintInputs(to, name, canonical, images, attributes, cloneOf);
 
         _mintProposals.push(MintProposal({
             id: _nextProposalId,
             name: name,
-            role: role,
             owner: to,
             images: images,
             cloneOf: cloneOf,
@@ -569,15 +570,13 @@ contract AgentCollectionV1 is
     /// @dev Mint a new agent token. (allowed when no moderators are setup or
     /// the caller is a moderator)
     /// @param to The future owner of the token.
-    /// @param role The agent role.
     /// @param name The Name of the agent.
     /// @param addresses Typed addresses controlled by the agent (at least one evm).
     /// @param images A set of images describing the agent.
-    /// @param attributes A set of attributes describing the agent.
+    /// @param attributes A set of attributes describing the agent (unique keys; must satisfy the mandatory-key requirements).
     /// @param cloneOf The ID of the agent to clone (if any).
     function mint(
         address to,
-        string memory role,
         string memory name,
         AgentAddress[] memory addresses,
         KeyValue[] memory images,
@@ -585,8 +584,8 @@ contract AgentCollectionV1 is
         NullableUint256 memory cloneOf
     ) external onlyWhenNoModeratorsOrSenderIsModerator {
         AgentAddress[] memory canonical = addresses.canonicalizeAndRequireEvm();
-        _validateMintInputs(to, name, canonical, images, cloneOf);
-        _mintAgent(to, _msgSender(), role, name, canonical, images, attributes, cloneOf);
+        _validateMintInputs(to, name, canonical, images, attributes, cloneOf);
+        _mintAgent(to, _msgSender(), name, canonical, images, attributes, cloneOf);
     }
 
     /// @dev Mint an agent from an approved proposal.
@@ -602,7 +601,6 @@ contract AgentCollectionV1 is
         _mintAgent(
             proposalInfo.owner,
             proposalInfo.creator,
-            proposalInfo.role,
             proposalInfo.name,
             proposalInfo.addresses,
             proposalInfo.images,
@@ -618,6 +616,7 @@ contract AgentCollectionV1 is
         string memory name,
         AgentAddress[] memory addresses,
         KeyValue[] memory images,
+        KeyValue[] memory attributes,
         NullableUint256 memory cloneOf
     ) internal view {
         if (to == address(0)) {
@@ -635,13 +634,15 @@ contract AgentCollectionV1 is
         if (cloneOf.isSet && (cloneOf.value == 0 || cloneOf.value >= nextTokenId)) {
             revert InvalidCloneOf(cloneOf.value);
         }
+
+        attributes.requireNoDuplicateKeys();
+        attributes.requireMandatoryKey(ROLE_KEY);
     }
 
     /// @dev Internal function to mint an agent NFT and store its information (addresses must already be canonical).
     function _mintAgent(
         address to,
         address creator,
-        string memory role,
         string memory name,
         AgentAddress[] memory addresses,
         KeyValue[] memory images,
@@ -652,7 +653,6 @@ contract AgentCollectionV1 is
 
         _agentInformationOf[tokenId] = AgentInformation({
             name: name,
-            role: role,
             images: images,
             addresses: addresses,
             creator: creator,

@@ -21,7 +21,10 @@ describe("WhenRefusingMintProposals", function () {
       value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
     },
   ];
-  const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
+  const DEFAULT_ATTRIBUTES = [
+    { key: "role", value: DEFAULT_ROLE },
+    { key: "mission", value: "random mission" },
+  ];
 
   let _collection: AgentCollectionV1;
   let _moderator: HardhatEthersSigner;
@@ -54,7 +57,6 @@ describe("WhenRefusingMintProposals", function () {
   async function createMintProposal(name: string) {
     await _collection.createMintProposal(
       _otherAccount.address,
-      DEFAULT_ROLE,
       name,
       evmAddresses(generateRandomAddress()),
       DEFAULT_IMAGES,

@@ -25,7 +25,10 @@ describe("WhenCreatingMintingProposal", function () {
       value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
     },
   ];
-  const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
+  const DEFAULT_ATTRIBUTES = [
+    { key: "role", value: DEFAULT_ROLE },
+    { key: "mission", value: "random mission" },
+  ];
   const DEFAULT_NAME = "test-agent";
   const INVALID_NAME = "Invalid_Name";
 
@@ -38,7 +41,6 @@ describe("WhenCreatingMintingProposal", function () {
   function createMintProposal(
     args: {
       to: string;
-      role?: string;
       name?: string;
       addresses: AgentAddressStruct[];
       images?: { key: string; value: string }[];
@@ -50,7 +52,6 @@ describe("WhenCreatingMintingProposal", function () {
     const collection = caller ? _collection.connect(caller) : _collection;
     return collection.createMintProposal(
       args.to,
-      args.role ?? DEFAULT_ROLE,
       args.name ?? DEFAULT_NAME,
       args.addresses,
       args.images ?? DEFAULT_IMAGES,
@@ -244,6 +245,69 @@ describe("WhenCreatingMintingProposal", function () {
       });
     });
 
+    describe("Given the role attribute is missing", function () {
+      it("Should revert with 'MissingRequiredKey'", async function () {
+        await expect(
+          createMintProposal({
+            to: _owner.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [{ key: "mission", value: "random mission" }],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "MissingRequiredKey")
+          .withArgs("role");
+      });
+    });
+
+    describe("Given the role attribute is empty", function () {
+      it("Should revert with 'MissingRequiredKey'", async function () {
+        await expect(
+          createMintProposal({
+            to: _owner.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [{ key: "role", value: "" }],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "MissingRequiredKey")
+          .withArgs("role");
+      });
+    });
+
+    describe("Given the attributes list repeats a key", function () {
+      it("Should revert with 'DuplicateKey'", async function () {
+        await expect(
+          createMintProposal({
+            to: _owner.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [
+              { key: "role", value: DEFAULT_ROLE },
+              { key: "mission", value: "a" },
+              { key: "mission", value: "b" },
+            ],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "DuplicateKey")
+          .withArgs("mission");
+      });
+    });
+
+    describe("Given the attributes list repeats the mandatory key", function () {
+      it("Should revert with 'DuplicateKey'", async function () {
+        await expect(
+          createMintProposal({
+            to: _owner.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [
+              { key: "role", value: "" },
+              { key: "role", value: DEFAULT_ROLE },
+            ],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "DuplicateKey")
+          .withArgs("role");
+      });
+    });
+
     describe("Given valid parameters", function () {
       it("Should create the proposal (cloneOf set)", async function () {
         await createMintProposal({
@@ -299,6 +363,21 @@ describe("WhenCreatingMintingProposal", function () {
           ["evm", wallet.toLowerCase()],
           ["btc", btcValue],
         ]);
+      });
+
+      it("Should store attributes verbatim in the proposal", async function () {
+        await createMintProposal({
+          to: _owner.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
+
+        const index = (await _collection.mintProposalsLength()) - BigInt(1);
+        const proposal = await _collection.mintProposal(index);
+        expect(
+          proposal.attributes.map((entry) => [entry.key, entry.value]),
+        ).to.deep.equal(
+          DEFAULT_ATTRIBUTES.map((entry) => [entry.key, entry.value]),
+        );
       });
 
       it("Should allow anybody to create a proposal", async function () {

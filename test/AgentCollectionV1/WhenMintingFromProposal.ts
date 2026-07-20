@@ -25,7 +25,10 @@ describe("WhenMintingFromProposal", function () {
       value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
     },
   ];
-  const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
+  const DEFAULT_ATTRIBUTES = [
+    { key: "role", value: DEFAULT_ROLE },
+    { key: "mission", value: "random mission" },
+  ];
   const DEFAULT_NAME = "test-agent";
   const DEFAULT_NAME_1 = "test-agent-1";
   const DEFAULT_NAME_2 = "test-agent-2";
@@ -41,7 +44,6 @@ describe("WhenMintingFromProposal", function () {
   ) {
     return _collection.createMintProposal(
       to,
-      DEFAULT_ROLE,
       name,
       addresses,
       DEFAULT_IMAGES,
@@ -287,6 +289,23 @@ describe("WhenMintingFromProposal", function () {
       }
     });
 
+    it("Should assign attributes to the token", async function () {
+      const tokenId = await proposeAndMint(_collection, _owner, {
+        to: _otherAccount.address,
+        addresses: evmAddresses(generateRandomAddress()),
+        name: DEFAULT_NAME,
+        attributes: DEFAULT_ATTRIBUTES,
+      });
+
+      const attributeCount = await _collection.attributesCountOf(tokenId);
+      expect(attributeCount).to.equal(DEFAULT_ATTRIBUTES.length);
+      for (let i = 0; i < attributeCount; i++) {
+        const attributeOf = await _collection.attributeOfByIndex(tokenId, i);
+        expect(attributeOf[0]).to.be.equal(DEFAULT_ATTRIBUTES[i].key);
+        expect(attributeOf[1]).to.be.equal(DEFAULT_ATTRIBUTES[i].value);
+      }
+    });
+
     it("Should assign creator (the proposal creator) to the token", async function () {
       await createMintProposal(
         DEFAULT_NAME,
@@ -310,7 +329,9 @@ describe("WhenMintingFromProposal", function () {
         addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
       });
-      expect(await _collection.roleOf(tokenId)).to.equal(DEFAULT_ROLE);
+      expect(await _collection.attributeOfByKey(tokenId, "role")).to.equal(
+        DEFAULT_ROLE,
+      );
     });
 
     it("Should assign token id to name", async function () {
