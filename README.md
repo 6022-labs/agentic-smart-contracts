@@ -34,3 +34,7 @@ npx hardhat add-authorized-token-for-creation --collection-creator-address <COLL
 
 npx hardhat add-signer-to-manager --collections-manager-address <COLLECTION_MANAGER_ADDRESS> --signer <SIGNER_ADDRESS> --network <MY_NETWORK>
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
