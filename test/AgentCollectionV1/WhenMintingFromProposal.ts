@@ -1,20 +1,22 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
+import {
+  AgentAddressStruct,
+  NullableUint256Struct,
+} from "../../typechain-types/contracts/AgentCollectionV1";
+import { ethers } from "hardhat";
 import {
   proposeAndMint,
-  signMintRequest,
   generateRandomAddress,
+  evmAddresses,
   deployCollectionWithCreator,
 } from "../common";
 
 describe("WhenMintingFromProposal", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
 
-  // Common constants to avoid repetition
   const DEFAULT_ROLE = "facilitator";
   const DEFAULT_CLONE_OF: NullableUint256Struct = { isSet: false, value: 0n };
   const DEFAULT_IMAGES = [
@@ -23,686 +25,432 @@ describe("WhenMintingFromProposal", function () {
       value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
     },
   ];
-  const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
+  const DEFAULT_ATTRIBUTES = [
+    { key: "role", value: DEFAULT_ROLE },
+    { key: "mission", value: "random mission" },
+  ];
   const DEFAULT_NAME = "test-agent";
   const DEFAULT_NAME_1 = "test-agent-1";
   const DEFAULT_NAME_2 = "test-agent-2";
-  const NONCE_1 = "1";
-  const NONCE_2 = "2";
 
   let _collection: AgentCollectionV1;
   let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
+
+  function createMintProposal(
+    name: string,
+    addresses: AgentAddressStruct[],
+    to: string,
+  ) {
+    return _collection.createMintProposal(
+      to,
+      name,
+      addresses,
+      DEFAULT_IMAGES,
+      DEFAULT_ATTRIBUTES,
+      DEFAULT_CLONE_OF,
+    );
+  }
 
   async function deployAgentCollection() {
     await reset();
 
-    const [owner, signer, otherAccount] = await ethers.getSigners();
+    const [owner, otherAccount] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator: owner,
-        ipfsGateway,
-      });
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator: owner,
+      ipfsGateway,
+    });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
-
-    return { collection, owner, signer, otherAccount };
+    return { collection, owner, otherAccount };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, otherAccount } = await loadFixture(
-      deployAgentCollection
+    const { collection, owner, otherAccount } = await loadFixture(
+      deployAgentCollection,
     );
 
     _collection = collection;
     _owner = owner;
-    _signer = signer;
     _otherAccount = otherAccount;
   });
 
-  describe("Given signer is not moderator", function () {
+  describe("Given caller is not a moderator", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' error", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const signature = await signMintRequest(_signer, _collection, {
-        to: _otherAccount.address,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME,
-        wallets,
-        images: DEFAULT_IMAGES,
-        attributes: DEFAULT_ATTRIBUTES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
-      });
-
-      await _collection.createMintProposal(
-        _otherAccount.address,
-        _signer.address,
-        DEFAULT_ROLE,
+      await createMintProposal(
         DEFAULT_NAME,
-        wallets,
-        DEFAULT_IMAGES,
-        DEFAULT_ATTRIBUTES,
-        DEFAULT_CLONE_OF,
-        ethers.id(NONCE_1),
-        signature
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
 
-      const mintProposalsLength = await _collection.mintProposalsLength();
+      const length = await _collection.mintProposalsLength();
       const { id: proposalId } = await _collection.mintProposal(
-        mintProposalsLength - BigInt(1)
+        length - BigInt(1),
       );
 
       await expect(
-        _collection.connect(_otherAccount).mintFromProposal(proposalId)
+        _collection.connect(_otherAccount).mintFromProposal(proposalId),
       ).to.be.revertedWithCustomError(
         _collection,
-        "AccessControlUnauthorizedAccount"
+        "AccessControlUnauthorizedAccount",
       );
     });
   });
 
   describe("Given proposal does not exist", function () {
-    it("Should revert", async function () {
-      const mintProposalsLength = await _collection.mintProposalsLength();
+    it("Should revert with 'ProposalNotFound' when no proposals exist", async function () {
+      await expect(_collection.connect(_owner).mintFromProposal(1))
+        .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+        .withArgs(1);
+    });
 
+    it("Should revert with 'ProposalNotFound' for a bogus id while a live proposal exists (not mint index 0)", async function () {
+      await createMintProposal(
+        DEFAULT_NAME,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
+
+      const lengthBefore = await _collection.mintProposalsLength();
+
+      // Bogus id must revert, NOT silently mint the proposal at index 0.
+      await expect(_collection.connect(_owner).mintFromProposal(9999))
+        .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+        .withArgs(9999);
+      // Id 0 is never a valid proposal id (ids start at 1).
+      await expect(_collection.connect(_owner).mintFromProposal(0))
+        .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+        .withArgs(0);
+
+      // The live proposal is untouched.
+      expect(await _collection.mintProposalsLength()).to.eq(lengthBefore);
+    });
+
+    it("Should revert with 'ProposalNotFound' when re-applying an already-consumed id", async function () {
+      await createMintProposal(
+        DEFAULT_NAME_1,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
+      await createMintProposal(
+        DEFAULT_NAME_2,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
+
+      // Consume the first proposal; its swap-and-pop moves NAME_2 into index 0.
+      const { id: firstProposalId } = await _collection.mintProposal(0);
+      await _collection.connect(_owner).mintFromProposal(firstProposalId);
+
+      // Re-applying the consumed id must revert, NOT mint whatever now sits at index 0.
       await expect(
-        _collection
-          .connect(_owner)
-          .mintFromProposal(mintProposalsLength + BigInt(1))
-      ).to.be.reverted;
+        _collection.connect(_owner).mintFromProposal(firstProposalId),
+      )
+        .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+        .withArgs(firstProposalId);
+
+      // The surviving NAME_2 proposal is still pending and still applicable by its own id.
+      expect(await _collection.mintProposalsLength()).to.eq(1n);
+      expect((await _collection.mintProposal(0)).name).to.equal(DEFAULT_NAME_2);
     });
   });
 
   describe("Given multiple minting proposals share the same name", function () {
     it("Should revert minting the second proposal with 'UsedName' error", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const sig1 = await signMintRequest(_signer, _collection, {
-        to: _otherAccount.address,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME,
-        wallets,
-        images: DEFAULT_IMAGES,
-        attributes: DEFAULT_ATTRIBUTES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
-      });
-
-      await _collection.createMintProposal(
-        _otherAccount.address,
-        _signer.address,
-        DEFAULT_ROLE,
+      await createMintProposal(
         DEFAULT_NAME,
-        wallets,
-        DEFAULT_IMAGES,
-        DEFAULT_ATTRIBUTES,
-        DEFAULT_CLONE_OF,
-        ethers.id(NONCE_1),
-        sig1
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
+      await createMintProposal(
+        DEFAULT_NAME,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
 
-      const sig2 = await signMintRequest(_signer, _collection, {
-        to: _otherAccount.address,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME,
-        wallets,
-        images: DEFAULT_IMAGES,
-        attributes: DEFAULT_ATTRIBUTES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_2,
-      });
-
-      await _collection.createMintProposal(
-        _otherAccount.address,
-        _signer.address,
-        DEFAULT_ROLE,
-        DEFAULT_NAME,
-        wallets,
-        DEFAULT_IMAGES,
-        DEFAULT_ATTRIBUTES,
-        DEFAULT_CLONE_OF,
-        ethers.id(NONCE_2),
-        sig2
-      );
-
-      const { id: proposalId } = await _collection.mintProposal(0);
+      const { id: firstProposalId } = await _collection.mintProposal(0);
+      const { id: secondProposalId } = await _collection.mintProposal(1);
       const tokenId = await _collection.nextTokenId();
 
-      await _collection.connect(_owner).mintFromProposal(proposalId);
+      await _collection.connect(_owner).mintFromProposal(firstProposalId);
 
-      await expect(_collection.connect(_owner).mintFromProposal(proposalId))
+      await expect(
+        _collection.connect(_owner).mintFromProposal(secondProposalId),
+      )
         .to.be.revertedWithCustomError(_collection, "UsedName")
         .withArgs(DEFAULT_NAME, tokenId);
     });
   });
 
-  describe("Given multiple minting proposals share the same wallet", function () {
-    it("Should revert minting the second proposal with 'UsedWallet' error", async function () {
-      const wallets = [generateRandomAddress()];
+  describe("Given multiple minting proposals share the same evm address", function () {
+    it("Should revert minting the second proposal with 'UsedAgentAddress' error", async function () {
+      const wallet = generateRandomAddress();
 
-      const name1 = DEFAULT_NAME + "-1";
-      const name2 = DEFAULT_NAME + "-2";
-
-      const sig1 = await signMintRequest(_signer, _collection, {
-        to: _otherAccount.address,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name: name1,
-        wallets,
-        images: DEFAULT_IMAGES,
-        attributes: DEFAULT_ATTRIBUTES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
-      });
-
-      await _collection.createMintProposal(
+      await createMintProposal(
+        DEFAULT_NAME + "-1",
+        evmAddresses(wallet),
         _otherAccount.address,
-        _signer.address,
-        DEFAULT_ROLE,
-        name1,
-        wallets,
-        DEFAULT_IMAGES,
-        DEFAULT_ATTRIBUTES,
-        DEFAULT_CLONE_OF,
-        ethers.id(NONCE_1),
-        sig1
+      );
+      await createMintProposal(
+        DEFAULT_NAME + "-2",
+        evmAddresses(wallet),
+        _otherAccount.address,
       );
 
-      const sig2 = await signMintRequest(_signer, _collection, {
-        to: _otherAccount.address,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name: name2,
-        wallets,
-        images: DEFAULT_IMAGES,
-        attributes: DEFAULT_ATTRIBUTES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_2,
-      });
-
-      await _collection.createMintProposal(
-        _otherAccount.address,
-        _signer.address,
-        DEFAULT_ROLE,
-        name2,
-        wallets,
-        DEFAULT_IMAGES,
-        DEFAULT_ATTRIBUTES,
-        DEFAULT_CLONE_OF,
-        ethers.id(NONCE_2),
-        sig2
-      );
-
-      const { id: proposalId } = await _collection.mintProposal(0);
+      const { id: firstProposalId } = await _collection.mintProposal(0);
+      const { id: secondProposalId } = await _collection.mintProposal(1);
       const tokenId = await _collection.nextTokenId();
 
-      await _collection.connect(_owner).mintFromProposal(proposalId);
+      await _collection.connect(_owner).mintFromProposal(firstProposalId);
 
-      await expect(_collection.connect(_owner).mintFromProposal(proposalId))
-        .to.be.revertedWithCustomError(_collection, "UsedWallet")
-        .withArgs(wallets[0], tokenId);
+      await expect(
+        _collection.connect(_owner).mintFromProposal(secondProposalId),
+      )
+        .to.be.revertedWithCustomError(_collection, "UsedAgentAddress")
+        .withArgs("evm", wallet.toLowerCase(), tokenId);
     });
   });
 
   describe("Given a valid minting proposal", function () {
     it("Should assign the owner of the token", async function () {
-      const wallets = [generateRandomAddress()];
-      const tokenId = await proposeAndMint(_signer, _collection, _owner, {
+      const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets,
-        role: DEFAULT_ROLE,
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
       });
 
       expect(await _collection.ownerOf(tokenId)).to.equal(
-        _otherAccount.address
+        _otherAccount.address,
       );
     });
 
     it("Should mint the NFT with the expected token ID", async function () {
-      const wallets1 = [generateRandomAddress()];
-
       const nextTokenId = await _collection.nextTokenId();
-
       await expect(_collection.ownerOf(nextTokenId)).to.be.reverted;
 
-      await proposeAndMint(_signer, _collection, _owner, {
+      await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets: wallets1,
-        role: DEFAULT_ROLE,
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME_1,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
       });
 
       expect(await _collection.ownerOf(nextTokenId)).to.equal(
-        _otherAccount.address
+        _otherAccount.address,
       );
     });
 
     it("Should increment next token ID", async function () {
-      const wallets1 = [generateRandomAddress()];
-
-      const nextTokenIdBefore = await _collection.nextTokenId();
-
-      await proposeAndMint(_signer, _collection, _owner, {
+      const before = await _collection.nextTokenId();
+      await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets: wallets1,
-        role: DEFAULT_ROLE,
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME_1,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
       });
-
-      const nextTokenIdAfter = await _collection.nextTokenId();
-      expect(nextTokenIdAfter).to.equal(nextTokenIdBefore + BigInt(1));
-    });
-
-    it("Should mark the nonce as used", async function () {
-      const wallets = [generateRandomAddress()];
-
-      expect(await _collection.isNonceUsed(ethers.id(NONCE_1))).to.be.false;
-
-      await proposeAndMint(_signer, _collection, _owner, {
-        to: _otherAccount.address,
-        wallets,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
-      });
-
-      expect(await _collection.isNonceUsed(ethers.id(NONCE_1))).to.be.true;
-    });
-
-    it("Should assign signer of the token", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const tokenId = await proposeAndMint(_signer, _collection, _owner, {
-        to: _otherAccount.address,
-        wallets,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
-      });
-
-      expect(await _collection.signerOf(tokenId)).to.equal(_signer.address);
+      expect(await _collection.nextTokenId()).to.equal(before + BigInt(1));
     });
 
     it("Should assign agent addresses to the token", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const tokenId = await proposeAndMint(_signer, _collection, _owner, {
+      const wallet = generateRandomAddress();
+      const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets,
-        role: DEFAULT_ROLE,
+        addresses: evmAddresses(wallet),
         name: DEFAULT_NAME,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
       });
 
-      const walletCount = await _collection.walletsCountOf(tokenId);
-      expect(walletCount).to.equal(wallets.length);
-
-      for (let i = 0; i < walletCount; i++) {
-        const walletsOf = await _collection.walletOfByIndex(tokenId, i);
-        expect(wallets).to.include(walletsOf);
-      }
+      expect(await _collection.addressesCountOf(tokenId)).to.equal(1n);
+      expect(await _collection.addressToTokenId("evm", wallet)).to.equal(
+        tokenId,
+      );
     });
 
     it("Should assign name to the token", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const tokenId = await proposeAndMint(_signer, _collection, _owner, {
+      const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets,
-        role: DEFAULT_ROLE,
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
       });
-
       expect(await _collection.nameOf(tokenId)).to.equal(DEFAULT_NAME);
     });
 
     it("Should assign images to the token", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const tokenId = await proposeAndMint(_signer, _collection, _owner, {
+      const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets,
-        role: DEFAULT_ROLE,
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
       });
 
       const imageCount = await _collection.imagesCountOf(tokenId);
       expect(imageCount).to.equal(DEFAULT_IMAGES.length);
-
-      for (let imagesOfIndex = 0; imagesOfIndex < imageCount; imagesOfIndex++) {
-        const imagesOf = await _collection.imageOfByIndex(
-          tokenId,
-          imagesOfIndex
-        );
-
-        expect(imagesOf[0]).to.be.equal(DEFAULT_IMAGES[imagesOfIndex].key);
-        expect(imagesOf[1]).to.be.equal(DEFAULT_IMAGES[imagesOfIndex].value);
+      for (let i = 0; i < imageCount; i++) {
+        const imagesOf = await _collection.imageOfByIndex(tokenId, i);
+        expect(imagesOf[0]).to.be.equal(DEFAULT_IMAGES[i].key);
+        expect(imagesOf[1]).to.be.equal(DEFAULT_IMAGES[i].value);
       }
     });
 
-    it("Should assign creator to the token", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const tokenId = await proposeAndMint(_signer, _collection, _owner, {
+    it("Should assign attributes to the token", async function () {
+      const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets,
-        role: DEFAULT_ROLE,
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
+        attributes: DEFAULT_ATTRIBUTES,
       });
 
+      const attributeCount = await _collection.attributesCountOf(tokenId);
+      expect(attributeCount).to.equal(DEFAULT_ATTRIBUTES.length);
+      for (let i = 0; i < attributeCount; i++) {
+        const attributeOf = await _collection.attributeOfByIndex(tokenId, i);
+        expect(attributeOf[0]).to.be.equal(DEFAULT_ATTRIBUTES[i].key);
+        expect(attributeOf[1]).to.be.equal(DEFAULT_ATTRIBUTES[i].value);
+      }
+    });
+
+    it("Should assign creator (the proposal creator) to the token", async function () {
+      await createMintProposal(
+        DEFAULT_NAME,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
+      const length = await _collection.mintProposalsLength();
+      const { id: proposalId } = await _collection.mintProposal(
+        length - BigInt(1),
+      );
+      const tokenId = await _collection.nextTokenId();
+      await _collection.connect(_owner).mintFromProposal(proposalId);
+
+      // createMintProposal was called by the default signer (_owner).
       expect(await _collection.creatorOf(tokenId)).to.equal(_owner.address);
     });
 
     it("Should assign role to the token", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const tokenId = await proposeAndMint(_signer, _collection, _owner, {
+      const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets,
-        role: DEFAULT_ROLE,
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
       });
-
-      expect(await _collection.roleOf(tokenId)).to.equal(DEFAULT_ROLE);
-    });
-
-    it("Should assign token id to name", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const tokenId = await proposeAndMint(_signer, _collection, _owner, {
-        to: _otherAccount.address,
-        wallets,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
-      });
-
-      expect(await _collection.nameToTokenId(DEFAULT_NAME)).to.be.equal(
-        tokenId
+      expect(await _collection.attributeOfByKey(tokenId, "role")).to.equal(
+        DEFAULT_ROLE,
       );
     });
 
-    it("Should assign token id to wallet", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const tokenId = await proposeAndMint(_signer, _collection, _owner, {
+    it("Should assign token id to name", async function () {
+      const tokenId = await proposeAndMint(_collection, _owner, {
         to: _otherAccount.address,
-        wallets,
-        role: DEFAULT_ROLE,
+        addresses: evmAddresses(generateRandomAddress()),
         name: DEFAULT_NAME,
-        images: DEFAULT_IMAGES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
       });
+      expect(await _collection.nameToTokenId(DEFAULT_NAME)).to.be.equal(
+        tokenId,
+      );
+    });
 
-      expect(await _collection.walletToTokenId(wallets[0])).to.be.equal(
-        tokenId
+    it("Should assign token id to evm address", async function () {
+      const wallet = generateRandomAddress();
+      const tokenId = await proposeAndMint(_collection, _owner, {
+        to: _otherAccount.address,
+        addresses: evmAddresses(wallet),
+        name: DEFAULT_NAME,
+      });
+      expect(await _collection.addressToTokenId("evm", wallet)).to.be.equal(
+        tokenId,
       );
     });
 
     it("Should emit 'Minted' event", async function () {
-      const wallets = [generateRandomAddress()];
-
       const tokenId = await _collection.nextTokenId();
-
-      const signature = await signMintRequest(_signer, _collection, {
-        to: _otherAccount.address,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME,
-        wallets,
-        images: DEFAULT_IMAGES,
-        attributes: DEFAULT_ATTRIBUTES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
-      });
-
-      await _collection.createMintProposal(
-        _otherAccount.address,
-        _signer.address,
-        DEFAULT_ROLE,
+      await createMintProposal(
         DEFAULT_NAME,
-        wallets,
-        DEFAULT_IMAGES,
-        DEFAULT_ATTRIBUTES,
-        DEFAULT_CLONE_OF,
-        ethers.id(NONCE_1),
-        signature
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
-
-      const mintProposalsLength = await _collection.mintProposalsLength();
+      const length = await _collection.mintProposalsLength();
       const { id: proposalId } = await _collection.mintProposal(
-        mintProposalsLength - BigInt(1)
+        length - BigInt(1),
       );
 
       await expect(_collection.connect(_owner).mintFromProposal(proposalId))
         .to.emit(_collection, "Minted")
-        .withArgs(_otherAccount.address, _signer.address, tokenId);
-    });
-
-    it("Should emit 'AgentSignerUpdated' event", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const tokenId = await _collection.nextTokenId();
-
-      const signature = await signMintRequest(_signer, _collection, {
-        to: _otherAccount.address,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME,
-        wallets,
-        images: DEFAULT_IMAGES,
-        attributes: DEFAULT_ATTRIBUTES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
-      });
-
-      await _collection.createMintProposal(
-        _otherAccount.address,
-        _signer.address,
-        DEFAULT_ROLE,
-        DEFAULT_NAME,
-        wallets,
-        DEFAULT_IMAGES,
-        DEFAULT_ATTRIBUTES,
-        DEFAULT_CLONE_OF,
-        ethers.id(NONCE_1),
-        signature
-      );
-
-      const mintProposalsLength = await _collection.mintProposalsLength();
-      const { id: proposalId } = await _collection.mintProposal(
-        mintProposalsLength - BigInt(1)
-      );
-
-      await expect(_collection.connect(_owner).mintFromProposal(proposalId))
-        .to.emit(_collection, "AgentSignerUpdated")
-        .withArgs(tokenId, ethers.ZeroAddress, _signer.address);
+        .withArgs(_otherAccount.address, tokenId);
     });
 
     it("Should emit 'MintProposalRemoved' event", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const signature = await signMintRequest(_signer, _collection, {
-        to: _otherAccount.address,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME,
-        wallets,
-        images: DEFAULT_IMAGES,
-        attributes: DEFAULT_ATTRIBUTES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
-      });
-
-      await _collection.createMintProposal(
-        _otherAccount.address,
-        _signer.address,
-        DEFAULT_ROLE,
+      await createMintProposal(
         DEFAULT_NAME,
-        wallets,
-        DEFAULT_IMAGES,
-        DEFAULT_ATTRIBUTES,
-        DEFAULT_CLONE_OF,
-        ethers.id(NONCE_1),
-        signature
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
-
-      const mintProposalsLength = await _collection.mintProposalsLength();
-      const { id: proposalId } = await _collection.mintProposal(
-        mintProposalsLength - BigInt(1)
-      );
+      const index = (await _collection.mintProposalsLength()) - BigInt(1);
+      const { id: proposalId } = await _collection.mintProposal(index);
 
       await expect(_collection.connect(_owner).mintFromProposal(proposalId))
         .to.emit(_collection, "MintProposalRemoved")
-        .withArgs(
-          _otherAccount.address,
-          _signer.address,
-          mintProposalsLength - BigInt(1)
-        );
+        .withArgs(_otherAccount.address, proposalId);
     });
 
     it("Should decrease proposals length", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const signature = await signMintRequest(_signer, _collection, {
-        to: _otherAccount.address,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME,
-        wallets,
-        images: DEFAULT_IMAGES,
-        attributes: DEFAULT_ATTRIBUTES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
-      });
-
-      await _collection.createMintProposal(
-        _otherAccount.address,
-        _signer.address,
-        DEFAULT_ROLE,
+      await createMintProposal(
         DEFAULT_NAME,
-        wallets,
-        DEFAULT_IMAGES,
-        DEFAULT_ATTRIBUTES,
-        DEFAULT_CLONE_OF,
-        ethers.id(NONCE_1),
-        signature
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
-
       const lengthBefore = await _collection.mintProposalsLength();
       const { id: proposalId } = await _collection.mintProposal(
-        lengthBefore - BigInt(1)
+        lengthBefore - BigInt(1),
       );
 
       await _collection.connect(_owner).mintFromProposal(proposalId);
 
       expect(await _collection.mintProposalsLength()).to.eq(
-        lengthBefore - BigInt(1)
+        lengthBefore - BigInt(1),
       );
     });
 
     it("Should reorder remaining proposals", async function () {
-      const wallets = [generateRandomAddress()];
-
-      const sig1 = await signMintRequest(_signer, _collection, {
-        to: _otherAccount.address,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME_1,
-        wallets,
-        images: DEFAULT_IMAGES,
-        attributes: DEFAULT_ATTRIBUTES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_1,
-      });
-
-      await _collection.createMintProposal(
-        _otherAccount.address,
-        _signer.address,
-        DEFAULT_ROLE,
+      await createMintProposal(
         DEFAULT_NAME_1,
-        wallets,
-        DEFAULT_IMAGES,
-        DEFAULT_ATTRIBUTES,
-        DEFAULT_CLONE_OF,
-        ethers.id(NONCE_1),
-        sig1
-      );
-
-      const sig2 = await signMintRequest(_signer, _collection, {
-        to: _otherAccount.address,
-        signer: _signer.address,
-        role: DEFAULT_ROLE,
-        name: DEFAULT_NAME_2,
-        wallets,
-        images: DEFAULT_IMAGES,
-        attributes: DEFAULT_ATTRIBUTES,
-        cloneOf: DEFAULT_CLONE_OF,
-        nonce: NONCE_2,
-      });
-
-      await _collection.createMintProposal(
+        evmAddresses(generateRandomAddress()),
         _otherAccount.address,
-        _signer.address,
-        DEFAULT_ROLE,
+      );
+      await createMintProposal(
         DEFAULT_NAME_2,
-        wallets,
-        DEFAULT_IMAGES,
-        DEFAULT_ATTRIBUTES,
-        DEFAULT_CLONE_OF,
-        ethers.id(NONCE_2),
-        sig2
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
       );
 
       expect(await _collection.mintProposalsLength()).to.eq(2n);
 
       const { id: proposalId } = await _collection.mintProposal(0);
-
       await _collection.connect(_owner).mintFromProposal(proposalId);
 
       expect(await _collection.mintProposalsLength()).to.eq(1n);
 
       const proposal = await _collection.mintProposal(0);
       expect(proposal.name).to.equal(DEFAULT_NAME_2);
+    });
+
+    it("Should remove only the applied proposal when applying out of order", async function () {
+      await createMintProposal(
+        DEFAULT_NAME_1,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
+      await createMintProposal(
+        DEFAULT_NAME_2,
+        evmAddresses(generateRandomAddress()),
+        _otherAccount.address,
+      );
+
+      // Apply the SECOND proposal (id at index 1), not the first.
+      const { id: secondProposalId } = await _collection.mintProposal(1);
+      const tokenId = await _collection.nextTokenId();
+
+      await _collection.connect(_owner).mintFromProposal(secondProposalId);
+
+      // The minted token is NAME_2; the untouched NAME_1 proposal must survive.
+      expect(await _collection.nameOf(tokenId)).to.equal(DEFAULT_NAME_2);
+      expect(await _collection.mintProposalsLength()).to.eq(1n);
+      expect((await _collection.mintProposal(0)).name).to.equal(DEFAULT_NAME_1);
     });
   });
 });

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
 import {KeyValue} from "../../types/KeyValue.sol";
@@ -6,9 +6,6 @@ import {AgentInformation} from "../../types/AgentInformation.sol";
 import {IAgentCollectionStates} from "../IAgentCollection/IAgentCollectionStates.sol";
 
 interface IAgentCollectionV1States is IAgentCollectionStates {
-    /// @dev Address of the collections manager contract.
-    function collectionsManager() external view returns (address);
-
     /// @dev Address of the collections descriptor contract.
     function collectionsDescriptor() external view returns (address);
 
@@ -33,11 +30,14 @@ interface IAgentCollectionV1States is IAgentCollectionStates {
     /// @param index The index of the attribute.
     function attributeOfByIndex(uint256 tokenId, uint256 index) external view returns (KeyValue memory);
 
+    /// @dev Get the value of a specific attribute of an agent by its key, or the
+    ///      empty string if unset.
+    /// @param tokenId The token identifier.
+    /// @param key The attribute key.
+    function attributeOfByKey(uint256 tokenId, string memory key) external view returns (string memory);
+
     /// @dev Get the token ID associated to the agent name.
     /// @param name The name of the agent.
     function nameToTokenId(string memory name) external view returns (uint256);
 
-    /// @dev Get the token ID associated to the agent wallet.
-    /// @param wallet The wallet address of the agent.
-    function walletToTokenId(address wallet) external view returns (uint256);
 }

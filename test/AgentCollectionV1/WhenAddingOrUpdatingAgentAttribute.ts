@@ -3,7 +3,11 @@ import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { proposeAndMint, deployCollectionWithCreator } from "../common";
+import {
+  proposeAndMint,
+  evmAddresses,
+  deployCollectionWithCreator,
+} from "../common";
 
 describe("WhenAddingOrUpdatingAgentAttribute", function () {
   const ipfsGateway = "https://ipfs.io/ipfs/";
@@ -11,45 +15,41 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
   let _collection: AgentCollectionV1;
 
   let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
 
   async function deployAgentCollection() {
     await reset();
 
-    const [owner, signer, otherAccount, moderator] = await ethers.getSigners();
+    const [owner, otherAccount, moderator] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator,
-        ipfsGateway,
-      });
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator,
+      ipfsGateway,
+    });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
-
-    return { collection, owner, signer, moderator, otherAccount };
+    return { collection, owner, moderator, otherAccount };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, moderator, otherAccount } =
-      await loadFixture(deployAgentCollection);
+    const { collection, owner, moderator, otherAccount } = await loadFixture(
+      deployAgentCollection,
+    );
 
     _collection = collection;
 
     _owner = owner;
-    _signer = signer;
     _moderator = moderator;
     _otherAccount = otherAccount;
   });
 
-  async function mint(to: string) {
+  async function mint(to: string, wallets?: string[]) {
     const tokenId = await _collection.nextTokenId();
 
-    await proposeAndMint(_signer, _collection, _moderator, {
+    await proposeAndMint(_collection, _moderator, {
       to,
+      ...(wallets ? { addresses: evmAddresses(...wallets) } : {}),
     });
 
     return tokenId;
@@ -62,27 +62,44 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
       await expect(
         _collection
           .connect(_owner)
-          .addOrUpdateAgentAttribute(tokenId, "key", "value")
+          .addOrUpdateAgentAttribute(tokenId, "key", "value"),
       )
         .to.be.revertedWithCustomError(_collection, "ERC721NonexistentToken")
         .withArgs(tokenId);
     });
   });
 
-  describe("Given sender is not the owner of the token", function () {
+  describe("Given sender is neither the owner nor a wallet of the token", function () {
     it("Should revert with 'OwnableUnauthorizedAccount' error", async function () {
       const tokenId = await mint(await _owner.getAddress());
 
       await expect(
         _collection
           .connect(_otherAccount)
-          .addOrUpdateAgentAttribute(tokenId, "key", "value")
+          .addOrUpdateAgentAttribute(tokenId, "key", "value"),
       )
         .to.be.revertedWithCustomError(
           _collection,
-          "OwnableUnauthorizedAccount"
+          "OwnableUnauthorizedAccount",
         )
         .withArgs(await _otherAccount.getAddress(), tokenId);
+    });
+  });
+
+  describe("Given sender is one of the agent's wallets", function () {
+    it("Should allow the wallet to add the attribute", async function () {
+      // owner holds the NFT; _otherAccount is registered as an agent wallet.
+      const tokenId = await mint(await _owner.getAddress(), [
+        _otherAccount.address,
+      ]);
+
+      await expect(
+        _collection
+          .connect(_otherAccount)
+          .addOrUpdateAgentAttribute(tokenId, "key", "value"),
+      )
+        .to.emit(_collection, "AgentAttributeUpdated")
+        .withArgs(tokenId, "key", "", "value");
     });
   });
 
@@ -115,10 +132,76 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
       await expect(
         _collection
           .connect(_owner)
-          .addOrUpdateAgentAttribute(tokenId, ATTRIBUTE_KEY, ATTRIBUTE_VALUE)
+          .addOrUpdateAgentAttribute(tokenId, ATTRIBUTE_KEY, ATTRIBUTE_VALUE),
       )
         .to.emit(_collection, "AgentAttributeUpdated")
         .withArgs(tokenId, ATTRIBUTE_KEY, "", ATTRIBUTE_VALUE);
+    });
+  });
+
+  describe("Given the mandatory attribute is cleared to empty", function () {
+    it("Should revert with 'MissingRequiredKey'", async function () {
+      const tokenId = await mint(await _owner.getAddress());
+
+      await expect(
+        _collection
+          .connect(_owner)
+          .addOrUpdateAgentAttribute(tokenId, "role", ""),
+      )
+        .to.be.revertedWithCustomError(_collection, "MissingRequiredKey")
+        .withArgs("role");
+    });
+  });
+
+  describe("Given a non-mandatory attribute is cleared to empty", function () {
+    it("Should update the attribute", async function () {
+      const tokenId = await mint(await _owner.getAddress());
+
+      await _collection
+        .connect(_owner)
+        .addOrUpdateAgentAttribute(tokenId, "mission", "");
+
+      const information = await _collection.informationOf(tokenId);
+      const attribute = information.attributes.find((a) => a.key === "mission");
+      expect(attribute?.value).to.equal("");
+    });
+
+    it("Should emit 'AgentAttributeUpdated' event", async function () {
+      const tokenId = await mint(await _owner.getAddress());
+
+      await expect(
+        await _collection
+          .connect(_owner)
+          .addOrUpdateAgentAttribute(tokenId, "mission", ""),
+      )
+        .to.emit(_collection, "AgentAttributeUpdated")
+        .withArgs(tokenId, "mission", "random mission", "");
+    });
+  });
+
+  describe("Given the mandatory attribute is updated to a new non-empty value", function () {
+    it("Should update the attribute", async function () {
+      const tokenId = await mint(await _owner.getAddress());
+
+      await _collection
+        .connect(_owner)
+        .addOrUpdateAgentAttribute(tokenId, "role", "new-role");
+
+      expect(await _collection.attributeOfByKey(tokenId, "role")).to.equal(
+        "new-role",
+      );
+    });
+
+    it("Should emit 'AgentAttributeUpdated' event", async function () {
+      const tokenId = await mint(await _owner.getAddress());
+
+      await expect(
+        _collection
+          .connect(_owner)
+          .addOrUpdateAgentAttribute(tokenId, "role", "new-role"),
+      )
+        .to.emit(_collection, "AgentAttributeUpdated")
+        .withArgs(tokenId, "role", "facilitator", "new-role");
     });
   });
 
@@ -135,7 +218,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
         .addOrUpdateAgentAttribute(
           tokenId,
           ATTRIBUTE_KEY,
-          EXISTING_ATTRIBUTE_VALUE
+          EXISTING_ATTRIBUTE_VALUE,
         );
 
       await _collection
@@ -162,7 +245,7 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
         .addOrUpdateAgentAttribute(
           tokenId,
           ATTRIBUTE_KEY,
-          EXISTING_ATTRIBUTE_VALUE
+          EXISTING_ATTRIBUTE_VALUE,
         );
 
       await expect(
@@ -171,15 +254,15 @@ describe("WhenAddingOrUpdatingAgentAttribute", function () {
           .addOrUpdateAgentAttribute(
             tokenId,
             ATTRIBUTE_KEY,
-            NEW_ATTRIBUTE_VALUE
-          )
+            NEW_ATTRIBUTE_VALUE,
+          ),
       )
         .to.emit(_collection, "AgentAttributeUpdated")
         .withArgs(
           tokenId,
           ATTRIBUTE_KEY,
           EXISTING_ATTRIBUTE_VALUE,
-          NEW_ATTRIBUTE_VALUE
+          NEW_ATTRIBUTE_VALUE,
         );
     });
   });

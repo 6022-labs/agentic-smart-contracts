@@ -5,7 +5,7 @@ import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   proposeAndMint,
-  generateRandomNonce,
+  evmAddresses,
   deployCollectionWithCreator,
 } from "../common";
 
@@ -15,51 +15,43 @@ describe("WhenRemovingImage", function () {
   let _collection: AgentCollectionV1;
 
   let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
 
   async function deployAgentCollection() {
     await reset();
 
-    const [owner, signer, moderator, otherAccount] = await ethers.getSigners();
+    const [owner, moderator, otherAccount] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator,
-        ipfsGateway,
-      });
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator,
+      ipfsGateway,
+    });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
-
-    return { collection, owner, signer, moderator, otherAccount };
+    return { collection, owner, moderator, otherAccount };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, moderator, otherAccount } =
-      await loadFixture(deployAgentCollection);
+    const { collection, owner, moderator, otherAccount } = await loadFixture(
+      deployAgentCollection,
+    );
 
     _collection = collection;
     _owner = owner;
-    _signer = signer;
     _moderator = moderator;
     _otherAccount = otherAccount;
   });
 
   async function mintWithImages(
     images: { key: string; value: string }[],
-    to: string
+    to: string,
   ) {
-    const nonce = generateRandomNonce();
-
     const tokenId = await _collection.nextTokenId();
 
-    await proposeAndMint(_signer, _collection, _moderator, {
+    await proposeAndMint(_collection, _moderator, {
       to,
       images,
-      nonce,
     });
 
     return tokenId;
@@ -70,7 +62,7 @@ describe("WhenRemovingImage", function () {
       const tokenId = 1;
 
       await expect(
-        _collection.connect(_owner).removeAgentImage(tokenId, "default")
+        _collection.connect(_owner).removeAgentImage(tokenId, "default"),
       )
         .to.be.revertedWithCustomError(_collection, "ERC721NonexistentToken")
         .withArgs(tokenId);
@@ -84,15 +76,15 @@ describe("WhenRemovingImage", function () {
           { key: "default", value: "bafybeihash" },
           { key: "profile", value: "bafybeiprofile" },
         ],
-        await _owner.getAddress()
+        await _owner.getAddress(),
       );
 
       await expect(
-        _collection.connect(_otherAccount).removeAgentImage(tokenId, "default")
+        _collection.connect(_otherAccount).removeAgentImage(tokenId, "default"),
       )
         .to.be.revertedWithCustomError(
           _collection,
-          "OwnableUnauthorizedAccount"
+          "OwnableUnauthorizedAccount",
         )
         .withArgs(await _otherAccount.getAddress(), tokenId);
     });
@@ -105,11 +97,11 @@ describe("WhenRemovingImage", function () {
           { key: "default", value: "bafybeidefault" },
           { key: "profile", value: "bafybeiprofile" },
         ],
-        await _owner.getAddress()
+        await _owner.getAddress(),
       );
 
       await expect(
-        _collection.connect(_owner).removeAgentImage(tokenId, "default")
+        _collection.connect(_owner).removeAgentImage(tokenId, "default"),
       ).to.be.revertedWithCustomError(_collection, "MissingDefaultImage");
     });
   });
@@ -126,7 +118,7 @@ describe("WhenRemovingImage", function () {
       };
       const tokenId = await mintWithImages(
         [defaultImg, profileImg],
-        await _owner.getAddress()
+        await _owner.getAddress(),
       );
 
       await _collection
@@ -155,7 +147,7 @@ describe("WhenRemovingImage", function () {
       };
       const tokenId = await mintWithImages(
         [defaultImg],
-        await _owner.getAddress()
+        await _owner.getAddress(),
       );
 
       await _collection.connect(_owner).removeAgentImage(tokenId, "unknown");
@@ -175,6 +167,27 @@ describe("WhenRemovingImage", function () {
     });
   });
 
+  describe("Given one of the agent's wallets removes an image", function () {
+    it("Should remove the image", async function () {
+      const tokenId = await proposeAndMint(_collection, _moderator, {
+        to: await _owner.getAddress(),
+        addresses: evmAddresses(_otherAccount.address),
+        images: [
+          { key: "default", value: "bafybeidefault" },
+          { key: "profile", value: "bafybeiprofile" },
+        ],
+      });
+
+      await _collection
+        .connect(_otherAccount)
+        .removeAgentImage(tokenId, "profile");
+
+      expect(await _collection.imagesCountOf(tokenId)).to.equal(1);
+      const image = await _collection.imageOfByIndex(tokenId, 0);
+      expect(image.key).to.equal("default");
+    });
+  });
+
   describe("Given moderator removes image from another token", function () {
     it("Should remove the image", async function () {
       const tokenId = await mintWithImages(
@@ -182,7 +195,7 @@ describe("WhenRemovingImage", function () {
           { key: "default", value: "bafybeidefault" },
           { key: "profile", value: "bafybeiprofile" },
         ],
-        await _otherAccount.getAddress()
+        await _otherAccount.getAddress(),
       );
 
       await _collection

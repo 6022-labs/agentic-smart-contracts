@@ -1,0 +1,840 @@
+{
+  "address": "0xfE7Ea63728191f34B2626D5BCa715C264c561A70",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "AccessControlBadConfirmation",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "neededRole",
+          "type": "bytes32"
+        }
+      ],
+      "name": "AccessControlUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "collectionId",
+          "type": "uint256"
+        }
+      ],
+      "name": "CollectionDoesNotExist",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "name": "CollectionNameAlreadyExists",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        }
+      ],
+      "name": "CollectionSymbolAlreadyExists",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "collectionId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "collectionAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        }
+      ],
+      "name": "CollectionCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "previousAdminRole",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "newAdminRole",
+          "type": "bytes32"
+        }
+      ],
+      "name": "RoleAdminChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "RoleGranted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "RoleRevoked",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "CREATOR_ROLE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DEFAULT_ADMIN_ROLE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newCollection",
+          "type": "address"
+        }
+      ],
+      "name": "addCollection",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "name": "collectionIdByName",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "name": "collectionIdBySymbol",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "collections",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "addressType",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "value",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "offset",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "limit",
+          "type": "uint256"
+        }
+      ],
+      "name": "findAgentByAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "collection",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "next",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getRoleAdmin",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "grantRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "hasRole",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "isKnownCollection",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "offset",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "limit",
+          "type": "uint256"
+        }
+      ],
+      "name": "listCollections",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "description",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "moderatorCount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nextTokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "collectionAddress",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct AgentCollectionInfo[]",
+          "name": "infos",
+          "type": "tuple[]"
+        },
+        {
+          "internalType": "uint256",
+          "name": "next",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "moderatorOf",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nextCollectionId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "callerConfirmation",
+          "type": "address"
+        }
+      ],
+      "name": "renounceRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "revokeRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x2a208b517911628814cb1e3cba65fcb46ff94863b46b4d97bf190c1c9bdf9595",
+  "receipt": {
+    "to": null,
+    "from": "0x4bca9E17a8326d283d1fC68A725B46b42c2D9146",
+    "contractAddress": "0xfE7Ea63728191f34B2626D5BCa715C264c561A70",
+    "transactionIndex": 0,
+    "gasUsed": "1070497",
+    "logsBloom": "0x00000004000000000000000000000001000000400000000000000000000000000000000000000000000000000000000000008000000000000000000000000001000000000000000000000000000000800000000000000000000100000000000000000200020000000000000000000800000000000000000080000000000000000000000000000000020000000400000000000000000000000000020000000040200000000000000000000000000000000000000000000000001000000000004000000000000000000001000000000000000000400000000100100000000020000000000000000000000000000000000000000000000000000000000000100000",
+    "blockHash": "0x3a1bc38100b50953433afb6369a01e8421a8e080881dd5de48aa54e44e536460",
+    "transactionHash": "0x2a208b517911628814cb1e3cba65fcb46ff94863b46b4d97bf190c1c9bdf9595",
+    "logs": [
+      {
+        "transactionIndex": 0,
+        "blockNumber": 42550725,
+        "transactionHash": "0x2a208b517911628814cb1e3cba65fcb46ff94863b46b4d97bf190c1c9bdf9595",
+        "address": "0xfE7Ea63728191f34B2626D5BCa715C264c561A70",
+        "topics": [
+          "0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000004bca9e17a8326d283d1fc68a725b46b42c2d9146",
+          "0x0000000000000000000000004bca9e17a8326d283d1fc68a725b46b42c2d9146"
+        ],
+        "data": "0x",
+        "logIndex": 0,
+        "blockHash": "0x3a1bc38100b50953433afb6369a01e8421a8e080881dd5de48aa54e44e536460"
+      },
+      {
+        "transactionIndex": 0,
+        "blockNumber": 42550725,
+        "transactionHash": "0x2a208b517911628814cb1e3cba65fcb46ff94863b46b4d97bf190c1c9bdf9595",
+        "address": "0x0000000000000000000000000000000000001010",
+        "topics": [
+          "0x4dfe1bbbcf077ddc3e01291eea2d5c70c2b422b415d95645b9adcfd678cb1d63",
+          "0x0000000000000000000000000000000000000000000000000000000000001010",
+          "0x0000000000000000000000004bca9e17a8326d283d1fc68a725b46b42c2d9146",
+          "0x0000000000000000000000007ee41d8a25641000661b1ef5e6ae8a00400466b0"
+        ],
+        "data": "0x000000000000000000000000000000000000000000000000076d95acc10a75610000000000000000000000000000000000000000000000000e694a9869fbf64200000000000000000000000000000000000000000000663f96472794e3c3976600000000000000000000000000000000000000000000000006fbb4eba8f180e100000000000000000000000000000000000000000000663f9db4bd41a4ce0cc7",
+        "logIndex": 1,
+        "blockHash": "0x3a1bc38100b50953433afb6369a01e8421a8e080881dd5de48aa54e44e536460"
+      }
+    ],
+    "blockNumber": 42550725,
+    "cumulativeGasUsed": "1070497",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "898e343dd089fcefae695e1c51f08a7a",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"AccessControlBadConfirmation\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"neededRole\",\"type\":\"bytes32\"}],\"name\":\"AccessControlUnauthorizedAccount\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"collectionId\",\"type\":\"uint256\"}],\"name\":\"CollectionDoesNotExist\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"}],\"name\":\"CollectionNameAlreadyExists\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"}],\"name\":\"CollectionSymbolAlreadyExists\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"collectionId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"collectionAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"}],\"name\":\"CollectionCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"CREATOR_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newCollection\",\"type\":\"address\"}],\"name\":\"addCollection\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"collectionIdByName\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"name\":\"collectionIdBySymbol\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"collections\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"addressType\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"value\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"offset\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"limit\",\"type\":\"uint256\"}],\"name\":\"findAgentByAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"collection\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"next\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"isKnownCollection\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"offset\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"limit\",\"type\":\"uint256\"}],\"name\":\"listCollections\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"description\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"moderatorCount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"nextTokenId\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"collectionAddress\",\"type\":\"address\"}],\"internalType\":\"struct AgentCollectionInfo[]\",\"name\":\"infos\",\"type\":\"tuple[]\"},{\"internalType\":\"uint256\",\"name\":\"next\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"moderatorOf\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nextCollectionId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"callerConfirmation\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Manages collections and authorizes creators.\",\"errors\":{\"AccessControlBadConfirmation()\":[{\"details\":\"The caller of a function is not the expected one. NOTE: Don't confuse with {AccessControlUnauthorizedAccount}.\"}],\"AccessControlUnauthorizedAccount(address,bytes32)\":[{\"details\":\"The `account` is missing a role.\"}],\"CollectionDoesNotExist(uint256)\":[{\"details\":\"Error when collection does not exist.\"}],\"CollectionNameAlreadyExists(string)\":[{\"details\":\"Error when the collection name already exists.\"}],\"CollectionSymbolAlreadyExists(string)\":[{\"details\":\"Error when the collection symbol already exists.\"}]},\"events\":{\"CollectionCreated(uint256,address,string,string)\":{\"details\":\"Emitted when a new collection is created.\",\"params\":{\"collectionAddress\":\"The address of the newly created collection.\",\"collectionId\":\"The unique identifier of the collection.\",\"name\":\"The name of the collection.\",\"symbol\":\"The symbol of the collection.\"}},\"RoleAdminChanged(bytes32,bytes32,bytes32)\":{\"details\":\"Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole` `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite {RoleAdminChanged} not being emitted to signal this.\"},\"RoleGranted(bytes32,address,address)\":{\"details\":\"Emitted when `account` is granted `role`. `sender` is the account that originated the contract call. This account bears the admin role (for the granted role). Expected in cases where the role was granted using the internal {AccessControl-_grantRole}.\"},\"RoleRevoked(bytes32,address,address)\":{\"details\":\"Emitted when `account` is revoked `role`. `sender` is the account that originated the contract call:   - if using `revokeRole`, it is the admin role bearer   - if using `renounceRole`, it is the role bearer (i.e. `account`)\"}},\"kind\":\"dev\",\"methods\":{\"addCollection(address)\":{\"details\":\"Add a new collection.\",\"params\":{\"newCollection\":\"The new collection to add.\"}},\"constructor\":{\"details\":\"Deploy the manager and set the deployer as admin.\"},\"findAgentByAddress(string,string,uint256,uint256)\":{\"details\":\"Paginated search for the agent a typed address belongs to. Returns the first match in [offset, offset+limit) or zeros; `next` resumes the scan.\"},\"getRoleAdmin(bytes32)\":{\"details\":\"Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.\"},\"grantRole(bytes32,address)\":{\"details\":\"Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleGranted} event.\"},\"hasRole(bytes32,address)\":{\"details\":\"Returns `true` if `account` has been granted `role`.\"},\"listCollections(uint256,uint256)\":{\"details\":\"Paginated collection listing for the operator UI. Pass offset 0 to start; `next` is the id to resume from, or 0 when exhausted.\"},\"renounceRole(bytes32,address)\":{\"details\":\"Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been revoked `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `callerConfirmation`. May emit a {RoleRevoked} event.\"},\"revokeRole(bytes32,address)\":{\"details\":\"Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleRevoked} event.\"},\"supportsInterface(bytes4)\":{\"details\":\"See {IERC165-supportsInterface}.\"}},\"stateVariables\":{\"collectionIdByName\":{\"details\":\"Get a collection id by its name.\",\"params\":{\"name\":\"The name of the collection.\"}},\"collectionIdBySymbol\":{\"details\":\"Get a collection id by its symbol.\",\"params\":{\"symbol\":\"The symbol of the collection.\"}},\"collections\":{\"details\":\"Get a collection address by its identifier.\",\"params\":{\"collectionId\":\"The id of the collection.\"}},\"isKnownCollection\":{\"details\":\"Whether a collection address was registered through this manager.\",\"params\":{\"collection\":\"The collection address to check.\"}}},\"title\":\"Agentic AI collections manager\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/AgentCollectionsManager.sol\":\"AgentCollectionsManager\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":1},\"remappings\":[],\"viaIR\":true},\"sources\":{\"@openzeppelin/contracts/access/AccessControl.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.3.0) (access/AccessControl.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {IAccessControl} from \\\"./IAccessControl.sol\\\";\\nimport {Context} from \\\"../utils/Context.sol\\\";\\nimport {ERC165} from \\\"../utils/introspection/ERC165.sol\\\";\\n\\n/**\\n * @dev Contract module that allows children to implement role-based access\\n * control mechanisms. This is a lightweight version that doesn't allow enumerating role\\n * members except through off-chain means by accessing the contract event logs. Some\\n * applications may benefit from on-chain enumerability, for those cases see\\n * {AccessControlEnumerable}.\\n *\\n * Roles are referred to by their `bytes32` identifier. These should be exposed\\n * in the external API and be unique. The best way to achieve this is by\\n * using `public constant` hash digests:\\n *\\n * ```solidity\\n * bytes32 public constant MY_ROLE = keccak256(\\\"MY_ROLE\\\");\\n * ```\\n *\\n * Roles can be used to represent a set of permissions. To restrict access to a\\n * function call, use {hasRole}:\\n *\\n * ```solidity\\n * function foo() public {\\n *     require(hasRole(MY_ROLE, msg.sender));\\n *     ...\\n * }\\n * ```\\n *\\n * Roles can be granted and revoked dynamically via the {grantRole} and\\n * {revokeRole} functions. Each role has an associated admin role, and only\\n * accounts that have a role's admin role can call {grantRole} and {revokeRole}.\\n *\\n * By default, the admin role for all roles is `DEFAULT_ADMIN_ROLE`, which means\\n * that only accounts with this role will be able to grant or revoke other\\n * roles. More complex role relationships can be created by using\\n * {_setRoleAdmin}.\\n *\\n * WARNING: The `DEFAULT_ADMIN_ROLE` is also its own admin: it has permission to\\n * grant and revoke this role. Extra precautions should be taken to secure\\n * accounts that have been granted it. We recommend using {AccessControlDefaultAdminRules}\\n * to enforce additional security measures for this role.\\n */\\nabstract contract AccessControl is Context, IAccessControl, ERC165 {\\n    struct RoleData {\\n        mapping(address account => bool) hasRole;\\n        bytes32 adminRole;\\n    }\\n\\n    mapping(bytes32 role => RoleData) private _roles;\\n\\n    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;\\n\\n    /**\\n     * @dev Modifier that checks that an account has a specific role. Reverts\\n     * with an {AccessControlUnauthorizedAccount} error including the required role.\\n     */\\n    modifier onlyRole(bytes32 role) {\\n        _checkRole(role);\\n        _;\\n    }\\n\\n    /**\\n     * @dev See {IERC165-supportsInterface}.\\n     */\\n    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {\\n        return interfaceId == type(IAccessControl).interfaceId || super.supportsInterface(interfaceId);\\n    }\\n\\n    /**\\n     * @dev Returns `true` if `account` has been granted `role`.\\n     */\\n    function hasRole(bytes32 role, address account) public view virtual returns (bool) {\\n        return _roles[role].hasRole[account];\\n    }\\n\\n    /**\\n     * @dev Reverts with an {AccessControlUnauthorizedAccount} error if `_msgSender()`\\n     * is missing `role`. Overriding this function changes the behavior of the {onlyRole} modifier.\\n     */\\n    function _checkRole(bytes32 role) internal view virtual {\\n        _checkRole(role, _msgSender());\\n    }\\n\\n    /**\\n     * @dev Reverts with an {AccessControlUnauthorizedAccount} error if `account`\\n     * is missing `role`.\\n     */\\n    function _checkRole(bytes32 role, address account) internal view virtual {\\n        if (!hasRole(role, account)) {\\n            revert AccessControlUnauthorizedAccount(account, role);\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the admin role that controls `role`. See {grantRole} and\\n     * {revokeRole}.\\n     *\\n     * To change a role's admin, use {_setRoleAdmin}.\\n     */\\n    function getRoleAdmin(bytes32 role) public view virtual returns (bytes32) {\\n        return _roles[role].adminRole;\\n    }\\n\\n    /**\\n     * @dev Grants `role` to `account`.\\n     *\\n     * If `account` had not been already granted `role`, emits a {RoleGranted}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     *\\n     * May emit a {RoleGranted} event.\\n     */\\n    function grantRole(bytes32 role, address account) public virtual onlyRole(getRoleAdmin(role)) {\\n        _grantRole(role, account);\\n    }\\n\\n    /**\\n     * @dev Revokes `role` from `account`.\\n     *\\n     * If `account` had been granted `role`, emits a {RoleRevoked} event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     *\\n     * May emit a {RoleRevoked} event.\\n     */\\n    function revokeRole(bytes32 role, address account) public virtual onlyRole(getRoleAdmin(role)) {\\n        _revokeRole(role, account);\\n    }\\n\\n    /**\\n     * @dev Revokes `role` from the calling account.\\n     *\\n     * Roles are often managed via {grantRole} and {revokeRole}: this function's\\n     * purpose is to provide a mechanism for accounts to lose their privileges\\n     * if they are compromised (such as when a trusted device is misplaced).\\n     *\\n     * If the calling account had been revoked `role`, emits a {RoleRevoked}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must be `callerConfirmation`.\\n     *\\n     * May emit a {RoleRevoked} event.\\n     */\\n    function renounceRole(bytes32 role, address callerConfirmation) public virtual {\\n        if (callerConfirmation != _msgSender()) {\\n            revert AccessControlBadConfirmation();\\n        }\\n\\n        _revokeRole(role, callerConfirmation);\\n    }\\n\\n    /**\\n     * @dev Sets `adminRole` as ``role``'s admin role.\\n     *\\n     * Emits a {RoleAdminChanged} event.\\n     */\\n    function _setRoleAdmin(bytes32 role, bytes32 adminRole) internal virtual {\\n        bytes32 previousAdminRole = getRoleAdmin(role);\\n        _roles[role].adminRole = adminRole;\\n        emit RoleAdminChanged(role, previousAdminRole, adminRole);\\n    }\\n\\n    /**\\n     * @dev Attempts to grant `role` to `account` and returns a boolean indicating if `role` was granted.\\n     *\\n     * Internal function without access restriction.\\n     *\\n     * May emit a {RoleGranted} event.\\n     */\\n    function _grantRole(bytes32 role, address account) internal virtual returns (bool) {\\n        if (!hasRole(role, account)) {\\n            _roles[role].hasRole[account] = true;\\n            emit RoleGranted(role, account, _msgSender());\\n            return true;\\n        } else {\\n            return false;\\n        }\\n    }\\n\\n    /**\\n     * @dev Attempts to revoke `role` from `account` and returns a boolean indicating if `role` was revoked.\\n     *\\n     * Internal function without access restriction.\\n     *\\n     * May emit a {RoleRevoked} event.\\n     */\\n    function _revokeRole(bytes32 role, address account) internal virtual returns (bool) {\\n        if (hasRole(role, account)) {\\n            _roles[role].hasRole[account] = false;\\n            emit RoleRevoked(role, account, _msgSender());\\n            return true;\\n        } else {\\n            return false;\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0xc1bebdee8943bd5e9ef1e0f2e63296aa1dd4171a66b9e74d0286220e891e1458\",\"license\":\"MIT\"},\"@openzeppelin/contracts/access/IAccessControl.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.3.0) (access/IAccessControl.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev External interface of AccessControl declared to support ERC-165 detection.\\n */\\ninterface IAccessControl {\\n    /**\\n     * @dev The `account` is missing a role.\\n     */\\n    error AccessControlUnauthorizedAccount(address account, bytes32 neededRole);\\n\\n    /**\\n     * @dev The caller of a function is not the expected one.\\n     *\\n     * NOTE: Don't confuse with {AccessControlUnauthorizedAccount}.\\n     */\\n    error AccessControlBadConfirmation();\\n\\n    /**\\n     * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`\\n     *\\n     * `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite\\n     * {RoleAdminChanged} not being emitted to signal this.\\n     */\\n    event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole);\\n\\n    /**\\n     * @dev Emitted when `account` is granted `role`.\\n     *\\n     * `sender` is the account that originated the contract call. This account bears the admin role (for the granted role).\\n     * Expected in cases where the role was granted using the internal {AccessControl-_grantRole}.\\n     */\\n    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);\\n\\n    /**\\n     * @dev Emitted when `account` is revoked `role`.\\n     *\\n     * `sender` is the account that originated the contract call:\\n     *   - if using `revokeRole`, it is the admin role bearer\\n     *   - if using `renounceRole`, it is the role bearer (i.e. `account`)\\n     */\\n    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);\\n\\n    /**\\n     * @dev Returns `true` if `account` has been granted `role`.\\n     */\\n    function hasRole(bytes32 role, address account) external view returns (bool);\\n\\n    /**\\n     * @dev Returns the admin role that controls `role`. See {grantRole} and\\n     * {revokeRole}.\\n     *\\n     * To change a role's admin, use {AccessControl-_setRoleAdmin}.\\n     */\\n    function getRoleAdmin(bytes32 role) external view returns (bytes32);\\n\\n    /**\\n     * @dev Grants `role` to `account`.\\n     *\\n     * If `account` had not been already granted `role`, emits a {RoleGranted}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     */\\n    function grantRole(bytes32 role, address account) external;\\n\\n    /**\\n     * @dev Revokes `role` from `account`.\\n     *\\n     * If `account` had been granted `role`, emits a {RoleRevoked} event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     */\\n    function revokeRole(bytes32 role, address account) external;\\n\\n    /**\\n     * @dev Revokes `role` from the calling account.\\n     *\\n     * Roles are often managed via {grantRole} and {revokeRole}: this function's\\n     * purpose is to provide a mechanism for accounts to lose their privileges\\n     * if they are compromised (such as when a trusted device is misplaced).\\n     *\\n     * If the calling account had been granted `role`, emits a {RoleRevoked}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must be `callerConfirmation`.\\n     */\\n    function renounceRole(bytes32 role, address callerConfirmation) external;\\n}\\n\",\"keccak256\":\"0x4d9a2b261b56a1e4a37bb038151dec98b952fed16de2bdfdda27e38e2b12b530\",\"license\":\"MIT\"},\"@openzeppelin/contracts/token/ERC721/IERC721.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.1.0) (token/ERC721/IERC721.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {IERC165} from \\\"../../utils/introspection/IERC165.sol\\\";\\n\\n/**\\n * @dev Required interface of an ERC-721 compliant contract.\\n */\\ninterface IERC721 is IERC165 {\\n    /**\\n     * @dev Emitted when `tokenId` token is transferred from `from` to `to`.\\n     */\\n    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);\\n\\n    /**\\n     * @dev Emitted when `owner` enables `approved` to manage the `tokenId` token.\\n     */\\n    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);\\n\\n    /**\\n     * @dev Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.\\n     */\\n    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);\\n\\n    /**\\n     * @dev Returns the number of tokens in ``owner``'s account.\\n     */\\n    function balanceOf(address owner) external view returns (uint256 balance);\\n\\n    /**\\n     * @dev Returns the owner of the `tokenId` token.\\n     *\\n     * Requirements:\\n     *\\n     * - `tokenId` must exist.\\n     */\\n    function ownerOf(uint256 tokenId) external view returns (address owner);\\n\\n    /**\\n     * @dev Safely transfers `tokenId` token from `from` to `to`.\\n     *\\n     * Requirements:\\n     *\\n     * - `from` cannot be the zero address.\\n     * - `to` cannot be the zero address.\\n     * - `tokenId` token must exist and be owned by `from`.\\n     * - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}.\\n     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon\\n     *   a safe transfer.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function safeTransferFrom(address from, address to, uint256 tokenId, bytes calldata data) external;\\n\\n    /**\\n     * @dev Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients\\n     * are aware of the ERC-721 protocol to prevent tokens from being forever locked.\\n     *\\n     * Requirements:\\n     *\\n     * - `from` cannot be the zero address.\\n     * - `to` cannot be the zero address.\\n     * - `tokenId` token must exist and be owned by `from`.\\n     * - If the caller is not `from`, it must have been allowed to move this token by either {approve} or\\n     *   {setApprovalForAll}.\\n     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon\\n     *   a safe transfer.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function safeTransferFrom(address from, address to, uint256 tokenId) external;\\n\\n    /**\\n     * @dev Transfers `tokenId` token from `from` to `to`.\\n     *\\n     * WARNING: Note that the caller is responsible to confirm that the recipient is capable of receiving ERC-721\\n     * or else they may be permanently lost. Usage of {safeTransferFrom} prevents loss, though the caller must\\n     * understand this adds an external call which potentially creates a reentrancy vulnerability.\\n     *\\n     * Requirements:\\n     *\\n     * - `from` cannot be the zero address.\\n     * - `to` cannot be the zero address.\\n     * - `tokenId` token must be owned by `from`.\\n     * - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}.\\n     *\\n     * Emits a {Transfer} event.\\n     */\\n    function transferFrom(address from, address to, uint256 tokenId) external;\\n\\n    /**\\n     * @dev Gives permission to `to` to transfer `tokenId` token to another account.\\n     * The approval is cleared when the token is transferred.\\n     *\\n     * Only a single account can be approved at a time, so approving the zero address clears previous approvals.\\n     *\\n     * Requirements:\\n     *\\n     * - The caller must own the token or be an approved operator.\\n     * - `tokenId` must exist.\\n     *\\n     * Emits an {Approval} event.\\n     */\\n    function approve(address to, uint256 tokenId) external;\\n\\n    /**\\n     * @dev Approve or remove `operator` as an operator for the caller.\\n     * Operators can call {transferFrom} or {safeTransferFrom} for any token owned by the caller.\\n     *\\n     * Requirements:\\n     *\\n     * - The `operator` cannot be the address zero.\\n     *\\n     * Emits an {ApprovalForAll} event.\\n     */\\n    function setApprovalForAll(address operator, bool approved) external;\\n\\n    /**\\n     * @dev Returns the account approved for `tokenId` token.\\n     *\\n     * Requirements:\\n     *\\n     * - `tokenId` must exist.\\n     */\\n    function getApproved(uint256 tokenId) external view returns (address operator);\\n\\n    /**\\n     * @dev Returns if the `operator` is allowed to manage all of the assets of `owner`.\\n     *\\n     * See {setApprovalForAll}\\n     */\\n    function isApprovedForAll(address owner, address operator) external view returns (bool);\\n}\\n\",\"keccak256\":\"0x5dc63d1c6a12fe1b17793e1745877b2fcbe1964c3edfd0a482fac21ca8f18261\",\"license\":\"MIT\"},\"@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.0) (token/ERC721/extensions/IERC721Metadata.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {IERC721} from \\\"../IERC721.sol\\\";\\n\\n/**\\n * @title ERC-721 Non-Fungible Token Standard, optional metadata extension\\n * @dev See https://eips.ethereum.org/EIPS/eip-721\\n */\\ninterface IERC721Metadata is IERC721 {\\n    /**\\n     * @dev Returns the token collection name.\\n     */\\n    function name() external view returns (string memory);\\n\\n    /**\\n     * @dev Returns the token collection symbol.\\n     */\\n    function symbol() external view returns (string memory);\\n\\n    /**\\n     * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.\\n     */\\n    function tokenURI(uint256 tokenId) external view returns (string memory);\\n}\\n\",\"keccak256\":\"0x37d1aaaa5a2908a09e9dcf56a26ddf762ecf295afb5964695937344fc6802ce1\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/Context.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Provides information about the current execution context, including the\\n * sender of the transaction and its data. While these are generally available\\n * via msg.sender and msg.data, they should not be accessed in such a direct\\n * manner, since when dealing with meta-transactions the account sending and\\n * paying for execution may not be the actual sender (as far as an application\\n * is concerned).\\n *\\n * This contract is only required for intermediate, library-like contracts.\\n */\\nabstract contract Context {\\n    function _msgSender() internal view virtual returns (address) {\\n        return msg.sender;\\n    }\\n\\n    function _msgData() internal view virtual returns (bytes calldata) {\\n        return msg.data;\\n    }\\n\\n    function _contextSuffixLength() internal view virtual returns (uint256) {\\n        return 0;\\n    }\\n}\\n\",\"keccak256\":\"0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/introspection/ERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.1.0) (utils/introspection/ERC165.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {IERC165} from \\\"./IERC165.sol\\\";\\n\\n/**\\n * @dev Implementation of the {IERC165} interface.\\n *\\n * Contracts that want to implement ERC-165 should inherit from this contract and override {supportsInterface} to check\\n * for the additional interface id that will be supported. For example:\\n *\\n * ```solidity\\n * function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {\\n *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);\\n * }\\n * ```\\n */\\nabstract contract ERC165 is IERC165 {\\n    /**\\n     * @dev See {IERC165-supportsInterface}.\\n     */\\n    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {\\n        return interfaceId == type(IERC165).interfaceId;\\n    }\\n}\\n\",\"keccak256\":\"0xddce8e17e3d3f9ed818b4f4c4478a8262aab8b11ed322f1bf5ed705bb4bd97fa\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/introspection/IERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.1.0) (utils/introspection/IERC165.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Interface of the ERC-165 standard, as defined in the\\n * https://eips.ethereum.org/EIPS/eip-165[ERC].\\n *\\n * Implementers can declare support of contract interfaces, which can then be\\n * queried by others ({ERC165Checker}).\\n *\\n * For an implementation, see {ERC165}.\\n */\\ninterface IERC165 {\\n    /**\\n     * @dev Returns true if this contract implements the interface defined by\\n     * `interfaceId`. See the corresponding\\n     * https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section]\\n     * to learn more about how these ids are created.\\n     *\\n     * This function call must use less than 30 000 gas.\\n     */\\n    function supportsInterface(bytes4 interfaceId) external view returns (bool);\\n}\\n\",\"keccak256\":\"0x79796192ec90263f21b464d5bc90b777a525971d3de8232be80d9c4f9fb353b8\",\"license\":\"MIT\"},\"contracts/AgentCollectionsManager.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity ^0.8.28;\\n\\nimport {AccessControl} from \\\"@openzeppelin/contracts/access/AccessControl.sol\\\";\\nimport {IERC721Metadata} from \\\"@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol\\\";\\n\\nimport {IAgentCollectionStates} from \\\"./interfaces/IAgentCollection/IAgentCollectionStates.sol\\\";\\nimport {IAgentCollectionsManager} from \\\"./interfaces/IAgentCollectionsManager/IAgentCollectionsManager.sol\\\";\\nimport {AgentCollectionInfo} from \\\"./types/AgentCollectionInfo.sol\\\";\\n\\n/// @title Agentic AI collections manager\\n/// @dev Manages collections and authorizes creators.\\ncontract AgentCollectionsManager is\\n    AccessControl,\\n    IAgentCollectionsManager\\n{\\n    bytes32 public constant CREATOR_ROLE = keccak256(\\\"CREATOR_ROLE\\\");\\n\\n    uint256 public nextCollectionId = 1;\\n\\n    mapping(uint256 => address) public collections;\\n    mapping(string => uint256) public collectionIdByName;\\n    mapping(string => uint256) public collectionIdBySymbol;\\n    mapping(address => bool) public isKnownCollection;\\n\\n    /// @dev Deploy the manager and set the deployer as admin.\\n    constructor() {\\n        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);\\n    }\\n\\n    function moderatorOf(address account) external view returns (address[] memory) {\\n        uint256 numberOfModeratorCollections = 0;\\n\\n        // Count the number of collections where the account is a moderator\\n        for (uint256 collectionIndex = 1; collectionIndex < nextCollectionId; collectionIndex++) {\\n            IAgentCollectionStates collection = IAgentCollectionStates(collections[collectionIndex]);\\n            if (collection.isModerator(account)) {\\n                numberOfModeratorCollections++;\\n            }\\n        }\\n\\n        // Fill the array with the addresses of the collections where the account is a moderator\\n        address[] memory moderatorCollections = new address[](numberOfModeratorCollections);\\n        uint256 insertIndex = 0;\\n        for (uint256 collectionIndex = 1; collectionIndex < nextCollectionId; collectionIndex++) {\\n            address collection = collections[collectionIndex];\\n            if (IAgentCollectionStates(collection).isModerator(account)) {\\n                moderatorCollections[insertIndex] = collection;\\n                insertIndex++;\\n            }\\n        }\\n\\n        return moderatorCollections;\\n    }\\n\\n    /// @dev Paginated collection listing for the operator UI. Pass offset 0 to\\n    /// start; `next` is the id to resume from, or 0 when exhausted.\\n    function listCollections(\\n        uint256 offset,\\n        uint256 limit\\n    ) external view returns (AgentCollectionInfo[] memory infos, uint256 next) {\\n        uint256 start = offset < 1 ? 1 : offset;\\n        uint256 end = start + limit;\\n        if (end > nextCollectionId) {\\n            end = nextCollectionId;\\n        }\\n        uint256 count = end > start ? end - start : 0;\\n\\n        infos = new AgentCollectionInfo[](count);\\n        for (uint256 i = 0; i < count; i++) {\\n            address collection = collections[start + i];\\n            IAgentCollectionStates state = IAgentCollectionStates(collection);\\n            infos[i] = AgentCollectionInfo({\\n                collectionAddress: collection,\\n                name: IERC721Metadata(collection).name(),\\n                description: state.description(),\\n                moderatorCount: state.moderatorCount(),\\n                nextTokenId: state.nextTokenId()\\n            });\\n        }\\n        next = end < nextCollectionId ? end : 0;\\n    }\\n\\n    /// @dev Paginated search for the agent a typed address belongs to. Returns\\n    /// the first match in [offset, offset+limit) or zeros; `next` resumes the scan.\\n    function findAgentByAddress(\\n        string memory addressType,\\n        string memory value,\\n        uint256 offset,\\n        uint256 limit\\n    ) external view returns (address collection, uint256 tokenId, string memory name, uint256 next) {\\n        uint256 start = offset < 1 ? 1 : offset;\\n        uint256 end = start + limit;\\n        if (end > nextCollectionId) {\\n            end = nextCollectionId;\\n        }\\n\\n        for (uint256 id = start; id < end; id++) {\\n            address current = collections[id];\\n            uint256 foundTokenId = IAgentCollectionStates(current).addressToTokenId(addressType, value);\\n            if (foundTokenId != 0) {\\n                return (current, foundTokenId, IAgentCollectionStates(current).nameOf(foundTokenId), 0);\\n            }\\n        }\\n\\n        next = end < nextCollectionId ? end : 0;\\n        return (address(0), 0, \\\"\\\", next);\\n    }\\n\\n    /// @dev Add a new collection.\\n    /// @param newCollection The new collection to add.\\n    function addCollection(\\n        address newCollection\\n    ) external onlyRole(CREATOR_ROLE) {\\n        string memory name = IERC721Metadata(newCollection).name();\\n        string memory symbol = IERC721Metadata(newCollection).symbol();\\n\\n        if (collectionIdByName[name] != 0) {\\n            revert CollectionNameAlreadyExists(name);\\n        }\\n        if (collectionIdBySymbol[symbol] != 0) {\\n            revert CollectionSymbolAlreadyExists(symbol);\\n        }\\n\\n        collections[nextCollectionId] = address(newCollection);\\n        collectionIdByName[name] = nextCollectionId;\\n        collectionIdBySymbol[symbol] = nextCollectionId;\\n        isKnownCollection[address(newCollection)] = true;\\n\\n        emit CollectionCreated(\\n            nextCollectionId,\\n            address(newCollection),\\n            name,\\n            symbol\\n        );\\n\\n        nextCollectionId++;\\n    }\\n}\",\"keccak256\":\"0x2d04d4c655e84f2f66521ce5d80145ef8e48b8b96d696b79e4d52f2c50f040bb\",\"license\":\"UNLICENSED\"},\"contracts/interfaces/IAgentCollection/IAgentCollectionStates.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity ^0.8.28;\\n\\nimport {KeyValue} from \\\"../../types/KeyValue.sol\\\";\\nimport {AgentAddress} from \\\"../../types/AgentAddress.sol\\\";\\n\\ninterface IAgentCollectionStates {\\n    /// @dev Get the fact that a account is a moderator or not.\\n    function isModerator(address account) external view returns (bool);\\n\\n    /// @dev Number of moderators configured on the collection.\\n    function moderatorCount() external view returns (uint256);\\n\\n    /// @dev Get the token ID associated to a typed address, or 0 if none.\\n    /// @param addressType The type of the address (\\\"evm\\\", \\\"btc\\\", ...).\\n    /// @param value The address value (evm values accepted in any casing).\\n    function addressToTokenId(string memory addressType, string memory value) external view returns (uint256);\\n\\n    /// @dev The next tokenId to be minted (count of minted agents + 1).\\n    function nextTokenId() external view returns (uint256);\\n\\n    /// @dev Description of the collection.\\n    function description() external view returns (string memory);\\n\\n    /// @dev Get the name of an agent.\\n    /// @param tokenId The token identifier.\\n    function nameOf(uint256 tokenId) external view returns (string memory);\\n\\n    /// @dev Get the role of an agent\\n    /// @param tokenId The token identifier.\\n    function roleOf(uint256 tokenId) external view returns (string memory);\\n\\n    /// @dev Get the number of images of an agent.\\n    /// @param tokenId The token identifier.\\n    function imagesCountOf(uint256 tokenId) external view returns (uint256);\\n\\n    /// @dev Get a specific image of an agent by its index.\\n    /// @param tokenId The token identifier.\\n    /// @param index The index of the image.\\n    function imageOfByIndex(uint256 tokenId, uint256 index) external view returns (KeyValue memory);\\n\\n    /// @dev Get the number of typed addresses of an agent.\\n    /// @param tokenId The token identifier.\\n    function addressesCountOf(uint256 tokenId) external view returns (uint256);\\n\\n    /// @dev Get a specific typed address of an agent by its index.\\n    /// @param tokenId The token identifier.\\n    /// @param index The index of the address.\\n    function addressOfByIndex(uint256 tokenId, uint256 index) external view returns (AgentAddress memory);\\n}\\n\",\"keccak256\":\"0x72b5a5da114226d25c56ad0839b85725648851f032fb2fa5caa45b28ece8307d\",\"license\":\"UNLICENSED\"},\"contracts/interfaces/IAgentCollectionsManager/IAgentCollectionsManager.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity ^0.8.28;\\n\\nimport {IAccessControl} from \\\"@openzeppelin/contracts/access/IAccessControl.sol\\\";\\n\\nimport {IAgentCollectionsManagerStates} from \\\"./IAgentCollectionsManagerStates.sol\\\";\\nimport {IAgentCollectionsManagerEvents} from \\\"./IAgentCollectionsManagerEvents.sol\\\";\\nimport {IAgentCollectionsManagerErrors} from \\\"./IAgentCollectionsManagerErrors.sol\\\";\\nimport {IAgentCollectionsManagerCollectionCreatorActions} from \\\"./IAgentCollectionsManagerCollectionCreatorActions.sol\\\";\\n\\ninterface IAgentCollectionsManager is\\n    IAccessControl,\\n    IAgentCollectionsManagerStates,\\n    IAgentCollectionsManagerEvents,\\n    IAgentCollectionsManagerErrors,\\n    IAgentCollectionsManagerCollectionCreatorActions\\n{\\n\\n}\\n\",\"keccak256\":\"0x450e5a2a8587d17c9617c5d1c208f116c3150df62504780c6e41a83696f12add\",\"license\":\"UNLICENSED\"},\"contracts/interfaces/IAgentCollectionsManager/IAgentCollectionsManagerCollectionCreatorActions.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity ^0.8.28;\\n\\ninterface IAgentCollectionsManagerCollectionCreatorActions {\\n    /// @dev Add a new collection.\\n    /// @param newCollection The new collection to add.\\n    function addCollection(\\n        address newCollection\\n    ) external;\\n}\\n\",\"keccak256\":\"0x351c48b04628cfb626ed5b392b5a128612bf471ba2199766bb21b8e51b5bd8e6\",\"license\":\"UNLICENSED\"},\"contracts/interfaces/IAgentCollectionsManager/IAgentCollectionsManagerErrors.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity ^0.8.28;\\n\\ninterface IAgentCollectionsManagerErrors {\\n    /// @dev Error when collection does not exist.\\n    error CollectionDoesNotExist(uint256 collectionId);\\n\\n    /// @dev Error when the collection name already exists.\\n    error CollectionNameAlreadyExists(string name);\\n\\n    /// @dev Error when the collection symbol already exists.\\n    error CollectionSymbolAlreadyExists(string symbol);\\n}\\n\",\"keccak256\":\"0xfb07be715be4bdac3d73228c2dcbd42bc5f49cb5fdcd8909756ce2538ea5c57f\",\"license\":\"UNLICENSED\"},\"contracts/interfaces/IAgentCollectionsManager/IAgentCollectionsManagerEvents.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity ^0.8.28;\\n\\ninterface IAgentCollectionsManagerEvents {\\n    /// @dev Emitted when a new collection is created.\\n    /// @param collectionId The unique identifier of the collection.\\n    /// @param collectionAddress The address of the newly created collection.\\n    /// @param name The name of the collection.\\n    /// @param symbol The symbol of the collection.\\n    event CollectionCreated(\\n        uint256 indexed collectionId,\\n        address collectionAddress,\\n        string name,\\n        string symbol\\n    );\\n}\\n\",\"keccak256\":\"0xe6db3d4438201877784c5713ab9b0b9ea18e2a80f794e04ac7ee588b3f10b6e3\",\"license\":\"UNLICENSED\"},\"contracts/interfaces/IAgentCollectionsManager/IAgentCollectionsManagerStates.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity ^0.8.28;\\n\\nimport {AgentCollectionInfo} from \\\"../../types/AgentCollectionInfo.sol\\\";\\n\\ninterface IAgentCollectionsManagerStates {\\n    /// @dev Get a collection address by its identifier.\\n    /// @param collectionId The id of the collection.\\n    function collections(uint256 collectionId) external view returns (address);\\n\\n    /// @dev Paginated collection listing. Scans ids [offset, offset+limit); pass\\n    /// offset 0 to start. `next` is the id to resume from, or 0 when exhausted.\\n    function listCollections(\\n        uint256 offset,\\n        uint256 limit\\n    ) external view returns (AgentCollectionInfo[] memory infos, uint256 next);\\n\\n    /// @dev Paginated search for the agent a typed address belongs to. Scans ids\\n    /// [offset, offset+limit); returns the match (collection != address(0)) with\\n    /// its tokenId + name, else zeros. `next` resumes the scan, or 0 when exhausted.\\n    function findAgentByAddress(\\n        string memory addressType,\\n        string memory value,\\n        uint256 offset,\\n        uint256 limit\\n    ) external view returns (address collection, uint256 tokenId, string memory name, uint256 next);\\n\\n    /// @dev Get a collection id by its name.\\n    /// @param name The name of the collection.\\n    function collectionIdByName(string memory name) external view returns (uint256);\\n\\n    /// @dev Get a collection id by its symbol.\\n    /// @param symbol The symbol of the collection.\\n    function collectionIdBySymbol(string memory symbol) external view returns (uint256);\\n\\n    /// @dev Whether a collection address was registered through this manager.\\n    /// @param collection The collection address to check.\\n    function isKnownCollection(address collection) external view returns (bool);\\n}\\n\",\"keccak256\":\"0x472f399457fd278d5d1881a714ce797e3a81836379aac0917d66b1966e6e243c\",\"license\":\"UNLICENSED\"},\"contracts/types/AgentAddress.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity ^0.8.28;\\n\\nstruct AgentAddress {\\n    string addressType;\\n    string value;\\n}\\n\\nstring constant EVM_TYPE = \\\"evm\\\";\\n\",\"keccak256\":\"0x1a71828f6a6e73782bb9e71f2d3ea34410be0b740e4a7b1249044d4fdb449bb6\",\"license\":\"UNLICENSED\"},\"contracts/types/AgentCollectionInfo.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity ^0.8.28;\\n\\n/// @dev A collection plus the data the operator UI needs to pick one.\\nstruct AgentCollectionInfo {\\n    string name;\\n    string description;\\n    uint256 moderatorCount;\\n    uint256 nextTokenId;\\n    address collectionAddress;\\n}\\n\",\"keccak256\":\"0x699da780367f42556015b8d961130900cefcb9e1a0d7f0d72a709a923a13a464\",\"license\":\"UNLICENSED\"},\"contracts/types/KeyValue.sol\":{\"content\":\"// SPDX-License-Identifier: UNLICENSED\\npragma solidity ^0.8.28;\\n\\nstruct KeyValue {\\n    string key;\\n    string value;\\n}\",\"keccak256\":\"0x265d7c259f52cf6fb4cc956f21559c28e836641d7c9122ea833ac94accb613b0\",\"license\":\"UNLICENSED\"}},\"version\":1}",
+  "bytecode": "0x608060405234602357600180556013336028565b5060405161116c90816100b68239f35b600080fd5b6001600160a01b0381166000908152600080516020611222833981519152602052604090205460ff1660af576001600160a01b0316600081815260008051602061122283398151915260205260408120805460ff191660011790553391907f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d8180a4600190565b5060009056fe608080604052600436101561001357600080fd5b60003560e01c90816301ffc9a714610bf55750806308fa3c6514610bac578063103b970e14610b50578063248a9ca314610b2a5780632f2ff15d14610af95780633637b24414610aba57806336568abe14610a745780634b2d8148146108935780638aeda25a1461086a57806391d148541461081d578063a174e77a1461059a578063a217fddf1461057e578063c4c36e6514610200578063d547741f146101c8578063e32f72a114610131578063e77d6f7c146101135763fdbda0ec146100da57600080fd5b3461010e57602036600319011261010e576004356000526002602052602060018060a01b0360406000205416604051908152f35b600080fd5b3461010e57600036600319011261010e576020600154604051908152f35b3461010e57608036600319011261010e576004356001600160401b03811161010e57610161903690600401610cb7565b6024356001600160401b03811161010e576101be91610187610195923690600401610cb7565b906064359160443591610e5c565b91939060405194859460018060a01b031685526020850152608060408501526080840190610d4d565b9060608301520390f35b3461010e57604036600319011261010e576101fe6004356101e7610d21565b906101f96101f482610d72565b610fce565b611094565b005b3461010e57604036600319011261010e576004356001811015610579575060015b61022d60243582610e4f565b600154808211610571575b60008383111561056a57508282038281116105545791905b61025983610dad565b926102676040519485610c79565b808452601f1961027682610dad565b0160005b81811061050e5750506000945b81861061034d57505081101561034457905b60405190604082016040835281518091526060830190602060608260051b8601019301916000905b8282106102d5578580868960208301520390f35b90919293602080600192605f198982030185528751906080610313610303845160a0855260a0850190610d4d565b8585015184820387860152610d4d565b92604081015160408401526060810151606084015281878060a01b03910151169101529601920192019092916102c1565b50600090610299565b6103578682610e4f565b600052600260205260018060a01b0360406000205416956040516306fdde0360e01b81526000816004818b5afa908115610490576000916104f5575b50604051633942720b60e11b815297600089600481845afa988915610490576000996104d2575b50604051630ee7e60b60e01b81529860208a600481855afa998a156104905760009a61049c575b50604051631d5e528f60e21b81529960208b600481865afa91821561049057600092610455575b6001969798999a9b506040519461041e86610c48565b8552602085015260408401526060830152608082015261043e8289610dc4565b526104498188610dc4565b50019493929190610287565b919a8b8160203d8111610489575b6020926104708284610c79565b50810103126104855751999a508a9991610408565b8b80fd5b503d610463565b6040513d6000823e3d90fd5b90996020823d82116104ca575b816104b660209383610c79565b810103126104c7575051988a6103e1565b80fd5b3d91506104a9565b6104ee91993d8091833e6104e68183610c79565b810190610dee565b97896103ba565b610508913d8091833e6104e68183610c79565b88610393565b60209060409793949596975161052381610c48565b6060815260608382015260006040820152600060608201526000608082015282828a0101520195949392919561027a565b634e487b7160e01b600052601160045260246000fd5b9190610250565b905080610238565b610221565b3461010e57600036600319011261010e57602060405160008152f35b3461010e57602036600319011261010e576105b3610d37565b3360009081527ffb6cfbf0a6e77dfd309859bf4bad2c7342bd2b734e42c01cbc85d3e6dd74f95e602052604090205460ff16156107f6576040516306fdde0360e01b81526001600160a01b039190911690600081600481855afa908115610490576000916107dd575b506040516395d89b4160e01b815291600083600481845afa928315610490576000936107c2575b506040518251906020818186019361065c818387610cfe565b81016003815203019020546107a0576040519084519160208181880194610684818388610cfe565b810160048152030190205461077a579261077594926020610719817fe1344d16944f31a1bd59b121889e600e71fcc0716ae3fe38175b7ef2db1678b39561076d986001546000526002835260406000208660018060a01b03198254161790556106fd600154958692604051809381928c51928391610cfe565b8101600381520301902055604051809381928a51928391610cfe565b81016004815203019020558060005260056020526040600020600160ff1982541617905560015494859461075f6040519485948552606060208601526060850190610d4d565b908382036040850152610d4d565b0390a2610d9e565b600155005b604051632456bbdf60e11b8152602060048201528061079c6024820188610d4d565b0390fd5b604051630a3942ab60e41b8152602060048201528061079c6024820186610d4d565b6107d691933d8091833e6104e68183610c79565b9183610643565b6107f0913d8091833e6104e68183610c79565b8261061c565b63e2517d3f60e01b6000523360045260008051602061111783398151915260245260446000fd5b3461010e57604036600319011261010e57610836610d21565b600435600052600060205260406000209060018060a01b0316600052602052602060ff604060002054166040519015158152f35b3461010e57600036600319011261010e5760206040516000805160206111178339815191528152f35b3461010e57602036600319011261010e576108ac610d37565b6001805460009290916001600160a01b03909116905b8281106109f157506108ec6108d684610dad565b936108e46040519586610c79565b808552610dad565b602084019290601f1901368437600060015b8281106109535784866040519182916020830190602084525180915260408301919060005b818110610931575050500390f35b82516001600160a01b0316845285945060209384019390920191600101610923565b80600052600260205260018060a01b0360406000205416604051637d379c9b60e11b8152856004820152602081602481855afa908115610490576000916109c3575b506109a4575b506001016108fe565b826109bc916109b6600194958a610dc4565b52610d9e565b919061099b565b6109e4915060203d81116109ea575b6109dc8183610c79565b810190610d86565b88610995565b503d6109d2565b8060005260026020526024602060018060a01b036040600020541660405192838092637d379c9b60e11b82528760048301525afa90811561049057600091610a56575b50610a42575b6001016108c2565b92610a4e600191610d9e565b939050610a3a565b610a6e915060203d81116109ea576109dc8183610c79565b85610a34565b3461010e57604036600319011261010e57610a8d610d21565b336001600160a01b03821603610aa9576101fe90600435611094565b63334bd91960e11b60005260046000fd5b3461010e57602036600319011261010e576001600160a01b03610adb610d37565b166000526005602052602060ff604060002054166040519015158152f35b3461010e57604036600319011261010e576101fe600435610b18610d21565b90610b256101f482610d72565b611009565b3461010e57602036600319011261010e576020610b48600435610d72565b604051908152f35b3461010e57602036600319011261010e576004356001600160401b03811161010e57610b996020610b8681933690600401610cb7565b8160405193828580945193849201610cfe565b8101600481520301902054604051908152f35b3461010e57602036600319011261010e576004356001600160401b03811161010e57610be26020610b8681933690600401610cb7565b8101600381520301902054604051908152f35b3461010e57602036600319011261010e576004359063ffffffff60e01b821680920361010e57602091637965db0b60e01b8114908115610c37575b5015158152f35b6301ffc9a760e01b14905083610c30565b60a081019081106001600160401b03821117610c6357604052565b634e487b7160e01b600052604160045260246000fd5b601f909101601f19168101906001600160401b03821190821017610c6357604052565b6001600160401b038111610c6357601f01601f191660200190565b81601f8201121561010e57803590610cce82610c9c565b92610cdc6040519485610c79565b8284526020838301011161010e57816000926020809301838601378301015290565b60005b838110610d115750506000910152565b8181015183820152602001610d01565b602435906001600160a01b038216820361010e57565b600435906001600160a01b038216820361010e57565b90602091610d6681518092818552858086019101610cfe565b601f01601f1916010190565b600052600060205260016040600020015490565b9081602091031261010e5751801515810361010e5790565b60001981146105545760010190565b6001600160401b038111610c635760051b60200190565b8051821015610dd85760209160051b010190565b634e487b7160e01b600052603260045260246000fd5b60208183031261010e578051906001600160401b03821161010e570181601f8201121561010e578051610e2081610c9c565b92610e2e6040519485610c79565b8184526020828401011161010e57610e4c9160208085019101610cfe565b90565b9190820180921161055457565b92916001811015610fc45750610e756001925b83610e4f565b9260015492838511610fbb575b848110610eba57505050811015610eb157905b600091600091604051610ea9602082610c79565b600081529190565b50600090610e95565b80600052600260205260018060a01b0360406000205416604051906317b89a8d60e11b82526040600483015260208280610f0c610efa6044830189610d4d565b82810360031901602484015289610d4d565b0381845afa91821561049057600092610f88575b5081610f30575050600101610e82565b955095935050505060405191630146899960e21b8352836004840152600083602481845afa92831561049057600093610f6d575b50929190600090565b610f8191933d8091833e6104e68183610c79565b9138610f64565b90916020823d8211610fb3575b81610fa260209383610c79565b810103126104c75750519038610f20565b3d9150610f95565b93508293610e82565b610e759092610e6f565b60008181526020818152604080832033845290915290205460ff1615610ff15750565b63e2517d3f60e01b6000523360045260245260446000fd5b6000818152602081815260408083206001600160a01b038616845290915290205460ff1661108d576000818152602081815260408083206001600160a01b0395909516808452949091528120805460ff19166001179055339291907f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d9080a4600190565b5050600090565b6000818152602081815260408083206001600160a01b038616845290915290205460ff161561108d576000818152602081815260408083206001600160a01b0395909516808452949091528120805460ff19169055339291907ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b9080a460019056fe828634d95e775031b9ff576b159a8509d3053581a8c9c4d7d86899e0afcd882fa2646970667358221220f698a462739c1fa12541d478a5b39e6723b5ee3c879ce8ff5d75c68929d4721a64736f6c634300081c0033ad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5",
+  "deployedBytecode": "0x608080604052600436101561001357600080fd5b60003560e01c90816301ffc9a714610bf55750806308fa3c6514610bac578063103b970e14610b50578063248a9ca314610b2a5780632f2ff15d14610af95780633637b24414610aba57806336568abe14610a745780634b2d8148146108935780638aeda25a1461086a57806391d148541461081d578063a174e77a1461059a578063a217fddf1461057e578063c4c36e6514610200578063d547741f146101c8578063e32f72a114610131578063e77d6f7c146101135763fdbda0ec146100da57600080fd5b3461010e57602036600319011261010e576004356000526002602052602060018060a01b0360406000205416604051908152f35b600080fd5b3461010e57600036600319011261010e576020600154604051908152f35b3461010e57608036600319011261010e576004356001600160401b03811161010e57610161903690600401610cb7565b6024356001600160401b03811161010e576101be91610187610195923690600401610cb7565b906064359160443591610e5c565b91939060405194859460018060a01b031685526020850152608060408501526080840190610d4d565b9060608301520390f35b3461010e57604036600319011261010e576101fe6004356101e7610d21565b906101f96101f482610d72565b610fce565b611094565b005b3461010e57604036600319011261010e576004356001811015610579575060015b61022d60243582610e4f565b600154808211610571575b60008383111561056a57508282038281116105545791905b61025983610dad565b926102676040519485610c79565b808452601f1961027682610dad565b0160005b81811061050e5750506000945b81861061034d57505081101561034457905b60405190604082016040835281518091526060830190602060608260051b8601019301916000905b8282106102d5578580868960208301520390f35b90919293602080600192605f198982030185528751906080610313610303845160a0855260a0850190610d4d565b8585015184820387860152610d4d565b92604081015160408401526060810151606084015281878060a01b03910151169101529601920192019092916102c1565b50600090610299565b6103578682610e4f565b600052600260205260018060a01b0360406000205416956040516306fdde0360e01b81526000816004818b5afa908115610490576000916104f5575b50604051633942720b60e11b815297600089600481845afa988915610490576000996104d2575b50604051630ee7e60b60e01b81529860208a600481855afa998a156104905760009a61049c575b50604051631d5e528f60e21b81529960208b600481865afa91821561049057600092610455575b6001969798999a9b506040519461041e86610c48565b8552602085015260408401526060830152608082015261043e8289610dc4565b526104498188610dc4565b50019493929190610287565b919a8b8160203d8111610489575b6020926104708284610c79565b50810103126104855751999a508a9991610408565b8b80fd5b503d610463565b6040513d6000823e3d90fd5b90996020823d82116104ca575b816104b660209383610c79565b810103126104c7575051988a6103e1565b80fd5b3d91506104a9565b6104ee91993d8091833e6104e68183610c79565b810190610dee565b97896103ba565b610508913d8091833e6104e68183610c79565b88610393565b60209060409793949596975161052381610c48565b6060815260608382015260006040820152600060608201526000608082015282828a0101520195949392919561027a565b634e487b7160e01b600052601160045260246000fd5b9190610250565b905080610238565b610221565b3461010e57600036600319011261010e57602060405160008152f35b3461010e57602036600319011261010e576105b3610d37565b3360009081527ffb6cfbf0a6e77dfd309859bf4bad2c7342bd2b734e42c01cbc85d3e6dd74f95e602052604090205460ff16156107f6576040516306fdde0360e01b81526001600160a01b039190911690600081600481855afa908115610490576000916107dd575b506040516395d89b4160e01b815291600083600481845afa928315610490576000936107c2575b506040518251906020818186019361065c818387610cfe565b81016003815203019020546107a0576040519084519160208181880194610684818388610cfe565b810160048152030190205461077a579261077594926020610719817fe1344d16944f31a1bd59b121889e600e71fcc0716ae3fe38175b7ef2db1678b39561076d986001546000526002835260406000208660018060a01b03198254161790556106fd600154958692604051809381928c51928391610cfe565b8101600381520301902055604051809381928a51928391610cfe565b81016004815203019020558060005260056020526040600020600160ff1982541617905560015494859461075f6040519485948552606060208601526060850190610d4d565b908382036040850152610d4d565b0390a2610d9e565b600155005b604051632456bbdf60e11b8152602060048201528061079c6024820188610d4d565b0390fd5b604051630a3942ab60e41b8152602060048201528061079c6024820186610d4d565b6107d691933d8091833e6104e68183610c79565b9183610643565b6107f0913d8091833e6104e68183610c79565b8261061c565b63e2517d3f60e01b6000523360045260008051602061111783398151915260245260446000fd5b3461010e57604036600319011261010e57610836610d21565b600435600052600060205260406000209060018060a01b0316600052602052602060ff604060002054166040519015158152f35b3461010e57600036600319011261010e5760206040516000805160206111178339815191528152f35b3461010e57602036600319011261010e576108ac610d37565b6001805460009290916001600160a01b03909116905b8281106109f157506108ec6108d684610dad565b936108e46040519586610c79565b808552610dad565b602084019290601f1901368437600060015b8281106109535784866040519182916020830190602084525180915260408301919060005b818110610931575050500390f35b82516001600160a01b0316845285945060209384019390920191600101610923565b80600052600260205260018060a01b0360406000205416604051637d379c9b60e11b8152856004820152602081602481855afa908115610490576000916109c3575b506109a4575b506001016108fe565b826109bc916109b6600194958a610dc4565b52610d9e565b919061099b565b6109e4915060203d81116109ea575b6109dc8183610c79565b810190610d86565b88610995565b503d6109d2565b8060005260026020526024602060018060a01b036040600020541660405192838092637d379c9b60e11b82528760048301525afa90811561049057600091610a56575b50610a42575b6001016108c2565b92610a4e600191610d9e565b939050610a3a565b610a6e915060203d81116109ea576109dc8183610c79565b85610a34565b3461010e57604036600319011261010e57610a8d610d21565b336001600160a01b03821603610aa9576101fe90600435611094565b63334bd91960e11b60005260046000fd5b3461010e57602036600319011261010e576001600160a01b03610adb610d37565b166000526005602052602060ff604060002054166040519015158152f35b3461010e57604036600319011261010e576101fe600435610b18610d21565b90610b256101f482610d72565b611009565b3461010e57602036600319011261010e576020610b48600435610d72565b604051908152f35b3461010e57602036600319011261010e576004356001600160401b03811161010e57610b996020610b8681933690600401610cb7565b8160405193828580945193849201610cfe565b8101600481520301902054604051908152f35b3461010e57602036600319011261010e576004356001600160401b03811161010e57610be26020610b8681933690600401610cb7565b8101600381520301902054604051908152f35b3461010e57602036600319011261010e576004359063ffffffff60e01b821680920361010e57602091637965db0b60e01b8114908115610c37575b5015158152f35b6301ffc9a760e01b14905083610c30565b60a081019081106001600160401b03821117610c6357604052565b634e487b7160e01b600052604160045260246000fd5b601f909101601f19168101906001600160401b03821190821017610c6357604052565b6001600160401b038111610c6357601f01601f191660200190565b81601f8201121561010e57803590610cce82610c9c565b92610cdc6040519485610c79565b8284526020838301011161010e57816000926020809301838601378301015290565b60005b838110610d115750506000910152565b8181015183820152602001610d01565b602435906001600160a01b038216820361010e57565b600435906001600160a01b038216820361010e57565b90602091610d6681518092818552858086019101610cfe565b601f01601f1916010190565b600052600060205260016040600020015490565b9081602091031261010e5751801515810361010e5790565b60001981146105545760010190565b6001600160401b038111610c635760051b60200190565b8051821015610dd85760209160051b010190565b634e487b7160e01b600052603260045260246000fd5b60208183031261010e578051906001600160401b03821161010e570181601f8201121561010e578051610e2081610c9c565b92610e2e6040519485610c79565b8184526020828401011161010e57610e4c9160208085019101610cfe565b90565b9190820180921161055457565b92916001811015610fc45750610e756001925b83610e4f565b9260015492838511610fbb575b848110610eba57505050811015610eb157905b600091600091604051610ea9602082610c79565b600081529190565b50600090610e95565b80600052600260205260018060a01b0360406000205416604051906317b89a8d60e11b82526040600483015260208280610f0c610efa6044830189610d4d565b82810360031901602484015289610d4d565b0381845afa91821561049057600092610f88575b5081610f30575050600101610e82565b955095935050505060405191630146899960e21b8352836004840152600083602481845afa92831561049057600093610f6d575b50929190600090565b610f8191933d8091833e6104e68183610c79565b9138610f64565b90916020823d8211610fb3575b81610fa260209383610c79565b810103126104c75750519038610f20565b3d9150610f95565b93508293610e82565b610e759092610e6f565b60008181526020818152604080832033845290915290205460ff1615610ff15750565b63e2517d3f60e01b6000523360045260245260446000fd5b6000818152602081815260408083206001600160a01b038616845290915290205460ff1661108d576000818152602081815260408083206001600160a01b0395909516808452949091528120805460ff19166001179055339291907f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d9080a4600190565b5050600090565b6000818152602081815260408083206001600160a01b038616845290915290205460ff161561108d576000818152602081815260408083206001600160a01b0395909516808452949091528120805460ff19169055339291907ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b9080a460019056fe828634d95e775031b9ff576b159a8509d3053581a8c9c4d7d86899e0afcd882fa2646970667358221220f698a462739c1fa12541d478a5b39e6723b5ee3c879ce8ff5d75c68929d4721a64736f6c634300081c0033",
+  "devdoc": {
+    "details": "Manages collections and authorizes creators.",
+    "errors": {
+      "AccessControlBadConfirmation()": [
+        {
+          "details": "The caller of a function is not the expected one. NOTE: Don't confuse with {AccessControlUnauthorizedAccount}."
+        }
+      ],
+      "AccessControlUnauthorizedAccount(address,bytes32)": [
+        {
+          "details": "The `account` is missing a role."
+        }
+      ],
+      "CollectionDoesNotExist(uint256)": [
+        {
+          "details": "Error when collection does not exist."
+        }
+      ],
+      "CollectionNameAlreadyExists(string)": [
+        {
+          "details": "Error when the collection name already exists."
+        }
+      ],
+      "CollectionSymbolAlreadyExists(string)": [
+        {
+          "details": "Error when the collection symbol already exists."
+        }
+      ]
+    },
+    "events": {
+      "CollectionCreated(uint256,address,string,string)": {
+        "details": "Emitted when a new collection is created.",
+        "params": {
+          "collectionAddress": "The address of the newly created collection.",
+          "collectionId": "The unique identifier of the collection.",
+          "name": "The name of the collection.",
+          "symbol": "The symbol of the collection."
+        }
+      },
+      "RoleAdminChanged(bytes32,bytes32,bytes32)": {
+        "details": "Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole` `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite {RoleAdminChanged} not being emitted to signal this."
+      },
+      "RoleGranted(bytes32,address,address)": {
+        "details": "Emitted when `account` is granted `role`. `sender` is the account that originated the contract call. This account bears the admin role (for the granted role). Expected in cases where the role was granted using the internal {AccessControl-_grantRole}."
+      },
+      "RoleRevoked(bytes32,address,address)": {
+        "details": "Emitted when `account` is revoked `role`. `sender` is the account that originated the contract call:   - if using `revokeRole`, it is the admin role bearer   - if using `renounceRole`, it is the role bearer (i.e. `account`)"
+      }
+    },
+    "kind": "dev",
+    "methods": {
+      "addCollection(address)": {
+        "details": "Add a new collection.",
+        "params": {
+          "newCollection": "The new collection to add."
+        }
+      },
+      "constructor": {
+        "details": "Deploy the manager and set the deployer as admin."
+      },
+      "findAgentByAddress(string,string,uint256,uint256)": {
+        "details": "Paginated search for the agent a typed address belongs to. Returns the first match in [offset, offset+limit) or zeros; `next` resumes the scan."
+      },
+      "getRoleAdmin(bytes32)": {
+        "details": "Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}."
+      },
+      "grantRole(bytes32,address)": {
+        "details": "Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleGranted} event."
+      },
+      "hasRole(bytes32,address)": {
+        "details": "Returns `true` if `account` has been granted `role`."
+      },
+      "listCollections(uint256,uint256)": {
+        "details": "Paginated collection listing for the operator UI. Pass offset 0 to start; `next` is the id to resume from, or 0 when exhausted."
+      },
+      "renounceRole(bytes32,address)": {
+        "details": "Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been revoked `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `callerConfirmation`. May emit a {RoleRevoked} event."
+      },
+      "revokeRole(bytes32,address)": {
+        "details": "Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleRevoked} event."
+      },
+      "supportsInterface(bytes4)": {
+        "details": "See {IERC165-supportsInterface}."
+      }
+    },
+    "stateVariables": {
+      "collectionIdByName": {
+        "details": "Get a collection id by its name.",
+        "params": {
+          "name": "The name of the collection."
+        }
+      },
+      "collectionIdBySymbol": {
+        "details": "Get a collection id by its symbol.",
+        "params": {
+          "symbol": "The symbol of the collection."
+        }
+      },
+      "collections": {
+        "details": "Get a collection address by its identifier.",
+        "params": {
+          "collectionId": "The id of the collection."
+        }
+      },
+      "isKnownCollection": {
+        "details": "Whether a collection address was registered through this manager.",
+        "params": {
+          "collection": "The collection address to check."
+        }
+      }
+    },
+    "title": "Agentic AI collections manager",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 1906,
+        "contract": "contracts/AgentCollectionsManager.sol:AgentCollectionsManager",
+        "label": "_roles",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_mapping(t_bytes32,t_struct(RoleData)1901_storage)"
+      },
+      {
+        "astId": 11396,
+        "contract": "contracts/AgentCollectionsManager.sol:AgentCollectionsManager",
+        "label": "nextCollectionId",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 11400,
+        "contract": "contracts/AgentCollectionsManager.sol:AgentCollectionsManager",
+        "label": "collections",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_mapping(t_uint256,t_address)"
+      },
+      {
+        "astId": 11404,
+        "contract": "contracts/AgentCollectionsManager.sol:AgentCollectionsManager",
+        "label": "collectionIdByName",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_mapping(t_string_memory_ptr,t_uint256)"
+      },
+      {
+        "astId": 11408,
+        "contract": "contracts/AgentCollectionsManager.sol:AgentCollectionsManager",
+        "label": "collectionIdBySymbol",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_mapping(t_string_memory_ptr,t_uint256)"
+      },
+      {
+        "astId": 11412,
+        "contract": "contracts/AgentCollectionsManager.sol:AgentCollectionsManager",
+        "label": "isKnownCollection",
+        "offset": 0,
+        "slot": "5",
+        "type": "t_mapping(t_address,t_bool)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_bytes32": {
+        "encoding": "inplace",
+        "label": "bytes32",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_address,t_bool)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => bool)",
+        "numberOfBytes": "32",
+        "value": "t_bool"
+      },
+      "t_mapping(t_bytes32,t_struct(RoleData)1901_storage)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+        "numberOfBytes": "32",
+        "value": "t_struct(RoleData)1901_storage"
+      },
+      "t_mapping(t_string_memory_ptr,t_uint256)": {
+        "encoding": "mapping",
+        "key": "t_string_memory_ptr",
+        "label": "mapping(string => uint256)",
+        "numberOfBytes": "32",
+        "value": "t_uint256"
+      },
+      "t_mapping(t_uint256,t_address)": {
+        "encoding": "mapping",
+        "key": "t_uint256",
+        "label": "mapping(uint256 => address)",
+        "numberOfBytes": "32",
+        "value": "t_address"
+      },
+      "t_string_memory_ptr": {
+        "encoding": "bytes",
+        "label": "string",
+        "numberOfBytes": "32"
+      },
+      "t_struct(RoleData)1901_storage": {
+        "encoding": "inplace",
+        "label": "struct AccessControl.RoleData",
+        "members": [
+          {
+            "astId": 1898,
+            "contract": "contracts/AgentCollectionsManager.sol:AgentCollectionsManager",
+            "label": "hasRole",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_mapping(t_address,t_bool)"
+          },
+          {
+            "astId": 1900,
+            "contract": "contracts/AgentCollectionsManager.sol:AgentCollectionsManager",
+            "label": "adminRole",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_bytes32"
+          }
+        ],
+        "numberOfBytes": "64"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

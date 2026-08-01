@@ -1,25 +1,13 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
 interface IAgentCollectionV1Events {
-    /// @dev Emitted when a token is minted with a signature.
+    /// @dev Emitted when a token is minted.
     /// @param to The address that receives the minted token.
-    /// @param signer The signer address associated with the minted token.
     /// @param tokenId The ID of the minted token.
     event Minted(
         address indexed to,
-        address indexed signer,
         uint256 tokenId
-    );
-
-    /// @dev Emitted when a token signer is updated.
-    /// @param tokenId The ID of the token whose signer was updated.
-    /// @param oldSigner The previous signer address.
-    /// @param newSigner The new signer address.
-    event AgentSignerUpdated(
-        uint256 indexed tokenId,
-        address oldSigner,
-        address newSigner
     );
 
     /// @dev Emitted when an agent's metadata key is updated.
@@ -32,6 +20,26 @@ interface IAgentCollectionV1Events {
         string indexed key,
         string oldValue,
         string newValue
+    );
+
+    /// @dev Emitted when a typed address is added to an agent.
+    /// @param tokenId The ID of the agent token.
+    /// @param addressType The type of the address added.
+    /// @param value The canonical value of the address added.
+    event AgentAddressAdded(
+        uint256 indexed tokenId,
+        string addressType,
+        string value
+    );
+
+    /// @dev Emitted when a typed address is removed from an agent.
+    /// @param tokenId The ID of the agent token.
+    /// @param addressType The type of the address removed.
+    /// @param value The canonical value of the address removed.
+    event AgentAddressRemoved(
+        uint256 indexed tokenId,
+        string addressType,
+        string value
     );
 
     /// @dev Emitted when an agent image is added or updated.
@@ -68,21 +76,17 @@ interface IAgentCollectionV1Events {
 
     /// @dev Emitted when a mint proposal is created.
     /// @param from The address that initiated the proposal.
-    /// @param signer The signer address associated with the agent.
     /// @param proposalId The id of the created proposal.
     event MintProposalCreated(
         address indexed from,
-        address indexed signer,
         uint256 proposalId
     );
 
     /// @dev Emitted when a mint proposal is removed.
     /// @param owner The address that was set to receive the token.
-    /// @param signer The signer address associated with the proposal.
     /// @param proposalId The id of the removed proposal.
     event MintProposalRemoved(
         address indexed owner,
-        address indexed signer,
         uint256 proposalId
     );
 

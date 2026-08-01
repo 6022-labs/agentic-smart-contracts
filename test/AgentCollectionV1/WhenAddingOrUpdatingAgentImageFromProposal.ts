@@ -10,41 +10,35 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
 
   let _collection: AgentCollectionV1;
   let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
 
   async function deployAgentCollection() {
     await reset();
 
-    const [owner, signer, moderator] = await ethers.getSigners();
+    const [owner, moderator] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator,
-        ipfsGateway,
-      });
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator,
+      ipfsGateway,
+    });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
-
-    return { collection, owner, signer, moderator };
+    return { collection, owner, moderator };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, moderator } = await loadFixture(
+    const { collection, owner, moderator } = await loadFixture(
       deployAgentCollection
     );
 
     _collection = collection;
     _owner = owner;
-    _signer = signer;
     _moderator = moderator;
   });
 
   describe("Given caller is not moderator", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' error", async function () {
-      const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+      const tokenId = await proposeAndMint(_collection, _moderator, {
         to: await _owner.getAddress(),
       });
 
@@ -69,20 +63,47 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
 
   describe("Given caller is moderator", function () {
     describe("And proposal does not exist", function () {
-      it("Should revert", async function () {
-        await proposeAndMint(_signer, _collection, _moderator, {
+      it("Should revert with 'ProposalNotFound' when no image proposals exist", async function () {
+        await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
-        return expect(
+        await expect(
           _collection.connect(_moderator).addOrUpdateAgentImageFromProposal(0)
-        ).to.be.reverted;
+        )
+          .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+          .withArgs(0);
+      });
+
+      it("Should revert with 'ProposalNotFound' for a bogus id while a live proposal exists (not apply index 0)", async function () {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
+          to: await _owner.getAddress(),
+        });
+
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+          key: "profile",
+          value: "cid1",
+        });
+
+        await expect(
+          _collection
+            .connect(_moderator)
+            .addOrUpdateAgentImageFromProposal(9999)
+        )
+          .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+          .withArgs(9999);
+
+        // The live proposal must be untouched and the image not applied.
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          1n
+        );
+        expect(await _collection.imagesCountOf(tokenId)).to.equal(1);
       });
     });
 
     describe("And image key does not exist", function () {
       it("Should add the image", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -112,7 +133,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
       });
 
       it("Should emit 'AgentImageUpdated' event", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -134,7 +155,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
       });
 
       it("Should emit 'AgentImageProposalRemoved' event", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -152,13 +173,13 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
             .addOrUpdateAgentImageFromProposal(proposalId)
         )
           .to.emit(_collection, "AgentImageProposalRemoved")
-          .withArgs(tokenId, "profile", 0n);
+          .withArgs(tokenId, "profile", proposalId);
       });
     });
 
     describe("And image key exists", function () {
       it("Should update the image value", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -201,7 +222,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
       });
 
       it("Should emit 'AgentImageUpdated' event", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -236,7 +257,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
       });
 
       it("Should emit 'AgentImageProposalRemoved' event", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -267,13 +288,13 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
             .addOrUpdateAgentImageFromProposal(proposalId)
         )
           .to.emit(_collection, "AgentImageProposalRemoved")
-          .withArgs(tokenId, "profile", proposalIndex);
+          .withArgs(tokenId, "profile", proposalId);
       });
     });
 
     describe("And proposal is executed", function () {
       it("Should not be executable twice", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -304,7 +325,7 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
       });
 
       it("Should reorder remaining proposals", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -347,6 +368,37 @@ describe("WhenAddingOrUpdatingAgentImageFromProposal", function () {
         }
 
         expect(images[1][0]).to.equal("profile1");
+      });
+
+      it("Should remove only the applied proposal when applying out of order", async function () {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
+          to: await _owner.getAddress(),
+        });
+
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+          key: "profile1",
+          value: "cid1",
+        });
+        await _collection.createAddOrUpdateAgentImageProposal(tokenId, {
+          key: "profile2",
+          value: "cid2",
+        });
+
+        // Apply the SECOND proposal (id at index 1), not the first.
+        const { id: secondProposalId } =
+          await _collection.addOrUpdateAgentImageProposal(1);
+
+        await _collection
+          .connect(_moderator)
+          .addOrUpdateAgentImageFromProposal(secondProposalId);
+
+        // The untouched profile1 proposal must survive intact.
+        expect(await _collection.addOrUpdateAgentImageProposalsLength()).to.eq(
+          1n
+        );
+        const remaining = await _collection.addOrUpdateAgentImageProposal(0);
+        expect(remaining.image.key).to.equal("profile1");
+        expect(remaining.image.value).to.equal("cid1");
       });
     });
   });

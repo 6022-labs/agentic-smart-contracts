@@ -1,44 +1,38 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
 interface IAgentCollectionV1Errors {
-    /// @dev Error when the nonce has already been used.
-    /// @param nonce The nonce that was used.
-    error UsedNonce(bytes32 nonce);
-
     /// @dev Error when the name is already in use.
     /// @param name The name that is already in use.
     /// @param tokenId The token ID associated with the name.
     error UsedName(string name, uint256 tokenId);
 
-    /// @dev Error when the wallet is already in use.
-    /// @param wallet The wallet that is already in use.
-    /// @param tokenId The token ID associated with the wallet.
-    error UsedWallet(address wallet, uint256 tokenId);
-
-    /// @dev Error when the wallet address is invalid (e.g., zero address).
-    error InvalidWallet();
-
-    /// @dev Error when the signer is invalid.
-    /// @param signer The actual signer address.
-    /// @param expectedSigner The expected signer address.
-    error InvalidSigner(address signer, address expectedSigner);
+    /// @dev Error when the typed address is already in use (tokenId 0 = duplicate within the submitted list).
+    /// @param addressType The type of the address that is already in use.
+    /// @param value The canonical value of the address that is already in use.
+    /// @param tokenId The token ID associated with the address.
+    error UsedAgentAddress(string addressType, string value, uint256 tokenId);
 
     /// @dev Error when the name is invalid.
     /// @param name The name that is not valid.
     error InvalidName(string name);
 
+    /// @dev Error when the collection name is not a valid ENS label.
+    /// @param name The collection name that is not valid.
+    error InvalidCollectionName(string name);
+
+    /// @dev Error when a required address argument is the zero address.
+    /// @param parameter The name of the parameter that was the zero address.
+    error ZeroAddress(string parameter);
+
+    /// @dev Error when the typed address to remove is not registered to the agent.
+    /// @param addressType The type of the address that was not found.
+    /// @param value The canonical value of the address that was not found.
+    error AgentAddressNotFound(string addressType, string value);
+
     /// @dev Error when the cloneOf is invalid.
     /// @param cloneOf The cloneOf that is not valid.
     error InvalidCloneOf(uint256 cloneOf);
-
-    /// @dev Error when the address is not a signer.
-    /// @param signer The address that is not a signer.
-    error NotSigner(address signer);
-
-    /// @dev Error when the signer is the same as the current signer.
-    /// @param signer The address that is unchanged.
-    error SignerUnchanged(address signer);
 
     /// @dev Error when no image with key `default` is present.
     error MissingDefaultImage();
@@ -54,4 +48,8 @@ interface IAgentCollectionV1Errors {
     /// @dev Error when the caller is not a moderator but moderators are set.
     /// @param sender The address that attempted the action.
     error NotModerator(address sender);
+
+    /// @dev Error when no pending proposal exists for the given id.
+    /// @param proposalId The proposal id that was not found.
+    error ProposalNotFound(uint256 proposalId);
 }

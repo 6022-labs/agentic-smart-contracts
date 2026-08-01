@@ -6,6 +6,7 @@ import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import {
   decodeTokenURI,
   proposeAndMint,
+  evmAddresses,
   generateRandomAddress,
   deployCollectionWithCreator,
 } from "../common";
@@ -16,44 +17,36 @@ describe("WhenGettingTokenUri", function () {
   let _collection: AgentCollectionV1;
 
   let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
 
   async function deployAgentCollectionDescription() {
     await reset();
 
-    const [owner, signer] = await ethers.getSigners();
+    const [owner] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator: owner,
-        ipfsGateway,
-      });
-
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator: owner,
+      ipfsGateway,
+    });
 
     return {
       owner,
-      signer,
       AgentCollection: collection,
     };
   }
 
   beforeEach(async function () {
-    const { owner, signer, AgentCollection } = await loadFixture(
-      deployAgentCollectionDescription
+    const { owner, AgentCollection } = await loadFixture(
+      deployAgentCollectionDescription,
     );
 
     _owner = owner;
-    _signer = signer;
     _collection = AgentCollection;
   });
 
   describe("Given token id exists", function () {
     let _tokenId: bigint;
     let _name: string = "test-agent";
-    let _role: string = "facilitator";
     let _images = [
       {
         key: "default",
@@ -65,10 +58,9 @@ describe("WhenGettingTokenUri", function () {
     beforeEach(async function () {
       _tokenId = await _collection.nextTokenId();
 
-      await proposeAndMint(_signer, _collection, _owner, {
+      await proposeAndMint(_collection, _owner, {
         to: _owner.address,
-        wallets: _wallets,
-        role: _role,
+        addresses: evmAddresses(..._wallets),
         name: _name,
         images: _images,
       });

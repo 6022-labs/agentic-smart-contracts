@@ -5,8 +5,8 @@ import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
 import {
-  signMintRequest,
   generateRandomAddress,
+  evmAddresses,
   deployCollectionWithCreator,
 } from "../common";
 
@@ -21,116 +21,104 @@ describe("WhenRefusingMintProposals", function () {
       value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
     },
   ];
-  const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
+  const DEFAULT_ATTRIBUTES = [
+    { key: "role", value: DEFAULT_ROLE },
+    { key: "mission", value: "random mission" },
+  ];
 
   let _collection: AgentCollectionV1;
-  let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
 
   async function deployCollection() {
     await reset();
 
-    const [owner, signer, moderator, otherAccount] = await ethers.getSigners();
+    const [owner, moderator, otherAccount] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator,
-        ipfsGateway,
-      });
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator,
+      ipfsGateway,
+    });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
-
-    return { collection, owner, signer, moderator, otherAccount };
+    return { collection, moderator, otherAccount };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, moderator, otherAccount } =
-      await loadFixture(deployCollection);
+    const { collection, moderator, otherAccount } = await loadFixture(
+      deployCollection,
+    );
 
     _collection = collection;
-    _owner = owner;
-    _signer = signer;
     _moderator = moderator;
     _otherAccount = otherAccount;
   });
 
-  async function createMintProposal(name: string, nonce: string) {
-    const wallets = [generateRandomAddress()];
-    const signature = await signMintRequest(_signer, _collection, {
-      to: _otherAccount.address,
-      signer: _signer.address,
-      role: DEFAULT_ROLE,
-      name,
-      wallets,
-      images: DEFAULT_IMAGES,
-      attributes: DEFAULT_ATTRIBUTES,
-      cloneOf: DEFAULT_CLONE_OF,
-      nonce,
-    });
-
+  async function createMintProposal(name: string) {
     await _collection.createMintProposal(
       _otherAccount.address,
-      _signer.address,
-      DEFAULT_ROLE,
       name,
-      wallets,
+      evmAddresses(generateRandomAddress()),
       DEFAULT_IMAGES,
       DEFAULT_ATTRIBUTES,
       DEFAULT_CLONE_OF,
-      ethers.id(nonce),
-      signature
     );
   }
 
-  describe("refuseMintProposal", function () {
-    it("Should revert with 'AccessControlUnauthorizedAccount' when caller is not moderator", async function () {
-      await createMintProposal("agent1", "1");
+  it("Should revert with 'AccessControlUnauthorizedAccount' when caller is not moderator", async function () {
+    await createMintProposal("agent1");
 
-      const { id: proposalId } = await _collection.mintProposal(0);
+    const { id: proposalId } = await _collection.mintProposal(0);
 
-      await expect(
-        _collection.refuseMintProposal(proposalId)
-      ).to.be.revertedWithCustomError(
-        _collection,
-        "AccessControlUnauthorizedAccount"
-      );
-    });
+    await expect(
+      _collection.refuseMintProposal(proposalId),
+    ).to.be.revertedWithCustomError(
+      _collection,
+      "AccessControlUnauthorizedAccount",
+    );
+  });
 
-    it("Should revert when proposal does not exist", async function () {
-      await expect(_collection.connect(_moderator).refuseMintProposal(0)).to.be
-        .reverted;
-    });
+  it("Should revert with 'ProposalNotFound' when no proposals exist", async function () {
+    await expect(_collection.connect(_moderator).refuseMintProposal(0))
+      .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+      .withArgs(0);
+  });
 
-    it("Should remove and reorder proposals", async function () {
-      await createMintProposal("agent1", "1");
-      await createMintProposal("agent2", "2");
+  it("Should revert with 'ProposalNotFound' for a bogus id while a live proposal exists (not refuse index 0)", async function () {
+    await createMintProposal("agent1");
 
-      expect(await _collection.mintProposalsLength()).to.eq(2n);
+    await expect(_collection.connect(_moderator).refuseMintProposal(9999))
+      .to.be.revertedWithCustomError(_collection, "ProposalNotFound")
+      .withArgs(9999);
 
-      const { id: proposalId } = await _collection.mintProposal(0);
+    // The live proposal must still be pending.
+    expect(await _collection.mintProposalsLength()).to.eq(1n);
+    expect((await _collection.mintProposal(0)).name).to.equal("agent1");
+  });
 
-      await _collection.connect(_moderator).refuseMintProposal(proposalId);
+  it("Should remove and reorder proposals", async function () {
+    await createMintProposal("agent1");
+    await createMintProposal("agent2");
 
-      expect(await _collection.mintProposalsLength()).to.eq(1n);
+    expect(await _collection.mintProposalsLength()).to.eq(2n);
 
-      const proposal = await _collection.mintProposal(0);
-      expect(proposal.name).to.equal("agent2");
-    });
+    const { id: proposalId } = await _collection.mintProposal(0);
 
-    it("Should emit a MintProposalRemoved event", async function () {
-      await createMintProposal("agent1", "1");
+    await _collection.connect(_moderator).refuseMintProposal(proposalId);
 
-      const { id: proposalId } = await _collection.mintProposal(0);
+    expect(await _collection.mintProposalsLength()).to.eq(1n);
 
-      await expect(
-        _collection.connect(_moderator).refuseMintProposal(proposalId)
-      )
-        .to.emit(_collection, "MintProposalRemoved")
-        .withArgs(_otherAccount.address, _signer.address, 1n);
-    });
+    const proposal = await _collection.mintProposal(0);
+    expect(proposal.name).to.equal("agent2");
+  });
+
+  it("Should emit a MintProposalRemoved event", async function () {
+    await createMintProposal("agent1");
+
+    const { id: proposalId } = await _collection.mintProposal(0);
+
+    await expect(_collection.connect(_moderator).refuseMintProposal(proposalId))
+      .to.emit(_collection, "MintProposalRemoved")
+      .withArgs(_otherAccount.address, 1n);
   });
 });

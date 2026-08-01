@@ -3,10 +3,14 @@ import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { NullableUint256Struct } from "../../typechain-types/contracts/AgentCollectionV1";
 import {
-  signMintRequest,
+  AgentAddressStruct,
+  NullableUint256Struct,
+} from "../../typechain-types/contracts/AgentCollectionV1";
+import {
   generateRandomAddress,
+  evmAddresses,
+  btcAddresses,
   deployCollectionWithCreator,
 } from "../common";
 
@@ -21,44 +25,61 @@ describe("WhenMinting", function () {
       value: "bafybeibsulc7sgpck3w7ur7eqa6fwaazcsswn3dg3rfl65zka3knajx43i",
     },
   ];
-  const DEFAULT_ATTRIBUTES = [{ key: "mission", value: "random mission" }];
+  const DEFAULT_ATTRIBUTES = [
+    { key: "role", value: DEFAULT_ROLE },
+    { key: "mission", value: "random mission" },
+  ];
   const DEFAULT_NAME = "test-agent";
   const INVALID_NAME = "Invalid_Name";
-  const NONCE_1 = "1";
-  const NONCE_2 = "2";
 
   let _collection: AgentCollectionV1;
   let _owner: HardhatEthersSigner;
-  let _signer1: HardhatEthersSigner;
-  let _signer2: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
+
+  // Mints with the signature-free API. `caller` defaults to the connected
+  // signer of `_collection`.
+  function mint(
+    args: {
+      to: string;
+      name?: string;
+      addresses: AgentAddressStruct[];
+      images?: { key: string; value: string }[];
+      attributes?: { key: string; value: string }[];
+      cloneOf?: NullableUint256Struct;
+    },
+    caller?: HardhatEthersSigner,
+  ) {
+    const collection = caller ? _collection.connect(caller) : _collection;
+    return collection.mint(
+      args.to,
+      args.name ?? DEFAULT_NAME,
+      args.addresses,
+      args.images ?? DEFAULT_IMAGES,
+      args.attributes ?? DEFAULT_ATTRIBUTES,
+      args.cloneOf ?? DEFAULT_CLONE_OF,
+    );
+  }
 
   async function deployCollection() {
     await reset();
 
-    const [owner, signer1, signer2, otherAccount] = await ethers.getSigners();
+    const [owner, otherAccount] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator: owner,
-        ipfsGateway,
-      });
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator: owner,
+      ipfsGateway,
+    });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer1.address);
-    await collectionsManager.grantRole(signerRole, signer2.address);
-
-    return { collection, owner, signer1, signer2, otherAccount };
+    return { collection, owner, otherAccount };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer1, signer2, otherAccount } =
-      await loadFixture(deployCollection);
+    const { collection, owner, otherAccount } = await loadFixture(
+      deployCollection,
+    );
 
     _owner = owner;
-    _signer1 = signer1;
-    _signer2 = signer2;
     _collection = collection;
     _otherAccount = otherAccount;
   });
@@ -72,142 +93,52 @@ describe("WhenMinting", function () {
   describe("Given a moderator exists", function () {
     describe("And caller is not a moderator", function () {
       it("Should revert with 'NotModerator' error", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
         await expect(
-          _collection
-            .connect(_otherAccount)
-            .mint(
-              _otherAccount.address,
-              _signer1.address,
-              DEFAULT_ROLE,
-              DEFAULT_NAME,
-              wallets,
-              DEFAULT_IMAGES,
-              DEFAULT_ATTRIBUTES,
-              DEFAULT_CLONE_OF,
-              ethers.id(NONCE_1),
-              signature
-            )
+          mint(
+            {
+              to: _otherAccount.address,
+              addresses: evmAddresses(generateRandomAddress()),
+            },
+            _otherAccount,
+          ),
         ).to.be.revertedWithCustomError(_collection, "NotModerator");
       });
     });
 
     describe("And caller is a moderator", function () {
-      describe("With cloneOf set", function () {
-        it("Should allow a moderator to mint directly", async function () {
-          const wallets1 = [generateRandomAddress()];
-          const signature1 = await signMintRequest(_signer1, _collection, {
-            to: _otherAccount.address,
-            signer: _signer1.address,
-            role: DEFAULT_ROLE,
-            name: DEFAULT_NAME,
-            wallets: wallets1,
-            images: DEFAULT_IMAGES,
-            attributes: DEFAULT_ATTRIBUTES,
-            cloneOf: DEFAULT_CLONE_OF,
-            nonce: NONCE_1,
-          });
-
-          let nextTokenId = await _collection.nextTokenId();
-
-          await _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME,
-            wallets1,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_1),
-            signature1
-          );
-
-          const cloneOf: NullableUint256Struct = {
-            isSet: true,
-            value: nextTokenId,
-          };
-
-          const wallets2 = [generateRandomAddress()];
-          const signature2 = await signMintRequest(_signer1, _collection, {
-            to: _otherAccount.address,
-            signer: _signer1.address,
-            role: DEFAULT_ROLE,
-            name: "cloned-agent",
-            wallets: wallets2,
-            images: DEFAULT_IMAGES,
-            attributes: DEFAULT_ATTRIBUTES,
-            cloneOf: cloneOf,
-            nonce: NONCE_2,
-          });
-
-          nextTokenId = await _collection.nextTokenId();
-
-          await _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            "cloned-agent",
-            wallets2,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            cloneOf,
-            ethers.id(NONCE_2),
-            signature2
-          );
-
-          expect(await _collection.ownerOf(nextTokenId)).to.equal(
-            _otherAccount.address
-          );
+      it("Should allow a moderator to mint directly (cloneOf set)", async function () {
+        let nextTokenId = await _collection.nextTokenId();
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
         });
+
+        const cloneOf: NullableUint256Struct = {
+          isSet: true,
+          value: nextTokenId,
+        };
+        nextTokenId = await _collection.nextTokenId();
+        await mint({
+          to: _otherAccount.address,
+          name: "cloned-agent",
+          addresses: evmAddresses(generateRandomAddress()),
+          cloneOf,
+        });
+
+        expect(await _collection.ownerOf(nextTokenId)).to.equal(
+          _otherAccount.address,
+        );
       });
 
-      describe("With cloneOf not set", function () {
-        it("Should allow a moderator to mint directly", async function () {
-          const wallets = [generateRandomAddress()];
-          const signature = await signMintRequest(_signer1, _collection, {
-            to: _otherAccount.address,
-            signer: _signer1.address,
-            role: DEFAULT_ROLE,
-            name: DEFAULT_NAME,
-            wallets,
-            images: DEFAULT_IMAGES,
-            attributes: DEFAULT_ATTRIBUTES,
-            cloneOf: DEFAULT_CLONE_OF,
-            nonce: NONCE_1,
-          });
-
-          const nextTokenId = await _collection.nextTokenId();
-
-          await _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME,
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_1),
-            signature
-          );
-
-          expect(await _collection.ownerOf(nextTokenId)).to.equal(
-            _otherAccount.address
-          );
+      it("Should allow a moderator to mint directly (cloneOf not set)", async function () {
+        const nextTokenId = await _collection.nextTokenId();
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
         });
+        expect(await _collection.ownerOf(nextTokenId)).to.equal(
+          _otherAccount.address,
+        );
       });
     });
   });
@@ -217,253 +148,145 @@ describe("WhenMinting", function () {
       await revokeModerator();
     });
 
-    describe("When name is invalid ens", function () {
-      it("Should revert with 'InvalidName'", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: INVALID_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
+    describe("Given an invalid ens name", function () {
+      // Agent name must be a valid ENS label (see ENSUtils.isValidENSName).
+      const invalidNames = [
+        { label: "empty", value: "" },
+        { label: "an invalid char", value: INVALID_NAME },
+        { label: "leading hyphen", value: "-foo" },
+        { label: "trailing hyphen", value: "foo-" },
+        { label: "double hyphen", value: "a--b" },
+        { label: "longer than 63 chars", value: "a".repeat(64) },
+      ];
 
-        await expect(
-          _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            INVALID_NAME,
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_1),
-            signature
+      for (const { label, value } of invalidNames) {
+        it(`Should revert with 'InvalidName' when name is ${label}`, async function () {
+          await expect(
+            mint({
+              to: _otherAccount.address,
+              name: value,
+              addresses: evmAddresses(generateRandomAddress()),
+            }),
           )
+            .to.be.revertedWithCustomError(_collection, "InvalidName")
+            .withArgs(value);
+        });
+      }
+    });
+
+    describe("Given the recipient is the zero address", function () {
+      it("Should revert with 'ZeroAddress' error", async function () {
+        await expect(
+          mint({
+            to: ethers.ZeroAddress,
+            addresses: evmAddresses(generateRandomAddress()),
+          }),
         )
-          .to.be.revertedWithCustomError(_collection, "InvalidName")
-          .withArgs(INVALID_NAME);
+          .to.be.revertedWithCustomError(_collection, "ZeroAddress")
+          .withArgs("to");
       });
     });
 
-    describe("Given nonce is already used", function () {
-      it("Should revert with 'UsedNonce'", async function () {
-        const wallets = [generateRandomAddress()];
-        const sig1 = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          sig1
-        );
-
-        const sig2 = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME + "2",
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
+    describe("Given an evm address value is the zero address", function () {
+      it("Should revert with 'InvalidEvmAddressValue' error", async function () {
         await expect(
-          _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME + "2",
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_1),
-            sig2
-          )
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(ethers.ZeroAddress),
+          }),
         )
-          .to.be.revertedWithCustomError(_collection, "UsedNonce")
-          .withArgs(ethers.id(NONCE_1));
+          .to.be.revertedWithCustomError(_collection, "InvalidEvmAddressValue")
+          .withArgs(ethers.ZeroAddress);
+      });
+    });
+
+    describe("Given an evm address value is malformed hex", function () {
+      it("Should revert with 'InvalidEvmAddressValue' error", async function () {
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses("not-an-address"),
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "InvalidEvmAddressValue")
+          .withArgs("not-an-address");
+      });
+    });
+
+    describe("Given no evm address", function () {
+      it("Should revert with 'MissingEvmAddress' error", async function () {
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: btcAddresses("bc1qexampleonly"),
+          }),
+        ).to.be.revertedWithCustomError(_collection, "MissingEvmAddress");
       });
     });
 
     describe("Given name is already taken", function () {
       it("Should revert with 'UsedName'", async function () {
-        const wallets = [generateRandomAddress()];
-        const sig1 = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
         const tokenId = await _collection.nextTokenId();
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          sig1
-        );
-
-        const sig2 = await signMintRequest(_signer1, _collection, {
+        await mint({
           to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_2,
+          addresses: evmAddresses(generateRandomAddress()),
         });
 
         await expect(
-          _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME,
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_2),
-            sig2
-          )
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+          }),
         )
           .to.be.revertedWithCustomError(_collection, "UsedName")
           .withArgs(DEFAULT_NAME, tokenId);
       });
     });
 
-    describe("Given wallet is already taken", function () {
-      it("Should revert with 'UsedWallet'", async function () {
-        const wallets = [generateRandomAddress()];
-
-        const name1 = DEFAULT_NAME + "-1";
-        const name2 = DEFAULT_NAME + "-2";
-
-        const sig1 = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: name1,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
+    describe("Given an evm address is already taken", function () {
+      it("Should revert with 'UsedAgentAddress'", async function () {
+        const wallet = generateRandomAddress();
         const tokenId = await _collection.nextTokenId();
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          name1,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          sig1
-        );
-
-        const sig2 = await signMintRequest(_signer1, _collection, {
+        await mint({
           to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: name2,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_2,
+          name: DEFAULT_NAME + "-1",
+          addresses: evmAddresses(wallet),
         });
 
         await expect(
-          _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            name2,
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_2),
-            sig2
-          )
+          mint({
+            to: _otherAccount.address,
+            name: DEFAULT_NAME + "-2",
+            addresses: evmAddresses(wallet),
+          }),
         )
-          .to.be.revertedWithCustomError(_collection, "UsedWallet")
-          .withArgs(wallets[0], tokenId);
+          .to.be.revertedWithCustomError(_collection, "UsedAgentAddress")
+          .withArgs("evm", wallet.toLowerCase(), tokenId);
+      });
+    });
+
+    describe("Given the address list repeats an entry", function () {
+      it("Should revert with 'UsedAgentAddress' and tokenId 0", async function () {
+        const wallet = generateRandomAddress();
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(wallet, wallet),
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "UsedAgentAddress")
+          .withArgs("evm", wallet.toLowerCase(), 0n);
       });
     });
 
     describe("Given cloneOf is set but value is 0", function () {
       it("Should revert with 'InvalidCloneOf'", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: { isSet: true, value: 0n },
-          nonce: NONCE_1,
-        });
-
         await expect(
-          _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME,
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            { isSet: true, value: 0n },
-            ethers.id(NONCE_1),
-            signature
-          )
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            cloneOf: { isSet: true, value: 0n },
+          }),
         )
           .to.be.revertedWithCustomError(_collection, "InvalidCloneOf")
           .withArgs(0);
@@ -472,665 +295,328 @@ describe("WhenMinting", function () {
 
     describe("Given cloneOf is set but related token (agent) does not exist", function () {
       it("Should revert with 'InvalidCloneOf'", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: { isSet: true, value: 9999n },
-          nonce: NONCE_1,
-        });
-
         await expect(
-          _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME,
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            { isSet: true, value: 9999n },
-            ethers.id(NONCE_1),
-            signature
-          )
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            cloneOf: { isSet: true, value: 9999n },
+          }),
         )
           .to.be.revertedWithCustomError(_collection, "InvalidCloneOf")
           .withArgs(9999);
       });
     });
 
-    describe("Given recovered signer is not the signer in parameters", function () {
-      it("Should revert with 'InvalidSigner'", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer2.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
+    describe("Given the default image is missing", function () {
+      it("Should revert with 'MissingDefaultImage'", async function () {
         await expect(
-          _collection.mint(
-            _otherAccount.address,
-            _signer2.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME,
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_1),
-            signature
-          )
-        )
-          .to.be.revertedWithCustomError(_collection, "InvalidSigner")
-          .withArgs(await _signer1.getAddress(), _signer2.address);
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            images: [{ key: "profile", value: "cid1" }],
+          }),
+        ).to.be.revertedWithCustomError(_collection, "MissingDefaultImage");
       });
     });
 
-    describe("Given recovered signer is not signer", function () {
-      it("Should revert with 'NotSigner'", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_otherAccount, _collection, {
-          to: _otherAccount.address,
-          signer: _otherAccount.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
+    describe("Given the role attribute is missing", function () {
+      it("Should revert with 'MissingRequiredKey'", async function () {
         await expect(
-          _collection.mint(
-            _otherAccount.address,
-            _otherAccount.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME,
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_1),
-            signature
-          )
-        ).to.be.revertedWithCustomError(_collection, "NotSigner");
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [{ key: "mission", value: "random mission" }],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "MissingRequiredKey")
+          .withArgs("role");
+      });
+    });
+
+    describe("Given the role attribute is empty", function () {
+      it("Should revert with 'MissingRequiredKey'", async function () {
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [{ key: "role", value: "" }],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "MissingRequiredKey")
+          .withArgs("role");
+      });
+    });
+
+    describe("Given the attributes list repeats a key", function () {
+      it("Should revert with 'DuplicateKey'", async function () {
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [
+              { key: "role", value: DEFAULT_ROLE },
+              { key: "mission", value: "a" },
+              { key: "mission", value: "b" },
+            ],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "DuplicateKey")
+          .withArgs("mission");
+      });
+    });
+
+    describe("Given the attributes list repeats the mandatory key", function () {
+      it("Should revert with 'DuplicateKey'", async function () {
+        await expect(
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+            attributes: [
+              { key: "role", value: "" },
+              { key: "role", value: DEFAULT_ROLE },
+            ],
+          }),
+        )
+          .to.be.revertedWithCustomError(_collection, "DuplicateKey")
+          .withArgs("role");
       });
     });
 
     describe("Given valid mint parameters", function () {
-      describe("With cloneOf set", function () {
-        it("Should mint the NFT with the expected token ID", async function () {
-          const wallets1 = [generateRandomAddress()];
-          const signature1 = await signMintRequest(_signer1, _collection, {
+      it("Should allow anybody to mint (cloneOf set)", async function () {
+        let nextTokenId = await _collection.nextTokenId();
+        await expect(_collection.ownerOf(nextTokenId)).to.be.reverted;
+
+        await mint(
+          {
             to: _otherAccount.address,
-            signer: _signer1.address,
-            role: DEFAULT_ROLE,
-            name: DEFAULT_NAME,
-            wallets: wallets1,
-            images: DEFAULT_IMAGES,
-            attributes: DEFAULT_ATTRIBUTES,
-            cloneOf: DEFAULT_CLONE_OF,
-            nonce: NONCE_1,
-          });
+            addresses: evmAddresses(generateRandomAddress()),
+          },
+          _otherAccount,
+        );
 
-          let nextTokenId = await _collection.nextTokenId();
-
-          await expect(_collection.ownerOf(nextTokenId)).to.be.reverted;
-
-          await _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME,
-            wallets1,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_1),
-            signature1
-          );
-
-          const cloneOf: NullableUint256Struct = {
-            isSet: true,
-            value: nextTokenId,
-          };
-
-          const wallets2 = [generateRandomAddress()];
-
-          const signature2 = await signMintRequest(_signer1, _collection, {
+        const cloneOf: NullableUint256Struct = {
+          isSet: true,
+          value: nextTokenId,
+        };
+        nextTokenId = await _collection.nextTokenId();
+        await mint(
+          {
             to: _otherAccount.address,
-            signer: _signer1.address,
-            role: DEFAULT_ROLE,
             name: "cloned-agent",
-            wallets: wallets2,
-            images: DEFAULT_IMAGES,
-            attributes: DEFAULT_ATTRIBUTES,
+            addresses: evmAddresses(generateRandomAddress()),
             cloneOf,
-            nonce: NONCE_2,
-          });
-
-          nextTokenId = await _collection.nextTokenId();
-
-          await _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            "cloned-agent",
-            wallets2,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            cloneOf,
-            ethers.id(NONCE_2),
-            signature2
-          );
-
-          expect(await _collection.ownerOf(nextTokenId)).to.equal(
-            _otherAccount.address
-          );
-        });
-      });
-
-      describe("With cloneOf not set", function () {
-        it("Should mint the NFT with the expected token ID", async function () {
-          const wallets = [generateRandomAddress()];
-          const signature = await signMintRequest(_signer1, _collection, {
-            to: _otherAccount.address,
-            signer: _signer1.address,
-            role: DEFAULT_ROLE,
-            name: DEFAULT_NAME,
-            wallets,
-            images: DEFAULT_IMAGES,
-            attributes: DEFAULT_ATTRIBUTES,
-            cloneOf: DEFAULT_CLONE_OF,
-            nonce: NONCE_1,
-          });
-
-          const nextTokenId = await _collection.nextTokenId();
-
-          await expect(_collection.ownerOf(nextTokenId)).to.be.reverted;
-
-          await _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME,
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_1),
-            signature
-          );
-
-          expect(await _collection.ownerOf(nextTokenId)).to.equal(
-            _otherAccount.address
-          );
-        });
-      });
-
-      it("Should assign the owner of the token", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
-        const nextTokenId = await _collection.nextTokenId();
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          signature
+          },
+          _otherAccount,
         );
 
         expect(await _collection.ownerOf(nextTokenId)).to.equal(
-          _otherAccount.address
+          _otherAccount.address,
+        );
+      });
+
+      it("Should allow anybody to mint (cloneOf not set)", async function () {
+        const nextTokenId = await _collection.nextTokenId();
+        await expect(_collection.ownerOf(nextTokenId)).to.be.reverted;
+
+        await mint(
+          {
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+          },
+          _otherAccount,
+        );
+
+        expect(await _collection.ownerOf(nextTokenId)).to.equal(
+          _otherAccount.address,
+        );
+      });
+
+      it("Should assign the owner of the token", async function () {
+        const nextTokenId = await _collection.nextTokenId();
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
+        expect(await _collection.ownerOf(nextTokenId)).to.equal(
+          _otherAccount.address,
         );
       });
 
       it("Should increment next token ID", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
+        const before = await _collection.nextTokenId();
+        await mint({
           to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
+          addresses: evmAddresses(generateRandomAddress()),
         });
-
-        const nextTokenIdBefore = await _collection.nextTokenId();
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          signature
-        );
-
-        const nextTokenIdAfter = await _collection.nextTokenId();
-        expect(nextTokenIdAfter).to.equal(nextTokenIdBefore + BigInt(1));
-      });
-
-      it("Should mark the nonce as used", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
-        expect(await _collection.isNonceUsed(ethers.id(NONCE_1))).to.be.false;
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          signature
-        );
-
-        expect(await _collection.isNonceUsed(ethers.id(NONCE_1))).to.be.true;
-      });
-
-      it("Should assign signer of the token", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
-        const nextTokenId = await _collection.nextTokenId();
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          signature
-        );
-
-        expect(await _collection.signerOf(nextTokenId)).to.equal(
-          _signer1.address
-        );
+        expect(await _collection.nextTokenId()).to.equal(before + BigInt(1));
       });
 
       it("Should assign agent addresses to the token", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
+        const wallet = generateRandomAddress();
+        const nextTokenId = await _collection.nextTokenId();
+        await mint({
           to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
+          addresses: evmAddresses(wallet),
         });
 
-        const nextTokenId = await _collection.nextTokenId();
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          signature
+        expect(await _collection.addressesCountOf(nextTokenId)).to.equal(1n);
+        expect(await _collection.addressToTokenId("evm", wallet)).to.equal(
+          nextTokenId,
         );
+      });
 
-        const walletCount = await _collection.walletsCountOf(nextTokenId);
-        expect(walletCount).to.equal(wallets.length);
+      it("Should store canonicalized addresses (evm lowercased, non-evm verbatim)", async function () {
+        const wallet = generateRandomAddress();
+        const btcValue = "bc1QVerbatimValue";
+        const nextTokenId = await _collection.nextTokenId();
+        await mint({
+          to: _otherAccount.address,
+          addresses: [...evmAddresses(wallet), ...btcAddresses(btcValue)],
+        });
 
-        for (let i = 0; i < walletCount; i++) {
-          const walletsOf = await _collection.walletOfByIndex(nextTokenId, i);
-          expect(wallets).to.include(walletsOf);
-        }
+        expect(await _collection.addressesCountOf(nextTokenId)).to.equal(2n);
+
+        const information = await _collection.informationOf(nextTokenId);
+        expect(
+          information.addresses.map((entry) => [
+            entry.addressType,
+            entry.value,
+          ]),
+        ).to.deep.equal([
+          ["evm", wallet.toLowerCase()],
+          ["btc", btcValue],
+        ]);
       });
 
       it("Should assign name to the token", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
         const nextTokenId = await _collection.nextTokenId();
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          signature
-        );
-
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
         expect(await _collection.nameOf(nextTokenId)).to.equal(DEFAULT_NAME);
       });
 
       it("Should assign images to the token", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
         const nextTokenId = await _collection.nextTokenId();
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          signature
-        );
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
 
         const imageCount = await _collection.imagesCountOf(nextTokenId);
         expect(imageCount).to.equal(DEFAULT_IMAGES.length);
-
-        for (
-          let imagesOfIndex = 0;
-          imagesOfIndex < imageCount;
-          imagesOfIndex++
-        ) {
-          const imagesOf = await _collection.imageOfByIndex(
-            nextTokenId,
-            imagesOfIndex
-          );
-
-          expect(imagesOf[0]).to.be.equal(DEFAULT_IMAGES[imagesOfIndex].key);
-          expect(imagesOf[1]).to.be.equal(DEFAULT_IMAGES[imagesOfIndex].value);
+        for (let i = 0; i < imageCount; i++) {
+          const imagesOf = await _collection.imageOfByIndex(nextTokenId, i);
+          expect(imagesOf[0]).to.be.equal(DEFAULT_IMAGES[i].key);
+          expect(imagesOf[1]).to.be.equal(DEFAULT_IMAGES[i].value);
         }
       });
 
-      it("Should assign creator to the token", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
+      it("Should assign attributes to the token", async function () {
+        const nextTokenId = await _collection.nextTokenId();
+        await mint({
           to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
+          addresses: evmAddresses(generateRandomAddress()),
         });
 
+        const attributeCount = await _collection.attributesCountOf(nextTokenId);
+        expect(attributeCount).to.equal(DEFAULT_ATTRIBUTES.length);
+        for (let i = 0; i < attributeCount; i++) {
+          const attributeOf = await _collection.attributeOfByIndex(
+            nextTokenId,
+            i,
+          );
+          expect(attributeOf[0]).to.be.equal(DEFAULT_ATTRIBUTES[i].key);
+          expect(attributeOf[1]).to.be.equal(DEFAULT_ATTRIBUTES[i].value);
+        }
+      });
+
+      it("Should return attribute values from 'attributeOfByKey'", async function () {
         const nextTokenId = await _collection.nextTokenId();
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
 
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          signature
+        for (const attribute of DEFAULT_ATTRIBUTES) {
+          expect(
+            await _collection.attributeOfByKey(nextTokenId, attribute.key),
+          ).to.equal(attribute.value);
+        }
+      });
+
+      it("Should return an empty string from 'attributeOfByKey' for an unset key", async function () {
+        const nextTokenId = await _collection.nextTokenId();
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
+
+        expect(
+          await _collection.attributeOfByKey(nextTokenId, "does-not-exist"),
+        ).to.equal("");
+      });
+
+      it("Should assign creator (the caller) to the token", async function () {
+        const nextTokenId = await _collection.nextTokenId();
+        await mint(
+          {
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+          },
+          _otherAccount,
         );
-
         expect(await _collection.creatorOf(nextTokenId)).to.equal(
-          _owner.address
+          _otherAccount.address,
         );
       });
 
       it("Should assign role to the token", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
         const nextTokenId = await _collection.nextTokenId();
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          signature
-        );
-
-        expect(await _collection.roleOf(nextTokenId)).to.equal(DEFAULT_ROLE);
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
+        expect(
+          await _collection.attributeOfByKey(nextTokenId, "role"),
+        ).to.equal(DEFAULT_ROLE);
       });
 
       it("Should assign token id to name", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
         const nextTokenId = await _collection.nextTokenId();
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          signature
-        );
-
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(generateRandomAddress()),
+        });
         expect(await _collection.nameToTokenId(DEFAULT_NAME)).to.be.equal(
-          nextTokenId
+          nextTokenId,
         );
       });
 
-      it("Should assign token id to wallet", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
+      it("Should assign token id to evm address", async function () {
+        const wallet = generateRandomAddress();
         const nextTokenId = await _collection.nextTokenId();
-
-        await _collection.mint(
-          _otherAccount.address,
-          _signer1.address,
-          DEFAULT_ROLE,
-          DEFAULT_NAME,
-          wallets,
-          DEFAULT_IMAGES,
-          DEFAULT_ATTRIBUTES,
-          DEFAULT_CLONE_OF,
-          ethers.id(NONCE_1),
-          signature
-        );
-
-        expect(await _collection.walletToTokenId(wallets[0])).to.be.equal(
-          nextTokenId
+        await mint({
+          to: _otherAccount.address,
+          addresses: evmAddresses(wallet),
+        });
+        expect(await _collection.addressToTokenId("evm", wallet)).to.be.equal(
+          nextTokenId,
         );
       });
 
       it("Should emit 'Minted' event", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
         const nextTokenId = await _collection.nextTokenId();
-
         await expect(
-          _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME,
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_1),
-            signature
-          )
+          mint({
+            to: _otherAccount.address,
+            addresses: evmAddresses(generateRandomAddress()),
+          }),
         )
           .to.emit(_collection, "Minted")
-          .withArgs(_otherAccount.address, _signer1.address, nextTokenId);
-      });
-
-      it("Should emit 'AgentSignerUpdated' event", async function () {
-        const wallets = [generateRandomAddress()];
-        const signature = await signMintRequest(_signer1, _collection, {
-          to: _otherAccount.address,
-          signer: _signer1.address,
-          role: DEFAULT_ROLE,
-          name: DEFAULT_NAME,
-          wallets,
-          images: DEFAULT_IMAGES,
-          attributes: DEFAULT_ATTRIBUTES,
-          cloneOf: DEFAULT_CLONE_OF,
-          nonce: NONCE_1,
-        });
-
-        const nextTokenId = await _collection.nextTokenId();
-
-        await expect(
-          _collection.mint(
-            _otherAccount.address,
-            _signer1.address,
-            DEFAULT_ROLE,
-            DEFAULT_NAME,
-            wallets,
-            DEFAULT_IMAGES,
-            DEFAULT_ATTRIBUTES,
-            DEFAULT_CLONE_OF,
-            ethers.id(NONCE_1),
-            signature
-          )
-        )
-          .to.emit(_collection, "AgentSignerUpdated")
-          .withArgs(nextTokenId, ethers.ZeroAddress, _signer1.address);
+          .withArgs(_otherAccount.address, nextTokenId);
       });
     });
   });

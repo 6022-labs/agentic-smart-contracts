@@ -37,19 +37,13 @@ describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
     const Collection = await ethers.getContractFactory("AgentCollectionV1");
     const collectionImplementation = await Collection.deploy();
 
-    const CollateralController = await ethers.getContractFactory(
-      "TestCollateralController6022"
-    );
-    const collateralController = await CollateralController.deploy();
-
     const CollectionCreator = await ethers.getContractFactory(
       "AgentCollectionCreatorV1"
     );
     const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
       await collectionsDescriptor.getAddress(),
-      await collectionImplementation.getAddress(),
-      await collateralController.getAddress()
+      await collectionImplementation.getAddress()
     );
 
     return { owner, otherAccount, collectionCreator, collectionsDescriptor };

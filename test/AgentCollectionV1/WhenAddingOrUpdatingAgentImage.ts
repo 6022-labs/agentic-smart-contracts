@@ -1,7 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { AgentCollectionV1 } from "../../typechain-types";
-import { proposeAndMint, deployCollectionWithCreator } from "../common";
+import {
+  proposeAndMint,
+  evmAddresses,
+  deployCollectionWithCreator,
+} from "../common";
 import { loadFixture, reset } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -10,35 +14,30 @@ describe("WhenAddingOrUpdatingAgentImage", function () {
 
   let _collection: AgentCollectionV1;
   let _owner: HardhatEthersSigner;
-  let _signer: HardhatEthersSigner;
   let _moderator: HardhatEthersSigner;
   let _otherAccount: HardhatEthersSigner;
 
   async function deployAgentCollection() {
     await reset();
 
-    const [owner, signer, moderator, otherAccount] = await ethers.getSigners();
+    const [owner, moderator, otherAccount] = await ethers.getSigners();
 
-    const { collection, collectionsManager } =
-      await deployCollectionWithCreator({
-        owner,
-        moderator,
-        ipfsGateway,
-      });
+    const { collection } = await deployCollectionWithCreator({
+      owner,
+      moderator,
+      ipfsGateway,
+    });
 
-    const signerRole = await collectionsManager.SIGNER_ROLE();
-    await collectionsManager.grantRole(signerRole, signer.address);
-
-    return { collection, owner, signer, moderator, otherAccount };
+    return { collection, owner, moderator, otherAccount };
   }
 
   beforeEach(async function () {
-    const { collection, owner, signer, moderator, otherAccount } =
-      await loadFixture(deployAgentCollection);
+    const { collection, owner, moderator, otherAccount } = await loadFixture(
+      deployAgentCollection,
+    );
 
     _collection = collection;
     _owner = owner;
-    _signer = signer;
     _moderator = moderator;
     _otherAccount = otherAccount;
   });
@@ -56,14 +55,14 @@ describe("WhenAddingOrUpdatingAgentImage", function () {
           _collection.addOrUpdateAgentImage(1n, {
             key: "profile",
             value: "cid1",
-          })
+          }),
         ).to.be.revertedWithCustomError(_collection, "NotModerator");
       });
     });
 
     describe("And caller is a moderator", function () {
       it("Should allow a moderator to update an image directly", async function () {
-        const tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        const tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
 
@@ -71,7 +70,7 @@ describe("WhenAddingOrUpdatingAgentImage", function () {
           _collection.connect(_moderator).addOrUpdateAgentImage(tokenId, {
             key: "profile",
             value: "cid1",
-          })
+          }),
         ).to.emit(_collection, "AgentImageUpdated");
       });
     });
@@ -90,17 +89,17 @@ describe("WhenAddingOrUpdatingAgentImage", function () {
           _collection.addOrUpdateAgentImage(tokenId, {
             key: "profile",
             value: "cid1",
-          })
+          }),
         )
           .to.be.revertedWithCustomError(_collection, "ERC721NonexistentToken")
           .withArgs(tokenId);
       });
     });
 
-    describe("And caller is not the owner of the token", function () {
+    describe("And caller is not the owner nor a wallet of the token", function () {
       let tokenId: bigint;
       beforeEach(async function () {
-        tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
         await revokeModerator();
@@ -110,20 +109,41 @@ describe("WhenAddingOrUpdatingAgentImage", function () {
         await expect(
           _collection
             .connect(_otherAccount)
-            .addOrUpdateAgentImage(tokenId, { key: "profile", value: "cid1" })
+            .addOrUpdateAgentImage(tokenId, { key: "profile", value: "cid1" }),
         )
           .to.be.revertedWithCustomError(
             _collection,
-            "OwnableUnauthorizedAccount"
+            "OwnableUnauthorizedAccount",
           )
           .withArgs(await _otherAccount.getAddress(), tokenId);
+      });
+    });
+
+    describe("And caller is one of the agent's wallets", function () {
+      let tokenId: bigint;
+      beforeEach(async function () {
+        tokenId = await proposeAndMint(_collection, _moderator, {
+          to: await _owner.getAddress(),
+          addresses: evmAddresses(_otherAccount.address),
+        });
+        await revokeModerator();
+      });
+
+      it("Should allow the wallet to add the image", async function () {
+        await expect(
+          _collection
+            .connect(_otherAccount)
+            .addOrUpdateAgentImage(tokenId, { key: "profile", value: "cid1" }),
+        )
+          .to.emit(_collection, "AgentImageUpdated")
+          .withArgs(tokenId, "profile", "", "cid1");
       });
     });
 
     describe("And image key does not exist", function () {
       let tokenId: bigint;
       beforeEach(async function () {
-        tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
         await revokeModerator();
@@ -153,7 +173,7 @@ describe("WhenAddingOrUpdatingAgentImage", function () {
           _collection.addOrUpdateAgentImage(tokenId, {
             key: "profile",
             value: "cid1",
-          })
+          }),
         )
           .to.emit(_collection, "AgentImageUpdated")
           .withArgs(tokenId, "profile", "", "cid1");
@@ -163,7 +183,7 @@ describe("WhenAddingOrUpdatingAgentImage", function () {
     describe("And image key exists", function () {
       let tokenId: bigint;
       beforeEach(async function () {
-        tokenId = await proposeAndMint(_signer, _collection, _moderator, {
+        tokenId = await proposeAndMint(_collection, _moderator, {
           to: await _owner.getAddress(),
         });
         await revokeModerator();
@@ -197,7 +217,7 @@ describe("WhenAddingOrUpdatingAgentImage", function () {
           _collection.addOrUpdateAgentImage(tokenId, {
             key: "profile",
             value: "cid2",
-          })
+          }),
         )
           .to.emit(_collection, "AgentImageUpdated")
           .withArgs(tokenId, "profile", "cid1", "cid2");

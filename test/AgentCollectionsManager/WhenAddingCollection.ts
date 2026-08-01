@@ -36,27 +36,13 @@ describe("WhenAddingCollection", function () {
     const Collection = await ethers.getContractFactory("AgentCollectionV1");
     const collectionImplementation = await Collection.deploy();
 
-    const TestErc20 = await ethers.getContractFactory("TestERC20");
-    const testErc20 = await TestErc20.deploy();
-
-    const CollateralController = await ethers.getContractFactory(
-      "TestCollateralController6022"
-    );
-    const collateralController = await CollateralController.deploy();
-
     const CollectionCreator = await ethers.getContractFactory(
       "AgentCollectionCreatorV1"
     );
     const collectionCreator = await CollectionCreator.deploy(
       await collectionsManager.getAddress(),
       await collectionsDescriptor.getAddress(),
-      await collectionImplementation.getAddress(),
-      await collateralController.getAddress()
-    );
-
-    await collectionCreator.addAuthorizedTokenForCreation(
-      await testErc20.getAddress(),
-      0n // No minimum balance required
+      await collectionImplementation.getAddress()
     );
 
     const creatorRole = await collectionsManager.CREATOR_ROLE();
@@ -88,7 +74,7 @@ describe("WhenAddingCollection", function () {
     describe("Given collection with this name already exists", function () {
       it("Should revert", async function () {
         await _collectionCreator.createCollection(
-          "",
+          "agents",
           "first-symbol",
           "description",
           _owner.address,
@@ -97,7 +83,7 @@ describe("WhenAddingCollection", function () {
 
         await expect(
           _collectionCreator.createCollection(
-            "",
+            "agents",
             "second-symbol",
             "description",
             _owner.address,
@@ -108,7 +94,7 @@ describe("WhenAddingCollection", function () {
             _collectionsManager,
             "CollectionNameAlreadyExists"
           )
-          .withArgs("");
+          .withArgs("agents");
       });
     });
 
@@ -172,6 +158,29 @@ describe("WhenAddingCollection", function () {
         );
 
         expect(collectionAddress).to.not.equal(ethers.ZeroAddress);
+      });
+
+      it("Should flag the created collection as known", async function () {
+        await _collectionCreator.createCollection(
+          "first-name",
+          "AIA",
+          "description",
+          _owner.address,
+          _owner.address
+        );
+
+        const collectionAddress = await _collectionsManager.collections(
+          (await _collectionsManager.nextCollectionId()) - 1n
+        );
+
+        expect(await _collectionsManager.isKnownCollection(collectionAddress)).to
+          .equal(true);
+      });
+
+      it("Should not flag an unregistered address as known", async function () {
+        expect(
+          await _collectionsManager.isKnownCollection(generateRandomAddress())
+        ).to.equal(false);
       });
     });
   });
