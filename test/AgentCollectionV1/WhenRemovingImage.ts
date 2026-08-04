@@ -140,6 +140,33 @@ describe("WhenRemovingImage", function () {
       expect(images[0][1]).to.equal(defaultImg.value);
     });
 
+    it("Should emit 'AgentImageRemoved' event", async function () {
+      const tokenId = await mintWithImages(
+        [
+          { key: "default", value: "bafybeidefault" },
+          { key: "profile", value: "bafybeiprofile" },
+        ],
+        await _owner.getAddress(),
+      );
+
+      await expect(
+        _collection.connect(_owner).removeAgentImage(tokenId, "profile"),
+      )
+        .to.emit(_collection, "AgentImageRemoved")
+        .withArgs(tokenId, "profile");
+    });
+
+    it("Should not emit 'AgentImageRemoved' event when key does not exist", async function () {
+      const tokenId = await mintWithImages(
+        [{ key: "default", value: "bafybeidefault" }],
+        await _owner.getAddress(),
+      );
+
+      await expect(
+        _collection.connect(_owner).removeAgentImage(tokenId, "unknown"),
+      ).to.not.emit(_collection, "AgentImageRemoved");
+    });
+
     it("Should do nothing when key does not exist", async function () {
       const defaultImg = {
         key: "default",
