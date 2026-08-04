@@ -33,7 +33,8 @@ interface IAgentCollectionV1Actions {
     function addAgentAddress(uint256 tokenId, string memory addressType, string memory value) external;
 
     /// @dev Remove a typed address from an agent. Only the agent controller
-    /// (owner or an existing evm agent address) may call.
+    /// (owner or an existing evm agent address) may call. Removing the last
+    /// evm address reverts with `MissingEvmAddress`.
     /// @param tokenId The agent token.
     /// @param addressType The type of the address to remove.
     /// @param value The value of the address to remove.

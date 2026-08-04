@@ -63,15 +63,29 @@ describe("WhenReadingAddr", function () {
       );
     });
 
-    describe("Given the last evm entry was removed", function () {
+    describe("Given the agent rotated its evm entry", function () {
+      let _rotatedWallet: string;
+
       beforeEach(async function () {
+        _rotatedWallet = generateRandomAddress();
+        await _collection
+          .connect(_agentWallet)
+          .addAgentAddress(_tokenId, "evm", _rotatedWallet);
         await _collection
           .connect(_agentWallet)
           .removeAgentAddress(_tokenId, "evm", _agentControlledWallet.address);
       });
 
-      it("Should return the zero address", async function () {
-        expect(await _ensRegistry.addr(_node)).to.equal(ethers.ZeroAddress);
+      it("Should return the remaining evm entry", async function () {
+        expect(await _ensRegistry.addr(_node)).to.equal(_rotatedWallet);
+      });
+
+      it("Should revert when removing the last evm entry", async function () {
+        await expect(
+          _collection
+            .connect(_agentWallet)
+            .removeAgentAddress(_tokenId, "evm", _rotatedWallet)
+        ).to.be.revertedWithCustomError(_collection, "MissingEvmAddress");
       });
     });
   });

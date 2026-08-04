@@ -50,6 +50,19 @@ library AgentAddressLib {
         return (agentAddress, isEvm);
     }
 
+    /// @dev True when any entry has the given type.
+    function containsType(
+        AgentAddress[] storage addresses,
+        string memory addressType
+    ) internal view returns (bool) {
+        for (uint256 i = 0; i < addresses.length; i++) {
+            if (Strings.equal(addresses[i].addressType, addressType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// @dev Canonicalizes a mint address list and enforces at least one evm entry.
     function canonicalizeAndRequireEvm(
         AgentAddress[] memory addresses
