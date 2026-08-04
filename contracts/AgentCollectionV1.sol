@@ -530,11 +530,14 @@ contract AgentCollectionV1 is
         string memory key
     ) external onlyAgentControllerOrModerator(tokenId) {
         KeyValue[] storage images = _agentInformationOf[tokenId].images;
-        // slither-disable-next-line unused-return
-        images.remove(key);
+        bool removed = images.remove(key);
 
         if (!images.containKey("default")) {
             revert MissingDefaultImage();
+        }
+
+        if (removed) {
+            emit AgentImageRemoved(tokenId, key);
         }
     }
 
