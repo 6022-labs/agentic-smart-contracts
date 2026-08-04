@@ -74,11 +74,7 @@ describe("WhenUpdatingDescription", function () {
   describe("Given signer is not admin", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' error when called by a non-admin", async function () {
       await expect(
-        _collection
-          .connect(_otherAccount)
-          .updateCollectionsDescriptor(
-            await _collectionsDescriptor.getAddress()
-          )
+        _collection.connect(_otherAccount).updateDescription("new description")
       ).to.be.revertedWithCustomError(
         _collection,
         "AccessControlUnauthorizedAccount"
