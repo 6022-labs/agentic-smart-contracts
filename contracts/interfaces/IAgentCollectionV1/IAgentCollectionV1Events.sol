@@ -102,8 +102,8 @@ interface IAgentCollectionV1Events {
     /// @param oldCollectionsDescriptor The previous collections descriptor address.
     /// @param newCollectionsDescriptor The new collections descriptor address.
     event CollectionsDescriptorUpdated(
-        address oldCollectionsDescriptor,
-        address newCollectionsDescriptor
+        address indexed oldCollectionsDescriptor,
+        address indexed newCollectionsDescriptor
     );
 
     /// @dev Emitted when the collection description is updated.
