@@ -28,29 +28,34 @@ contract AgentCollectionsManager is
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function moderatorOf(address account) external view returns (address[] memory) {
-        uint256 numberOfModeratorCollections = 0;
-
-        // Count the number of collections where the account is a moderator
-        for (uint256 collectionIndex = 1; collectionIndex < nextCollectionId; collectionIndex++) {
-            IAgentCollectionStates collection = IAgentCollectionStates(collections[collectionIndex]);
-            if (collection.isModerator(account)) {
-                numberOfModeratorCollections++;
-            }
+    /// @dev Paginated lookup of the collections where `account` is a moderator.
+    /// Pass offset 0 to start; `next` is the id to resume from, or 0 when exhausted.
+    function moderatorOf(
+        address account,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (address[] memory moderatorCollections, uint256 next) {
+        uint256 start = offset < 1 ? 1 : offset;
+        uint256 end = start + limit;
+        if (end > nextCollectionId) {
+            end = nextCollectionId;
         }
 
-        // Fill the array with the addresses of the collections where the account is a moderator
-        address[] memory moderatorCollections = new address[](numberOfModeratorCollections);
-        uint256 insertIndex = 0;
-        for (uint256 collectionIndex = 1; collectionIndex < nextCollectionId; collectionIndex++) {
-            address collection = collections[collectionIndex];
+        uint256 count = 0;
+        address[] memory found = new address[](end > start ? end - start : 0);
+        for (uint256 id = start; id < end; id++) {
+            address collection = collections[id];
             if (IAgentCollectionStates(collection).isModerator(account)) {
-                moderatorCollections[insertIndex] = collection;
-                insertIndex++;
+                found[count] = collection;
+                count++;
             }
         }
 
-        return moderatorCollections;
+        moderatorCollections = new address[](count);
+        for (uint256 i = 0; i < count; i++) {
+            moderatorCollections[i] = found[i];
+        }
+        next = end < nextCollectionId ? end : 0;
     }
 
     /// @dev Paginated collection listing for the operator UI. Pass offset 0 to

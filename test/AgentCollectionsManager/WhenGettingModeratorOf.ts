@@ -86,14 +86,48 @@ describe("WhenGettingModeratorOf", function () {
 
   describe("Given account is moderator of multiple collections", function () {
     it("Should return all collections where the account is moderator", async function () {
-      const addresses = await _collectionsManager.moderatorOf(
-        _moderator.address
+      const [addresses, next] = await _collectionsManager.moderatorOf(
+        _moderator.address,
+        0n,
+        10n
       );
 
       expect(addresses).to.deep.equal([
         await _collection1.getAddress(),
         await _collection2.getAddress(),
       ]);
+      expect(next).to.equal(0n);
+    });
+
+    it("Should paginate and resume from `next`", async function () {
+      const [firstPage, next] = await _collectionsManager.moderatorOf(
+        _moderator.address,
+        0n,
+        1n
+      );
+
+      expect(firstPage).to.deep.equal([await _collection1.getAddress()]);
+      expect(next).to.equal(2n);
+
+      const [secondPage, secondNext] = await _collectionsManager.moderatorOf(
+        _moderator.address,
+        next,
+        1n
+      );
+
+      expect(secondPage).to.deep.equal([await _collection2.getAddress()]);
+      expect(secondNext).to.equal(0n);
+    });
+
+    it("Should skip collections where the account is not moderator", async function () {
+      const [addresses, next] = await _collectionsManager.moderatorOf(
+        _otherAccount.address,
+        0n,
+        10n
+      );
+
+      expect(addresses).to.deep.equal([]);
+      expect(next).to.equal(0n);
     });
   });
 
@@ -103,9 +137,14 @@ describe("WhenGettingModeratorOf", function () {
         deployEmptyManager
       );
 
-      const addresses = await collectionsManager.moderatorOf(owner.address);
+      const [addresses, next] = await collectionsManager.moderatorOf(
+        owner.address,
+        0n,
+        10n
+      );
 
       expect(addresses).to.deep.equal([]);
+      expect(next).to.equal(0n);
     });
   });
 });
