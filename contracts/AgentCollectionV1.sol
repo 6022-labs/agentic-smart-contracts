@@ -10,7 +10,7 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 
 import {ENSUtils} from "./libraries/ENSUtils.sol";
 import {KeyValueLib} from "./libraries/KeyValueLib.sol";
-import {AgentAddressLib} from "./libraries/AgentAddressLib.sol";
+import {AgentAddressLib, MissingEvmAddress} from "./libraries/AgentAddressLib.sol";
 
 import {KeyValue} from "./types/KeyValue.sol";
 import {NullableUint256} from "./types/NullableUint256.sol";
@@ -401,13 +401,13 @@ contract AgentCollectionV1 is
     }
 
     /// @dev Remove a typed address from an agent (agent controller only).
+    /// Removing the last evm address reverts with `MissingEvmAddress`.
     function removeAgentAddress(
         uint256 tokenId,
         string memory addressType,
         string memory value
     ) external onlyAgentController(tokenId) {
-        // slither-disable-next-line unused-return
-        (AgentAddress memory canonical, ) =
+        (AgentAddress memory canonical, bool isEvm) =
             AgentAddress({
                 addressType: addressType,
                 value: value
@@ -430,6 +430,10 @@ contract AgentCollectionV1 is
             }
         }
         delete _addressToTokenId[canonical.addressType][canonical.value];
+
+        if (isEvm && !addresses.containsType(EVM_TYPE)) {
+            revert MissingEvmAddress();
+        }
 
         emit AgentAddressRemoved(tokenId, canonical.addressType, canonical.value);
     }

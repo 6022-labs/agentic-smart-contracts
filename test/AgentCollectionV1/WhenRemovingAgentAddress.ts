@@ -38,7 +38,7 @@ describe("WhenRemovingAgentAddress", function () {
       to: owner.address,
       name: "test-agent",
       addresses: [
-        ...evmAddresses(agentWallet.address),
+        ...evmAddresses(agentWallet.address, owner.address),
         ...btcAddresses(BTC_VALUE),
       ],
     });
@@ -70,7 +70,7 @@ describe("WhenRemovingAgentAddress", function () {
           .connect(getSigner())
           .removeAgentAddress(_tokenId, "evm", _agentWallet.address);
 
-        expect(await _collection.addressesCountOf(_tokenId)).to.equal(1n);
+        expect(await _collection.addressesCountOf(_tokenId)).to.equal(2n);
         expect(
           await _collection.addressToTokenId("evm", _agentWallet.address)
         ).to.equal(0n);
@@ -101,12 +101,12 @@ describe("WhenRemovingAgentAddress", function () {
           .withArgs(_tokenId, "evm", _agentWallet.address.toLowerCase());
       });
 
-      it("Should leave the evm entry intact when removing the btc entry", async function () {
+      it("Should leave the evm entries intact when removing the btc entry", async function () {
         await _collection
           .connect(getSigner())
           .removeAgentAddress(_tokenId, "btc", BTC_VALUE);
 
-        expect(await _collection.addressesCountOf(_tokenId)).to.equal(1n);
+        expect(await _collection.addressesCountOf(_tokenId)).to.equal(2n);
         expect(await _collection.addressToTokenId("btc", BTC_VALUE)).to.equal(
           0n
         );
@@ -115,18 +115,33 @@ describe("WhenRemovingAgentAddress", function () {
         ).to.equal(_tokenId);
       });
 
-      it("Should allow removing the last evm entry and keep the owner as controller", async function () {
+      it("Should revert with 'MissingEvmAddress' when removing the last evm entry", async function () {
         await _collection
           .connect(getSigner())
           .removeAgentAddress(_tokenId, "evm", _agentWallet.address);
 
-        expect(await _collection.addressesCountOf(_tokenId)).to.equal(1n);
+        await expect(
+          _collection
+            .connect(_owner)
+            .removeAgentAddress(_tokenId, "evm", _owner.address)
+        ).to.be.revertedWithCustomError(_collection, "MissingEvmAddress");
+      });
+
+      it("Should keep the last evm entry registered after the revert", async function () {
+        await _collection
+          .connect(getSigner())
+          .removeAgentAddress(_tokenId, "evm", _agentWallet.address);
 
         await expect(
           _collection
             .connect(_owner)
-            .addAgentAddress(_tokenId, "evm", _newWallet.address)
-        ).to.emit(_collection, "AgentAddressAdded");
+            .removeAgentAddress(_tokenId, "evm", _owner.address)
+        ).to.be.reverted;
+
+        expect(
+          await _collection.addressToTokenId("evm", _owner.address)
+        ).to.equal(_tokenId);
+        expect(await _collection.addressesCountOf(_tokenId)).to.equal(2n);
       });
     });
   }
