@@ -101,7 +101,7 @@ contract AgentCollectionsDescriptor is
 
         bytes memory hexDigits = "0123456789abcdef";
         bytes memory escapedBytes = new bytes(valueBytes.length + extraCount);
-        uint256 index;
+        uint256 index = 0;
         for (uint256 i = 0; i < valueBytes.length; i++) {
             uint8 c = uint8(valueBytes[i]);
             if (c == 0x22 || c == 0x5c) {

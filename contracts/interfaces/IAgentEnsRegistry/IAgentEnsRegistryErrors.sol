@@ -17,4 +17,7 @@ interface IAgentEnsRegistryErrors {
     /// @dev Key is resolved by the registry itself (e.g. `avatar`) and cannot
     ///      be stored.
     error ReservedKey(string key);
+
+    /// @dev Error when an address parameter is the zero address.
+    error ZeroAddress(string parameter);
 }

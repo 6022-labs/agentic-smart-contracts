@@ -59,6 +59,18 @@ describe("WhenUpdatingDefaultCollectionsDescriptor", function () {
     _otherAccount = otherAccount;
   });
 
+  describe("Given new descriptor is the zero address", function () {
+    it("Should revert with 'ZeroAddress' error", async function () {
+      await expect(
+        _collectionCreator
+          .connect(_owner)
+          .updateCollectionsDescriptor(ethers.ZeroAddress)
+      )
+        .to.be.revertedWithCustomError(_collectionCreator, "ZeroAddress")
+        .withArgs("newDescriptor");
+    });
+  });
+
   describe("Given signer is admin", function () {
     it("Should update the collections descriptor", async function () {
       const Descriptor = await ethers.getContractFactory(

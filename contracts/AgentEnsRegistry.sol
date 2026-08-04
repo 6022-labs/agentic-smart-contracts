@@ -40,6 +40,10 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
     mapping(bytes32 => mapping(string => string)) private _texts;
 
     constructor(address managerAddress, bytes32 parentNode_) {
+        if (managerAddress == address(0)) {
+            revert ZeroAddress("managerAddress");
+        }
+
         manager = managerAddress;
         parentNode = parentNode_;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -115,6 +119,10 @@ contract AgentEnsRegistry is AccessControl, IAgentEnsRegistry {
     }
 
     function setManager(address newManager) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (newManager == address(0)) {
+            revert ZeroAddress("newManager");
+        }
+
         manager = newManager;
         emit ManagerUpdated(newManager);
     }

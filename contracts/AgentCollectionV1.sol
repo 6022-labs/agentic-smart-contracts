@@ -107,21 +107,21 @@ contract AgentCollectionV1 is
     }
 
     /// @dev Initialize a new agent collection.
-    /// @param name ERC721 name of the collection.
-    /// @param symbol ERC721 symbol of the collection.
+    /// @param name_ ERC721 name of the collection.
+    /// @param symbol_ ERC721 symbol of the collection.
     /// @param admin Address granted the default admin role.
     /// @param moderator Address granted the moderator role.
     /// @param initialCollectionsDescriptor Address of the descriptor contract.
     function initialize(
-        string memory name,
-        string memory symbol,
+        string memory name_,
+        string memory symbol_,
         string memory initialDescription,
         address admin,
         address moderator,
         address initialCollectionsDescriptor
     ) external initializer {
-        if (!ENSUtils.isValidENSName(name)) {
-            revert InvalidCollectionName(name);
+        if (!ENSUtils.isValidENSName(name_)) {
+            revert InvalidCollectionName(name_);
         }
         if (admin == address(0)) {
             revert ZeroAddress("admin");
@@ -143,7 +143,7 @@ contract AgentCollectionV1 is
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MODERATOR_ROLE, moderator);
 
-        __ERC721_init(name, symbol);
+        __ERC721_init(name_, symbol_);
         __AccessControl_init();
     }
 
@@ -192,6 +192,10 @@ contract AgentCollectionV1 is
     function updateCollectionsDescriptor(
         address newCollectionsDescriptor
     ) external onlyRole(MODERATOR_ROLE) {
+        if (newCollectionsDescriptor == address(0)) {
+            revert ZeroAddress("newCollectionsDescriptor");
+        }
+
         address oldDescriptor = address(collectionsDescriptor);
 
         collectionsDescriptor = newCollectionsDescriptor;
@@ -310,9 +314,9 @@ contract AgentCollectionV1 is
     }
 
     /// @dev Get the token ID associated to the agent name.
-    /// @param name The name of the agent.
-    function nameToTokenId(string memory name) external view returns (uint256) {
-        return _nameToTokenId[name];
+    /// @param agentName The name of the agent.
+    function nameToTokenId(string memory agentName) external view returns (uint256) {
+        return _nameToTokenId[agentName];
     }
 
     /// @dev Get the token ID associated to a typed address, or 0 if none.
@@ -378,6 +382,7 @@ contract AgentCollectionV1 is
         string memory addressType,
         string memory value
     ) external onlyAgentController(tokenId) {
+        // slither-disable-next-line unused-return
         (AgentAddress memory canonical, ) =
             AgentAddress({
                 addressType: addressType,
@@ -401,6 +406,7 @@ contract AgentCollectionV1 is
         string memory addressType,
         string memory value
     ) external onlyAgentController(tokenId) {
+        // slither-disable-next-line unused-return
         (AgentAddress memory canonical, ) =
             AgentAddress({
                 addressType: addressType,
@@ -524,6 +530,7 @@ contract AgentCollectionV1 is
         string memory key
     ) external onlyAgentControllerOrModerator(tokenId) {
         KeyValue[] storage images = _agentInformationOf[tokenId].images;
+        // slither-disable-next-line unused-return
         images.remove(key);
 
         if (!images.containKey("default")) {
@@ -533,25 +540,25 @@ contract AgentCollectionV1 is
 
     /// @dev Propose minting of a new agent token. (used if moderators setup)
     /// @param to The future owner of the token.
-    /// @param name The Name of the agent.
+    /// @param agentName The Name of the agent.
     /// @param addresses Typed addresses controlled by the agent (at least one evm).
     /// @param images A set of images describing the agent.
     /// @param attributes A set of attributes describing the agent (unique keys; must satisfy the mandatory-key requirements).
     /// @param cloneOf The ID of the agent to clone (if any).
     function createMintProposal(
         address to,
-        string memory name,
+        string memory agentName,
         AgentAddress[] memory addresses,
         KeyValue[] memory images,
         KeyValue[] memory attributes,
         NullableUint256 memory cloneOf
     ) external onlyWhenModeratorsExist {
         AgentAddress[] memory canonical = addresses.canonicalizeAndRequireEvm();
-        _validateMintInputs(to, name, canonical, images, attributes, cloneOf);
+        _validateMintInputs(to, agentName, canonical, images, attributes, cloneOf);
 
         _mintProposals.push(MintProposal({
             id: _nextProposalId,
-            name: name,
+            name: agentName,
             owner: to,
             images: images,
             cloneOf: cloneOf,
@@ -570,22 +577,22 @@ contract AgentCollectionV1 is
     /// @dev Mint a new agent token. (allowed when no moderators are setup or
     /// the caller is a moderator)
     /// @param to The future owner of the token.
-    /// @param name The Name of the agent.
+    /// @param agentName The Name of the agent.
     /// @param addresses Typed addresses controlled by the agent (at least one evm).
     /// @param images A set of images describing the agent.
     /// @param attributes A set of attributes describing the agent (unique keys; must satisfy the mandatory-key requirements).
     /// @param cloneOf The ID of the agent to clone (if any).
     function mint(
         address to,
-        string memory name,
+        string memory agentName,
         AgentAddress[] memory addresses,
         KeyValue[] memory images,
         KeyValue[] memory attributes,
         NullableUint256 memory cloneOf
     ) external onlyWhenNoModeratorsOrSenderIsModerator {
         AgentAddress[] memory canonical = addresses.canonicalizeAndRequireEvm();
-        _validateMintInputs(to, name, canonical, images, attributes, cloneOf);
-        _mintAgent(to, _msgSender(), name, canonical, images, attributes, cloneOf);
+        _validateMintInputs(to, agentName, canonical, images, attributes, cloneOf);
+        _mintAgent(to, _msgSender(), agentName, canonical, images, attributes, cloneOf);
     }
 
     /// @dev Mint an agent from an approved proposal.
@@ -598,6 +605,9 @@ contract AgentCollectionV1 is
 
         _requireUniqueNameAndUniqueAddresses(proposalInfo.name, proposalInfo.addresses);
 
+        // Pop before minting: _safeMint calls out to the receiver.
+        _popMintProposalAt(proposalId);
+
         _mintAgent(
             proposalInfo.owner,
             proposalInfo.creator,
@@ -607,13 +617,12 @@ contract AgentCollectionV1 is
             proposalInfo.attributes,
             proposalInfo.cloneOf
         );
-        _popMintProposalAt(proposalId);
     }
 
     /// @dev Internal function to validate minting parameters (addresses must already be canonical).
     function _validateMintInputs(
         address to,
-        string memory name,
+        string memory agentName,
         AgentAddress[] memory addresses,
         KeyValue[] memory images,
         KeyValue[] memory attributes,
@@ -622,11 +631,11 @@ contract AgentCollectionV1 is
         if (to == address(0)) {
             revert ZeroAddress("to");
         }
-        if (!ENSUtils.isValidENSName(name)) {
-            revert InvalidName(name);
+        if (!ENSUtils.isValidENSName(agentName)) {
+            revert InvalidName(agentName);
         }
 
-        _requireUniqueNameAndUniqueAddresses(name, addresses);
+        _requireUniqueNameAndUniqueAddresses(agentName, addresses);
 
         if (!images.containKey("default")) {
             revert MissingDefaultImage();
@@ -643,7 +652,7 @@ contract AgentCollectionV1 is
     function _mintAgent(
         address to,
         address creator,
-        string memory name,
+        string memory agentName,
         AgentAddress[] memory addresses,
         KeyValue[] memory images,
         KeyValue[] memory attributes,
@@ -652,14 +661,14 @@ contract AgentCollectionV1 is
         uint256 tokenId = nextTokenId;
 
         _agentInformationOf[tokenId] = AgentInformation({
-            name: name,
+            name: agentName,
             images: images,
             addresses: addresses,
             creator: creator,
             cloneOf: cloneOf,
             attributes: attributes
         });
-        _nameToTokenId[name] = tokenId;
+        _nameToTokenId[agentName] = tokenId;
         for (uint256 i = 0; i < addresses.length; i++) {
             _addressToTokenId[addresses[i].addressType][addresses[i].value] = tokenId;
         }
@@ -738,12 +747,12 @@ contract AgentCollectionV1 is
 
     /// @dev Reverts if the name or any canonical address is already used, or the list repeats an address.
     function _requireUniqueNameAndUniqueAddresses(
-        string memory name,
+        string memory agentName,
         AgentAddress[] memory addresses
     ) internal view {
-        uint256 tokenIdForName = _nameToTokenId[name];
+        uint256 tokenIdForName = _nameToTokenId[agentName];
         if (tokenIdForName != 0) {
-            revert UsedName(name, tokenIdForName);
+            revert UsedName(agentName, tokenIdForName);
         }
         for (uint256 i = 0; i < addresses.length; i++) {
             uint256 tokenIdForAddress = _addressToTokenId[addresses[i].addressType][addresses[i].value];
