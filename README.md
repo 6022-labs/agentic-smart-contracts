@@ -36,11 +36,11 @@ Key invariants (enforced for the token's lifetime, not just at mint):
 
 | Network | Contract | Address |
 |---|---|---|
-| Polygon Amoy | `AgentCollectionsManager` | `0xfE7Ea63728191f34B2626D5BCa715C264c561A70` |
-| Polygon Amoy | `AgentCollectionCreatorV1` | `0x90dBa5E381c0E9b69B4258E29EB5D8d53406395e` |
-| Polygon Amoy | `AgentCollectionsDescriptor` | `0xe4A49f338E0270f4976aCF8aCE8A528C7448985b` |
-| Polygon Amoy | `AgentCollectionV1` (implementation) | `0x758cac16CafC47b593e74a66a1C1dD87B2Ebe65d` |
-| Polygon Amoy | `AgentEnsRegistry` | `0x341aAb46B92dBd702c955d8Eb3982F657A158DAa` |
+| Polygon Amoy | `AgentCollectionsManager` | `0x8095A0D4bE42A61db9e609aA693f516044Bda990` |
+| Polygon Amoy | `AgentCollectionCreatorV1` | `0x94EbaBD4796D0A8d1d416B6696559dE2C5E9F0a1` |
+| Polygon Amoy | `AgentCollectionsDescriptor` | `0x21D3E43A8b057609C3DC8f12dd3861fD2560754A` |
+| Polygon Amoy | `AgentCollectionV1` (implementation) | `0x7dFF34CceE40bc70910C001552b83C8800a69Ef8` |
+| Polygon Amoy | `AgentEnsRegistry` | `0x37c5879529E5b0241663ed40feeebb2326BBEE0d` |
 | Sepolia | `AgentEnsOffchainResolver` | `0xa3f6011779B55BB155BDAcd25Dd5Bcb9f5597646` |
 
 The full deployment records (ABIs included) live in [`deployments/`](deployments/).
