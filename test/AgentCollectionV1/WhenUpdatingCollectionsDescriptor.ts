@@ -78,6 +78,16 @@ describe("WhenUpdatingCollectionsDescriptor", function () {
     });
   });
 
+  describe("Given new descriptor is the zero address", function () {
+    it("Should revert with 'ZeroAddress' error", async function () {
+      await expect(
+        _collection.connect(_owner).updateCollectionsDescriptor(ethers.ZeroAddress)
+      )
+        .to.be.revertedWithCustomError(_collection, "ZeroAddress")
+        .withArgs("newCollectionsDescriptor");
+    });
+  });
+
   describe("Given signer is not admin", function () {
     it("Should revert with 'AccessControlUnauthorizedAccount' error when called by a non-admin", async function () {
       await expect(

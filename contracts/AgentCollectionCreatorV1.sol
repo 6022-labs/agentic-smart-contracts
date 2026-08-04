@@ -15,8 +15,8 @@ contract AgentCollectionCreatorV1 is
     IAgentCollectionCreatorV1
 {
     address public immutable collectionImplementation;
+    address public immutable collectionsManager;
 
-    address public collectionsManager;
     address public collectionsDescriptor;
 
     /// @dev Deploy the creator contract.
@@ -28,6 +28,16 @@ contract AgentCollectionCreatorV1 is
         address initialCollectionsDescriptor,
         address initialCollectionImplementation
     ) {
+        if (initialCollectionsManager == address(0)) {
+            revert ZeroAddress("initialCollectionsManager");
+        }
+        if (initialCollectionsDescriptor == address(0)) {
+            revert ZeroAddress("initialCollectionsDescriptor");
+        }
+        if (initialCollectionImplementation == address(0)) {
+            revert ZeroAddress("initialCollectionImplementation");
+        }
+
         collectionsManager = initialCollectionsManager;
         collectionsDescriptor = initialCollectionsDescriptor;
         collectionImplementation = initialCollectionImplementation;
@@ -43,6 +53,10 @@ contract AgentCollectionCreatorV1 is
     function updateCollectionsDescriptor(
         address newDescriptor
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (newDescriptor == address(0)) {
+            revert ZeroAddress("newDescriptor");
+        }
+
         address oldDescriptor = collectionsDescriptor;
         collectionsDescriptor = newDescriptor;
 

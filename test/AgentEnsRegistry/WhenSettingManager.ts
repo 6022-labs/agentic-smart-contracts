@@ -28,6 +28,14 @@ describe("WhenSettingManager", function () {
     });
   });
 
+  describe("Given new manager is the zero address", function () {
+    it("Should revert with ZeroAddress", async function () {
+      await expect(_ensRegistry.setManager(ethers.ZeroAddress))
+        .to.be.revertedWithCustomError(_ensRegistry, "ZeroAddress")
+        .withArgs("newManager");
+    });
+  });
+
   describe("Given caller does not have DEFAULT_ADMIN_ROLE", function () {
     it("Should revert with AccessControlUnauthorizedAccount", async function () {
       await expect(

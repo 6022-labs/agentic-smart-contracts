@@ -20,5 +20,4 @@ jobs:
         uses: crytic/slither-action@v0.4.1
         with:
           node-version: "22"
-          # raise to medium after slither cleanup
-          fail-on: high
+          fail-on: medium
