@@ -100,5 +100,58 @@ describe("WhenGettingTokenUri", function () {
       // Image is a SVG
       expect(parsedTokenURI.image).to.be.equal(ipfsGateway + _images[0].value);
     });
+
+    it("Should skip non-default images when resolving the image", async function () {
+      const tokenId = await _collection.nextTokenId();
+
+      await proposeAndMint(_collection, _owner, {
+        to: _owner.address,
+        addresses: evmAddresses(generateRandomAddress()),
+        name: "ordered-images-agent",
+        images: [
+          { key: "profile", value: "bafybeiprofile" },
+          { key: "default", value: "bafybeidefault" },
+        ],
+      });
+
+      const parsedTokenURI = decodeTokenURI(await _collection.tokenURI(tokenId));
+      expect(parsedTokenURI.image).to.equal(ipfsGateway + "bafybeidefault");
+    });
+  });
+
+  describe("Given token id is zero", function () {
+    it("Should revert with 'ERC721NonexistentToken' error", async function () {
+      await expect(_collection.tokenURI(0))
+        .to.be.revertedWithCustomError(_collection, "ERC721NonexistentToken")
+        .withArgs(0);
+    });
+  });
+
+  describe("Given token id was never minted", function () {
+    it("Should revert with 'ERC721NonexistentToken' error", async function () {
+      await expect(_collection.tokenURI(999))
+        .to.be.revertedWithCustomError(_collection, "ERC721NonexistentToken")
+        .withArgs(999);
+    });
+  });
+
+  describe("Given the default image has an empty value", function () {
+    it("Should revert with 'MissingDefaultImage' error", async function () {
+      const tokenId = await _collection.nextTokenId();
+
+      await proposeAndMint(_collection, _owner, {
+        to: _owner.address,
+        addresses: evmAddresses(generateRandomAddress()),
+        name: "empty-image-agent",
+        images: [{ key: "default", value: "" }],
+      });
+
+      const Descriptor = await ethers.getContractFactory(
+        "AgentCollectionsDescriptor",
+      );
+      await expect(
+        _collection.tokenURI(tokenId),
+      ).to.be.revertedWithCustomError(Descriptor, "MissingDefaultImage");
+    });
   });
 });

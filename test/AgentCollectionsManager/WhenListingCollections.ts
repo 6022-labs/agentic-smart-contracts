@@ -64,6 +64,13 @@ describe("WhenListingCollections", function () {
       expect(secondPage[0].name).to.equal("beta");
       expect(secondNext).to.equal(0n);
     });
+
+    it("Should return an empty page for an offset past the end", async function () {
+      const [infos, next] = await _manager.listCollections(999, 10);
+
+      expect(infos.length).to.equal(0);
+      expect(next).to.equal(0n);
+    });
   });
 
   describe("Given a collection has no moderators", function () {

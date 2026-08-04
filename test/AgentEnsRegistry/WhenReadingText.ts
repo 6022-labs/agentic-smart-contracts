@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { AgentCollectionV1, AgentEnsRegistry } from "../../typechain-types";
@@ -63,6 +64,45 @@ describe("WhenReadingText", function () {
       expect(await _ensRegistry.text(_node, "avatar")).to.equal(
         `ipfs://${defaultImage.value}`
       );
+    });
+  });
+
+  describe("Given the agent's images list a non-default entry first", function () {
+    it("Should skip it and return the default image", async function () {
+      const tokenId = await proposeAndMint(_collection, _moderator, {
+        to: _agentWallet.address,
+        name: "ordered-agent",
+        addresses: evmAddresses(ethers.Wallet.createRandom().address),
+        images: [
+          { key: "profile", value: "bafybeiprofile" },
+          { key: "default", value: "bafybeidefault" },
+        ],
+      });
+      await _ensRegistry
+        .connect(_agentWallet)
+        .initAgentTexts(_collectionAddress, tokenId, runtimeRecords());
+
+      expect(
+        await _ensRegistry.text(await agentNode("ordered-agent"), "avatar")
+      ).to.equal("ipfs://bafybeidefault");
+    });
+  });
+
+  describe("Given the default image has an empty value", function () {
+    it("Should return the empty string for the avatar key", async function () {
+      const tokenId = await proposeAndMint(_collection, _moderator, {
+        to: _agentWallet.address,
+        name: "empty-image-agent",
+        addresses: evmAddresses(ethers.Wallet.createRandom().address),
+        images: [{ key: "default", value: "" }],
+      });
+      await _ensRegistry
+        .connect(_agentWallet)
+        .initAgentTexts(_collectionAddress, tokenId, runtimeRecords());
+
+      expect(
+        await _ensRegistry.text(await agentNode("empty-image-agent"), "avatar")
+      ).to.equal("");
     });
   });
 
