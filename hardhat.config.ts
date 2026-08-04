@@ -3,54 +3,59 @@ import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "./deploy-config/types";
+import { existsSync } from "fs";
+import { join } from "path";
 
-// AgentCollection tasks
-import "./tasks/agent-collection/add-agent-address";
-import "./tasks/agent-collection/add-moderator-to-collection";
-import "./tasks/agent-collection/get-agent-attributes";
-import "./tasks/agent-collection/get-agent-description";
-import "./tasks/agent-collection/get-agent-images";
-import "./tasks/agent-collection/get-agent-addresses";
-import "./tasks/agent-collection/get-collection-description";
-import "./tasks/agent-collection/get-name-of";
-import "./tasks/agent-collection/get-owner-of";
-import "./tasks/agent-collection/get-address-token-id";
-import "./tasks/agent-collection/remove-agent-address";
+// Tasks import generated typechain types; skip them until the first compile.
+if (existsSync(join(__dirname, "typechain-types"))) {
+  // AgentCollection tasks
+  require("./tasks/agent-collection/add-agent-address");
+  require("./tasks/agent-collection/add-moderator-to-collection");
+  require("./tasks/agent-collection/get-agent-attributes");
+  require("./tasks/agent-collection/get-agent-description");
+  require("./tasks/agent-collection/get-agent-images");
+  require("./tasks/agent-collection/get-agent-addresses");
+  require("./tasks/agent-collection/get-collection-description");
+  require("./tasks/agent-collection/get-name-of");
+  require("./tasks/agent-collection/get-owner-of");
+  require("./tasks/agent-collection/get-address-token-id");
+  require("./tasks/agent-collection/remove-agent-address");
 
-// AgentCollectionsManager tasks
-import "./tasks/agent-collections-manager/add-creator-to-manager";
-import "./tasks/agent-collections-manager/add-signer-to-manager";
-import "./tasks/agent-collections-manager/remove-creator-from-manager";
+  // AgentCollectionsManager tasks
+  require("./tasks/agent-collections-manager/add-creator-to-manager");
+  require("./tasks/agent-collections-manager/add-signer-to-manager");
+  require("./tasks/agent-collections-manager/remove-creator-from-manager");
 
-// AgentCollectionCreator tasks
-import "./tasks/agent-collection-creator/create-collection";
+  // AgentCollectionCreator tasks
+  require("./tasks/agent-collection-creator/create-collection");
 
-// AgentCollectionsDescriptor tasks
-import "./tasks/agent-collections-descriptor/build-token-uri";
-import "./tasks/agent-collections-descriptor/update-collections-descriptor";
+  // AgentCollectionsDescriptor tasks
+  require("./tasks/agent-collections-descriptor/build-token-uri");
+  require("./tasks/agent-collections-descriptor/update-collections-descriptor");
 
-// AgentEnsRegistry tasks
-import "./tasks/agent-ens-registry/get-ens-registry-manager";
-import "./tasks/agent-ens-registry/get-ens-registry-parent-node";
-import "./tasks/agent-ens-registry/get-ens-registry-provisioned";
-import "./tasks/agent-ens-registry/get-agent-text";
-import "./tasks/agent-ens-registry/init-agent-texts";
-import "./tasks/agent-ens-registry/set-agent-text";
-import "./tasks/agent-ens-registry/set-ens-registry-manager";
-import "./tasks/agent-ens-registry/set-ens-registry-parent-node";
-import "./tasks/agent-ens-registry/add-admin-to-ens-registry";
-import "./tasks/agent-ens-registry/remove-admin-from-ens-registry";
+  // AgentEnsRegistry tasks
+  require("./tasks/agent-ens-registry/get-ens-registry-manager");
+  require("./tasks/agent-ens-registry/get-ens-registry-parent-node");
+  require("./tasks/agent-ens-registry/get-ens-registry-provisioned");
+  require("./tasks/agent-ens-registry/get-agent-text");
+  require("./tasks/agent-ens-registry/init-agent-texts");
+  require("./tasks/agent-ens-registry/set-agent-text");
+  require("./tasks/agent-ens-registry/set-ens-registry-manager");
+  require("./tasks/agent-ens-registry/set-ens-registry-parent-node");
+  require("./tasks/agent-ens-registry/add-admin-to-ens-registry");
+  require("./tasks/agent-ens-registry/remove-admin-from-ens-registry");
 
-// AgentEnsOffchainResolver tasks
-import "./tasks/agent-ens-offchain-resolver/get-resolver-url-at";
-import "./tasks/agent-ens-offchain-resolver/is-resolver-signer-trusted";
-import "./tasks/agent-ens-offchain-resolver/resolve-name";
-import "./tasks/agent-ens-offchain-resolver/resolve-with-proof";
-import "./tasks/agent-ens-offchain-resolver/get-resolver-supports-interface";
-import "./tasks/agent-ens-offchain-resolver/set-resolver-urls";
-import "./tasks/agent-ens-offchain-resolver/set-resolver-signer";
-import "./tasks/agent-ens-offchain-resolver/add-admin-to-resolver";
-import "./tasks/agent-ens-offchain-resolver/remove-admin-from-resolver";
+  // AgentEnsOffchainResolver tasks
+  require("./tasks/agent-ens-offchain-resolver/get-resolver-url-at");
+  require("./tasks/agent-ens-offchain-resolver/is-resolver-signer-trusted");
+  require("./tasks/agent-ens-offchain-resolver/resolve-name");
+  require("./tasks/agent-ens-offchain-resolver/resolve-with-proof");
+  require("./tasks/agent-ens-offchain-resolver/get-resolver-supports-interface");
+  require("./tasks/agent-ens-offchain-resolver/set-resolver-urls");
+  require("./tasks/agent-ens-offchain-resolver/set-resolver-signer");
+  require("./tasks/agent-ens-offchain-resolver/add-admin-to-resolver");
+  require("./tasks/agent-ens-offchain-resolver/remove-admin-from-resolver");
+}
 
 require("dotenv").config();
 
@@ -74,7 +79,7 @@ const config: HardhatUserConfig = {
       gas: "auto",
       chainId: 137,
       gasMultiplier: 2,
-      accounts: [privateKey],
+      accounts: privateKey ? [privateKey] : [],
       throwOnCallFailures: true,
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
@@ -89,7 +94,7 @@ const config: HardhatUserConfig = {
       gas: "auto",
       chainId: 80002,
       gasMultiplier: 2,
-      accounts: [privateKey],
+      accounts: privateKey ? [privateKey] : [],
       throwOnCallFailures: true,
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
@@ -104,7 +109,7 @@ const config: HardhatUserConfig = {
       gas: "auto",
       chainId: 5115,
       gasMultiplier: 2,
-      accounts: [privateKey],
+      accounts: privateKey ? [privateKey] : [],
       throwOnCallFailures: true,
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
@@ -115,7 +120,7 @@ const config: HardhatUserConfig = {
       gas: "auto",
       chainId: 1,
       gasMultiplier: 2,
-      accounts: [privateKey],
+      accounts: privateKey ? [privateKey] : [],
       throwOnCallFailures: true,
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,
@@ -131,7 +136,7 @@ const config: HardhatUserConfig = {
       gas: "auto",
       chainId: 11155111,
       gasMultiplier: 2,
-      accounts: [privateKey],
+      accounts: privateKey ? [privateKey] : [],
       throwOnCallFailures: true,
       throwOnTransactionFailures: true,
       allowUnlimitedContractSize: true,

@@ -1,0 +1,24 @@
+name: Slither
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  slither:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Run Slither
+        uses: crytic/slither-action@v0.4.1
+        with:
+          node-version: "22"
+          # raise to medium after slither cleanup
+          fail-on: high
