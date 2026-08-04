@@ -25,6 +25,15 @@ interface IAgentCollectionsManagerStates {
         uint256 limit
     ) external view returns (address collection, uint256 tokenId, string memory name, uint256 next);
 
+    /// @dev Paginated lookup of the collections where `account` is a moderator.
+    /// Scans ids [offset, offset+limit); pass offset 0 to start. `next` is the
+    /// id to resume from, or 0 when exhausted.
+    function moderatorOf(
+        address account,
+        uint256 offset,
+        uint256 limit
+    ) external view returns (address[] memory moderatorCollections, uint256 next);
+
     /// @dev Get a collection id by its name.
     /// @param name The name of the collection.
     function collectionIdByName(string memory name) external view returns (uint256);
