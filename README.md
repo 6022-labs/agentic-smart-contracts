@@ -36,6 +36,11 @@ Key invariants (enforced for the token's lifetime, not just at mint):
 
 | Network | Contract | Address |
 |---|---|---|
+| Polygon | `AgentCollectionsManager` | `0xb0dc8a83c700A9BBcc53cA1a2C6993a63129d2F6` |
+| Polygon | `AgentCollectionCreatorV1` | `0x6919B4A31b27cf5Be422a88F3259f5C7B9470BEa` |
+| Polygon | `AgentCollectionsDescriptor` | `0x7462D55bD41DE313e739d5DA6acfE926952ABbf3` |
+| Polygon | `AgentCollectionV1` (implementation) | `0xfCD13C7Cb7Ee8913a1E651308a11D5D05e575dc6` |
+| Polygon | `AgentEnsRegistry` | `0x23dbc335f966d9869940FB55f61E919118AAD236` |
 | Polygon Amoy | `AgentCollectionsManager` | `0x8095A0D4bE42A61db9e609aA693f516044Bda990` |
 | Polygon Amoy | `AgentCollectionCreatorV1` | `0x94EbaBD4796D0A8d1d416B6696559dE2C5E9F0a1` |
 | Polygon Amoy | `AgentCollectionsDescriptor` | `0x21D3E43A8b057609C3DC8f12dd3861fD2560754A` |
