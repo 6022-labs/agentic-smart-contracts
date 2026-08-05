@@ -1,0 +1,702 @@
+{
+  "address": "0x7462D55bD41DE313e739d5DA6acfE926952ABbf3",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "string[]",
+          "name": "urls_",
+          "type": "string[]"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "AccessControlBadConfirmation",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "neededRole",
+          "type": "bytes32"
+        }
+      ],
+      "name": "AccessControlUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ECDSAInvalidSignature",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "length",
+          "type": "uint256"
+        }
+      ],
+      "name": "ECDSAInvalidSignatureLength",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "ECDSAInvalidSignatureS",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "internalType": "string[]",
+          "name": "urls",
+          "type": "string[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "callData",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes4",
+          "name": "callbackFunction",
+          "type": "bytes4"
+        },
+        {
+          "internalType": "bytes",
+          "name": "extraData",
+          "type": "bytes"
+        }
+      ],
+      "name": "OffchainLookup",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "expires",
+          "type": "uint64"
+        }
+      ],
+      "name": "SignatureExpired",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        }
+      ],
+      "name": "UntrustedSigner",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "previousAdminRole",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "newAdminRole",
+          "type": "bytes32"
+        }
+      ],
+      "name": "RoleAdminChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "RoleGranted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "RoleRevoked",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "trusted",
+          "type": "bool"
+        }
+      ],
+      "name": "SignerUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "string[]",
+          "name": "urls",
+          "type": "string[]"
+        }
+      ],
+      "name": "UrlsUpdated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "DEFAULT_ADMIN_ROLE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getRoleAdmin",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "grantRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "hasRole",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "callerConfirmation",
+          "type": "address"
+        }
+      ],
+      "name": "renounceRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "name",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "resolve",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "response",
+          "type": "bytes"
+        },
+        {
+          "internalType": "bytes",
+          "name": "extraData",
+          "type": "bytes"
+        }
+      ],
+      "name": "resolveWithProof",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "revokeRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "trusted",
+          "type": "bool"
+        }
+      ],
+      "name": "setSigner",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string[]",
+          "name": "newUrls",
+          "type": "string[]"
+        }
+      ],
+      "name": "setUrls",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "signers",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "urls",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x5138af02442ba6ce250ace9b610f822ed12a6938a20590abaddf9a1b60c970ed",
+  "receipt": {
+    "from": "0x0af07251258f49ad23b037f30dbda01e0ba7335b",
+    "contractAddress": "0x7462D55bD41DE313e739d5DA6acfE926952ABbf3",
+    "gasUsed": "1058269",
+    "transactionHash": "0x5138af02442ba6ce250ace9b610f822ed12a6938a20590abaddf9a1b60c970ed",
+    "blockNumber": 25691523,
+    "status": 1
+  },
+  "args": [
+    [
+      "https://ens-gateway.agentic.6022.io/{sender}/{data}.json"
+    ],
+    "0x2447D11B2BC95EEDb0d1897aDcdb5eC5D5ED7dd7"
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "2c7e99090b4e953f1a650e1c3daed05c",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"string[]\",\"name\":\"urls_\",\"type\":\"string[]\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"AccessControlBadConfirmation\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"neededRole\",\"type\":\"bytes32\"}],\"name\":\"AccessControlUnauthorizedAccount\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ECDSAInvalidSignature\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"length\",\"type\":\"uint256\"}],\"name\":\"ECDSAInvalidSignatureLength\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"}],\"name\":\"ECDSAInvalidSignatureS\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"string[]\",\"name\":\"urls\",\"type\":\"string[]\"},{\"internalType\":\"bytes\",\"name\":\"callData\",\"type\":\"bytes\"},{\"internalType\":\"bytes4\",\"name\":\"callbackFunction\",\"type\":\"bytes4\"},{\"internalType\":\"bytes\",\"name\":\"extraData\",\"type\":\"bytes\"}],\"name\":\"OffchainLookup\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"expires\",\"type\":\"uint64\"}],\"name\":\"SignatureExpired\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"UntrustedSigner\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bool\",\"name\":\"trusted\",\"type\":\"bool\"}],\"name\":\"SignerUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string[]\",\"name\":\"urls\",\"type\":\"string[]\"}],\"name\":\"UrlsUpdated\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"callerConfirmation\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"name\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"resolve\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"response\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"extraData\",\"type\":\"bytes\"}],\"name\":\"resolveWithProof\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"trusted\",\"type\":\"bool\"}],\"name\":\"setSigner\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string[]\",\"name\":\"newUrls\",\"type\":\"string[]\"}],\"name\":\"setUrls\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"signers\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"urls\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"ERC-3668 / ENSIP-10 resolver, deployed on an ENS-bearing chain      (Ethereum L1 / Sepolia). `resolve` always reverts with `OffchainLookup`      to send CCIP-Read clients to the gateway, which reads records from      `AgentEnsRegistry` and returns a signed response; `resolveWithProof`      checks that signature against the trusted signer set.\",\"errors\":{\"AccessControlBadConfirmation()\":[{\"details\":\"The caller of a function is not the expected one. NOTE: Don't confuse with {AccessControlUnauthorizedAccount}.\"}],\"AccessControlUnauthorizedAccount(address,bytes32)\":[{\"details\":\"The `account` is missing a role.\"}],\"ECDSAInvalidSignature()\":[{\"details\":\"The signature derives the `address(0)`.\"}],\"ECDSAInvalidSignatureLength(uint256)\":[{\"details\":\"The signature has an invalid length.\"}],\"ECDSAInvalidSignatureS(bytes32)\":[{\"details\":\"The signature has an S value that is in the upper half order.\"}],\"OffchainLookup(address,string[],bytes,bytes4,bytes)\":[{\"details\":\"https://eips.ethereum.org/EIPS/eip-3668 Error selector: `0x556f1830`\"}],\"SignatureExpired(uint64)\":[{\"details\":\"The signed response has already expired.\"}],\"UntrustedSigner(address)\":[{\"details\":\"The signer recovered from the gateway response is not trusted.\"}]},\"events\":{\"RoleAdminChanged(bytes32,bytes32,bytes32)\":{\"details\":\"Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole` `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite {RoleAdminChanged} not being emitted to signal this.\"},\"RoleGranted(bytes32,address,address)\":{\"details\":\"Emitted when `account` is granted `role`. `sender` is the account that originated the contract call. This account bears the admin role (for the granted role). Expected in cases where the role was granted using the internal {AccessControl-_grantRole}.\"},\"RoleRevoked(bytes32,address,address)\":{\"details\":\"Emitted when `account` is revoked `role`. `sender` is the account that originated the contract call:   - if using `revokeRole`, it is the admin role bearer   - if using `renounceRole`, it is the role bearer (i.e. `account`)\"},\"SignerUpdated(address,bool)\":{\"details\":\"Emitted when a signer's trust is set (at deploy and on `setSigner`).\"},\"UrlsUpdated(string[])\":{\"details\":\"Emitted when the gateway URL list is set (at deploy and on `setUrls`).\"}},\"kind\":\"dev\",\"methods\":{\"constructor\":{\"details\":\"Deployer becomes DEFAULT_ADMIN.\"},\"getRoleAdmin(bytes32)\":{\"details\":\"Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.\"},\"grantRole(bytes32,address)\":{\"details\":\"Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleGranted} event.\"},\"hasRole(bytes32,address)\":{\"details\":\"Returns `true` if `account` has been granted `role`.\"},\"renounceRole(bytes32,address)\":{\"details\":\"Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been revoked `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `callerConfirmation`. May emit a {RoleRevoked} event.\"},\"resolveWithProof(bytes,bytes)\":{\"details\":\"ERC-3668 callback. Verifies the gateway's signed response against a      trusted signer and returns the resolved record bytes.\",\"params\":{\"extraData\":\"The original lookup callData carried through from `resolve`.\",\"response\":\"The gateway response: abi.encode(bytes result, uint64 expires, bytes sig).\"}},\"revokeRole(bytes32,address)\":{\"details\":\"Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleRevoked} event.\"},\"setSigner(address,bool)\":{\"details\":\"Add or remove a trusted gateway signer.\"},\"setUrls(string[])\":{\"details\":\"Replace the off-chain gateway URL list.\"},\"supportsInterface(bytes4)\":{\"details\":\"See {IERC165-supportsInterface}.\"},\"urls(uint256)\":{\"details\":\"The off-chain gateway URL at the given index, used in the ERC-3668      `OffchainLookup` revert.\"}},\"stateVariables\":{\"signers\":{\"details\":\"Whether an address is a trusted gateway signer.\"}},\"title\":\"Agent off-chain ENS resolver\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/AgentEnsOffchainResolver.sol\":\"AgentEnsOffchainResolver\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"@ensdomains/ens-contracts/contracts/ccipRead/EIP3668.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\n/// @dev https://eips.ethereum.org/EIPS/eip-3668\\n/// Error selector: `0x556f1830`\\nerror OffchainLookup(\\n    address sender,\\n    string[] urls,\\n    bytes callData,\\n    bytes4 callbackFunction,\\n    bytes extraData\\n);\\n\\n/// @dev Simple library for decoding `OffchainLookup` error data.\\n/// Avoids \\\"stack too deep\\\" issues as the natural decoding consumes 5 variables.\\nlibrary EIP3668 {\\n    /// @dev Struct with members matching `OffchainLookup`.\\n    struct Params {\\n        address sender;\\n        string[] urls;\\n        bytes callData;\\n        bytes4 callbackFunction;\\n        bytes extraData;\\n    }\\n\\n    /// @dev Decode an `OffchainLookup` into a struct from the data after the error selector.\\n    function decode(bytes memory v) internal pure returns (Params memory p) {\\n        (p.sender, p.urls, p.callData, p.callbackFunction, p.extraData) = abi\\n            .decode(v, (address, string[], bytes, bytes4, bytes));\\n    }\\n}\\n\",\"keccak256\":\"0x14619de0f3d9f085e6209767b35c2888b8d2af6d787af535f30db7b51e843bf8\",\"license\":\"MIT\"},\"@ensdomains/ens-contracts/contracts/resolvers/profiles/IExtendedResolver.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.4;\\n\\ninterface IExtendedResolver {\\n    function resolve(\\n        bytes memory name,\\n        bytes memory data\\n    ) external view returns (bytes memory);\\n}\\n\",\"keccak256\":\"0x5d81521cfae7d9a4475d27533cd8ed0d3475d369eb0674fd90ffbdbdf292faa3\",\"license\":\"MIT\"},\"@openzeppelin/contracts/access/AccessControl.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.3.0) (access/AccessControl.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {IAccessControl} from \\\"./IAccessControl.sol\\\";\\nimport {Context} from \\\"../utils/Context.sol\\\";\\nimport {ERC165} from \\\"../utils/introspection/ERC165.sol\\\";\\n\\n/**\\n * @dev Contract module that allows children to implement role-based access\\n * control mechanisms. This is a lightweight version that doesn't allow enumerating role\\n * members except through off-chain means by accessing the contract event logs. Some\\n * applications may benefit from on-chain enumerability, for those cases see\\n * {AccessControlEnumerable}.\\n *\\n * Roles are referred to by their `bytes32` identifier. These should be exposed\\n * in the external API and be unique. The best way to achieve this is by\\n * using `public constant` hash digests:\\n *\\n * ```solidity\\n * bytes32 public constant MY_ROLE = keccak256(\\\"MY_ROLE\\\");\\n * ```\\n *\\n * Roles can be used to represent a set of permissions. To restrict access to a\\n * function call, use {hasRole}:\\n *\\n * ```solidity\\n * function foo() public {\\n *     require(hasRole(MY_ROLE, msg.sender));\\n *     ...\\n * }\\n * ```\\n *\\n * Roles can be granted and revoked dynamically via the {grantRole} and\\n * {revokeRole} functions. Each role has an associated admin role, and only\\n * accounts that have a role's admin role can call {grantRole} and {revokeRole}.\\n *\\n * By default, the admin role for all roles is `DEFAULT_ADMIN_ROLE`, which means\\n * that only accounts with this role will be able to grant or revoke other\\n * roles. More complex role relationships can be created by using\\n * {_setRoleAdmin}.\\n *\\n * WARNING: The `DEFAULT_ADMIN_ROLE` is also its own admin: it has permission to\\n * grant and revoke this role. Extra precautions should be taken to secure\\n * accounts that have been granted it. We recommend using {AccessControlDefaultAdminRules}\\n * to enforce additional security measures for this role.\\n */\\nabstract contract AccessControl is Context, IAccessControl, ERC165 {\\n    struct RoleData {\\n        mapping(address account => bool) hasRole;\\n        bytes32 adminRole;\\n    }\\n\\n    mapping(bytes32 role => RoleData) private _roles;\\n\\n    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;\\n\\n    /**\\n     * @dev Modifier that checks that an account has a specific role. Reverts\\n     * with an {AccessControlUnauthorizedAccount} error including the required role.\\n     */\\n    modifier onlyRole(bytes32 role) {\\n        _checkRole(role);\\n        _;\\n    }\\n\\n    /**\\n     * @dev See {IERC165-supportsInterface}.\\n     */\\n    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {\\n        return interfaceId == type(IAccessControl).interfaceId || super.supportsInterface(interfaceId);\\n    }\\n\\n    /**\\n     * @dev Returns `true` if `account` has been granted `role`.\\n     */\\n    function hasRole(bytes32 role, address account) public view virtual returns (bool) {\\n        return _roles[role].hasRole[account];\\n    }\\n\\n    /**\\n     * @dev Reverts with an {AccessControlUnauthorizedAccount} error if `_msgSender()`\\n     * is missing `role`. Overriding this function changes the behavior of the {onlyRole} modifier.\\n     */\\n    function _checkRole(bytes32 role) internal view virtual {\\n        _checkRole(role, _msgSender());\\n    }\\n\\n    /**\\n     * @dev Reverts with an {AccessControlUnauthorizedAccount} error if `account`\\n     * is missing `role`.\\n     */\\n    function _checkRole(bytes32 role, address account) internal view virtual {\\n        if (!hasRole(role, account)) {\\n            revert AccessControlUnauthorizedAccount(account, role);\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the admin role that controls `role`. See {grantRole} and\\n     * {revokeRole}.\\n     *\\n     * To change a role's admin, use {_setRoleAdmin}.\\n     */\\n    function getRoleAdmin(bytes32 role) public view virtual returns (bytes32) {\\n        return _roles[role].adminRole;\\n    }\\n\\n    /**\\n     * @dev Grants `role` to `account`.\\n     *\\n     * If `account` had not been already granted `role`, emits a {RoleGranted}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     *\\n     * May emit a {RoleGranted} event.\\n     */\\n    function grantRole(bytes32 role, address account) public virtual onlyRole(getRoleAdmin(role)) {\\n        _grantRole(role, account);\\n    }\\n\\n    /**\\n     * @dev Revokes `role` from `account`.\\n     *\\n     * If `account` had been granted `role`, emits a {RoleRevoked} event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     *\\n     * May emit a {RoleRevoked} event.\\n     */\\n    function revokeRole(bytes32 role, address account) public virtual onlyRole(getRoleAdmin(role)) {\\n        _revokeRole(role, account);\\n    }\\n\\n    /**\\n     * @dev Revokes `role` from the calling account.\\n     *\\n     * Roles are often managed via {grantRole} and {revokeRole}: this function's\\n     * purpose is to provide a mechanism for accounts to lose their privileges\\n     * if they are compromised (such as when a trusted device is misplaced).\\n     *\\n     * If the calling account had been revoked `role`, emits a {RoleRevoked}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must be `callerConfirmation`.\\n     *\\n     * May emit a {RoleRevoked} event.\\n     */\\n    function renounceRole(bytes32 role, address callerConfirmation) public virtual {\\n        if (callerConfirmation != _msgSender()) {\\n            revert AccessControlBadConfirmation();\\n        }\\n\\n        _revokeRole(role, callerConfirmation);\\n    }\\n\\n    /**\\n     * @dev Sets `adminRole` as ``role``'s admin role.\\n     *\\n     * Emits a {RoleAdminChanged} event.\\n     */\\n    function _setRoleAdmin(bytes32 role, bytes32 adminRole) internal virtual {\\n        bytes32 previousAdminRole = getRoleAdmin(role);\\n        _roles[role].adminRole = adminRole;\\n        emit RoleAdminChanged(role, previousAdminRole, adminRole);\\n    }\\n\\n    /**\\n     * @dev Attempts to grant `role` to `account` and returns a boolean indicating if `role` was granted.\\n     *\\n     * Internal function without access restriction.\\n     *\\n     * May emit a {RoleGranted} event.\\n     */\\n    function _grantRole(bytes32 role, address account) internal virtual returns (bool) {\\n        if (!hasRole(role, account)) {\\n            _roles[role].hasRole[account] = true;\\n            emit RoleGranted(role, account, _msgSender());\\n            return true;\\n        } else {\\n            return false;\\n        }\\n    }\\n\\n    /**\\n     * @dev Attempts to revoke `role` from `account` and returns a boolean indicating if `role` was revoked.\\n     *\\n     * Internal function without access restriction.\\n     *\\n     * May emit a {RoleRevoked} event.\\n     */\\n    function _revokeRole(bytes32 role, address account) internal virtual returns (bool) {\\n        if (hasRole(role, account)) {\\n            _roles[role].hasRole[account] = false;\\n            emit RoleRevoked(role, account, _msgSender());\\n            return true;\\n        } else {\\n            return false;\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0xc1bebdee8943bd5e9ef1e0f2e63296aa1dd4171a66b9e74d0286220e891e1458\",\"license\":\"MIT\"},\"@openzeppelin/contracts/access/IAccessControl.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.3.0) (access/IAccessControl.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev External interface of AccessControl declared to support ERC-165 detection.\\n */\\ninterface IAccessControl {\\n    /**\\n     * @dev The `account` is missing a role.\\n     */\\n    error AccessControlUnauthorizedAccount(address account, bytes32 neededRole);\\n\\n    /**\\n     * @dev The caller of a function is not the expected one.\\n     *\\n     * NOTE: Don't confuse with {AccessControlUnauthorizedAccount}.\\n     */\\n    error AccessControlBadConfirmation();\\n\\n    /**\\n     * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`\\n     *\\n     * `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite\\n     * {RoleAdminChanged} not being emitted to signal this.\\n     */\\n    event RoleAdminChanged(bytes32 indexed role, bytes32 indexed previousAdminRole, bytes32 indexed newAdminRole);\\n\\n    /**\\n     * @dev Emitted when `account` is granted `role`.\\n     *\\n     * `sender` is the account that originated the contract call. This account bears the admin role (for the granted role).\\n     * Expected in cases where the role was granted using the internal {AccessControl-_grantRole}.\\n     */\\n    event RoleGranted(bytes32 indexed role, address indexed account, address indexed sender);\\n\\n    /**\\n     * @dev Emitted when `account` is revoked `role`.\\n     *\\n     * `sender` is the account that originated the contract call:\\n     *   - if using `revokeRole`, it is the admin role bearer\\n     *   - if using `renounceRole`, it is the role bearer (i.e. `account`)\\n     */\\n    event RoleRevoked(bytes32 indexed role, address indexed account, address indexed sender);\\n\\n    /**\\n     * @dev Returns `true` if `account` has been granted `role`.\\n     */\\n    function hasRole(bytes32 role, address account) external view returns (bool);\\n\\n    /**\\n     * @dev Returns the admin role that controls `role`. See {grantRole} and\\n     * {revokeRole}.\\n     *\\n     * To change a role's admin, use {AccessControl-_setRoleAdmin}.\\n     */\\n    function getRoleAdmin(bytes32 role) external view returns (bytes32);\\n\\n    /**\\n     * @dev Grants `role` to `account`.\\n     *\\n     * If `account` had not been already granted `role`, emits a {RoleGranted}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     */\\n    function grantRole(bytes32 role, address account) external;\\n\\n    /**\\n     * @dev Revokes `role` from `account`.\\n     *\\n     * If `account` had been granted `role`, emits a {RoleRevoked} event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must have ``role``'s admin role.\\n     */\\n    function revokeRole(bytes32 role, address account) external;\\n\\n    /**\\n     * @dev Revokes `role` from the calling account.\\n     *\\n     * Roles are often managed via {grantRole} and {revokeRole}: this function's\\n     * purpose is to provide a mechanism for accounts to lose their privileges\\n     * if they are compromised (such as when a trusted device is misplaced).\\n     *\\n     * If the calling account had been granted `role`, emits a {RoleRevoked}\\n     * event.\\n     *\\n     * Requirements:\\n     *\\n     * - the caller must be `callerConfirmation`.\\n     */\\n    function renounceRole(bytes32 role, address callerConfirmation) external;\\n}\\n\",\"keccak256\":\"0x4d9a2b261b56a1e4a37bb038151dec98b952fed16de2bdfdda27e38e2b12b530\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/Context.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Provides information about the current execution context, including the\\n * sender of the transaction and its data. While these are generally available\\n * via msg.sender and msg.data, they should not be accessed in such a direct\\n * manner, since when dealing with meta-transactions the account sending and\\n * paying for execution may not be the actual sender (as far as an application\\n * is concerned).\\n *\\n * This contract is only required for intermediate, library-like contracts.\\n */\\nabstract contract Context {\\n    function _msgSender() internal view virtual returns (address) {\\n        return msg.sender;\\n    }\\n\\n    function _msgData() internal view virtual returns (bytes calldata) {\\n        return msg.data;\\n    }\\n\\n    function _contextSuffixLength() internal view virtual returns (uint256) {\\n        return 0;\\n    }\\n}\\n\",\"keccak256\":\"0x493033a8d1b176a037b2cc6a04dad01a5c157722049bbecf632ca876224dd4b2\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/cryptography/ECDSA.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.1.0) (utils/cryptography/ECDSA.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.\\n *\\n * These functions can be used to verify that a message was signed by the holder\\n * of the private keys of a given address.\\n */\\nlibrary ECDSA {\\n    enum RecoverError {\\n        NoError,\\n        InvalidSignature,\\n        InvalidSignatureLength,\\n        InvalidSignatureS\\n    }\\n\\n    /**\\n     * @dev The signature derives the `address(0)`.\\n     */\\n    error ECDSAInvalidSignature();\\n\\n    /**\\n     * @dev The signature has an invalid length.\\n     */\\n    error ECDSAInvalidSignatureLength(uint256 length);\\n\\n    /**\\n     * @dev The signature has an S value that is in the upper half order.\\n     */\\n    error ECDSAInvalidSignatureS(bytes32 s);\\n\\n    /**\\n     * @dev Returns the address that signed a hashed message (`hash`) with `signature` or an error. This will not\\n     * return address(0) without also returning an error description. Errors are documented using an enum (error type)\\n     * and a bytes32 providing additional information about the error.\\n     *\\n     * If no error is returned, then the address can be used for verification purposes.\\n     *\\n     * The `ecrecover` EVM precompile allows for malleable (non-unique) signatures:\\n     * this function rejects them by requiring the `s` value to be in the lower\\n     * half order, and the `v` value to be either 27 or 28.\\n     *\\n     * IMPORTANT: `hash` _must_ be the result of a hash operation for the\\n     * verification to be secure: it is possible to craft signatures that\\n     * recover to arbitrary addresses for non-hashed data. A safe way to ensure\\n     * this is by receiving a hash of the original message (which may otherwise\\n     * be too long), and then calling {MessageHashUtils-toEthSignedMessageHash} on it.\\n     *\\n     * Documentation for signature generation:\\n     * - with https://web3js.readthedocs.io/en/v1.3.4/web3-eth-accounts.html#sign[Web3.js]\\n     * - with https://docs.ethers.io/v5/api/signer/#Signer-signMessage[ethers]\\n     */\\n    function tryRecover(\\n        bytes32 hash,\\n        bytes memory signature\\n    ) internal pure returns (address recovered, RecoverError err, bytes32 errArg) {\\n        if (signature.length == 65) {\\n            bytes32 r;\\n            bytes32 s;\\n            uint8 v;\\n            // ecrecover takes the signature parameters, and the only way to get them\\n            // currently is to use assembly.\\n            assembly (\\\"memory-safe\\\") {\\n                r := mload(add(signature, 0x20))\\n                s := mload(add(signature, 0x40))\\n                v := byte(0, mload(add(signature, 0x60)))\\n            }\\n            return tryRecover(hash, v, r, s);\\n        } else {\\n            return (address(0), RecoverError.InvalidSignatureLength, bytes32(signature.length));\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the address that signed a hashed message (`hash`) with\\n     * `signature`. This address can then be used for verification purposes.\\n     *\\n     * The `ecrecover` EVM precompile allows for malleable (non-unique) signatures:\\n     * this function rejects them by requiring the `s` value to be in the lower\\n     * half order, and the `v` value to be either 27 or 28.\\n     *\\n     * IMPORTANT: `hash` _must_ be the result of a hash operation for the\\n     * verification to be secure: it is possible to craft signatures that\\n     * recover to arbitrary addresses for non-hashed data. A safe way to ensure\\n     * this is by receiving a hash of the original message (which may otherwise\\n     * be too long), and then calling {MessageHashUtils-toEthSignedMessageHash} on it.\\n     */\\n    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {\\n        (address recovered, RecoverError error, bytes32 errorArg) = tryRecover(hash, signature);\\n        _throwError(error, errorArg);\\n        return recovered;\\n    }\\n\\n    /**\\n     * @dev Overload of {ECDSA-tryRecover} that receives the `r` and `vs` short-signature fields separately.\\n     *\\n     * See https://eips.ethereum.org/EIPS/eip-2098[ERC-2098 short signatures]\\n     */\\n    function tryRecover(\\n        bytes32 hash,\\n        bytes32 r,\\n        bytes32 vs\\n    ) internal pure returns (address recovered, RecoverError err, bytes32 errArg) {\\n        unchecked {\\n            bytes32 s = vs & bytes32(0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);\\n            // We do not check for an overflow here since the shift operation results in 0 or 1.\\n            uint8 v = uint8((uint256(vs) >> 255) + 27);\\n            return tryRecover(hash, v, r, s);\\n        }\\n    }\\n\\n    /**\\n     * @dev Overload of {ECDSA-recover} that receives the `r and `vs` short-signature fields separately.\\n     */\\n    function recover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address) {\\n        (address recovered, RecoverError error, bytes32 errorArg) = tryRecover(hash, r, vs);\\n        _throwError(error, errorArg);\\n        return recovered;\\n    }\\n\\n    /**\\n     * @dev Overload of {ECDSA-tryRecover} that receives the `v`,\\n     * `r` and `s` signature fields separately.\\n     */\\n    function tryRecover(\\n        bytes32 hash,\\n        uint8 v,\\n        bytes32 r,\\n        bytes32 s\\n    ) internal pure returns (address recovered, RecoverError err, bytes32 errArg) {\\n        // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature\\n        // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines\\n        // the valid range for s in (301): 0 < s < secp256k1n \\u00f7 2 + 1, and for v in (302): v \\u2208 {27, 28}. Most\\n        // signatures from current libraries generate a unique signature with an s-value in the lower half order.\\n        //\\n        // If your library generates malleable signatures, such as s-values in the upper range, calculate a new s-value\\n        // with 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - s1 and flip v from 27 to 28 or\\n        // vice versa. If your library also generates signatures with 0/1 for v instead 27/28, add 27 to v to accept\\n        // these malleable signatures as well.\\n        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {\\n            return (address(0), RecoverError.InvalidSignatureS, s);\\n        }\\n\\n        // If the signature is valid (and not malleable), return the signer address\\n        address signer = ecrecover(hash, v, r, s);\\n        if (signer == address(0)) {\\n            return (address(0), RecoverError.InvalidSignature, bytes32(0));\\n        }\\n\\n        return (signer, RecoverError.NoError, bytes32(0));\\n    }\\n\\n    /**\\n     * @dev Overload of {ECDSA-recover} that receives the `v`,\\n     * `r` and `s` signature fields separately.\\n     */\\n    function recover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {\\n        (address recovered, RecoverError error, bytes32 errorArg) = tryRecover(hash, v, r, s);\\n        _throwError(error, errorArg);\\n        return recovered;\\n    }\\n\\n    /**\\n     * @dev Optionally reverts with the corresponding custom error according to the `error` argument provided.\\n     */\\n    function _throwError(RecoverError error, bytes32 errorArg) private pure {\\n        if (error == RecoverError.NoError) {\\n            return; // no error: do nothing\\n        } else if (error == RecoverError.InvalidSignature) {\\n            revert ECDSAInvalidSignature();\\n        } else if (error == RecoverError.InvalidSignatureLength) {\\n            revert ECDSAInvalidSignatureLength(uint256(errorArg));\\n        } else if (error == RecoverError.InvalidSignatureS) {\\n            revert ECDSAInvalidSignatureS(errorArg);\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x69f54c02b7d81d505910ec198c11ed4c6a728418a868b906b4a0cf29946fda84\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/introspection/ERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.1.0) (utils/introspection/ERC165.sol)\\n\\npragma solidity ^0.8.20;\\n\\nimport {IERC165} from \\\"./IERC165.sol\\\";\\n\\n/**\\n * @dev Implementation of the {IERC165} interface.\\n *\\n * Contracts that want to implement ERC-165 should inherit from this contract and override {supportsInterface} to check\\n * for the additional interface id that will be supported. For example:\\n *\\n * ```solidity\\n * function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {\\n *     return interfaceId == type(MyInterface).interfaceId || super.supportsInterface(interfaceId);\\n * }\\n * ```\\n */\\nabstract contract ERC165 is IERC165 {\\n    /**\\n     * @dev See {IERC165-supportsInterface}.\\n     */\\n    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {\\n        return interfaceId == type(IERC165).interfaceId;\\n    }\\n}\\n\",\"keccak256\":\"0xddce8e17e3d3f9ed818b4f4c4478a8262aab8b11ed322f1bf5ed705bb4bd97fa\",\"license\":\"MIT\"},\"@openzeppelin/contracts/utils/introspection/IERC165.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts (last updated v5.1.0) (utils/introspection/IERC165.sol)\\n\\npragma solidity ^0.8.20;\\n\\n/**\\n * @dev Interface of the ERC-165 standard, as defined in the\\n * https://eips.ethereum.org/EIPS/eip-165[ERC].\\n *\\n * Implementers can declare support of contract interfaces, which can then be\\n * queried by others ({ERC165Checker}).\\n *\\n * For an implementation, see {ERC165}.\\n */\\ninterface IERC165 {\\n    /**\\n     * @dev Returns true if this contract implements the interface defined by\\n     * `interfaceId`. See the corresponding\\n     * https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[ERC section]\\n     * to learn more about how these ids are created.\\n     *\\n     * This function call must use less than 30 000 gas.\\n     */\\n    function supportsInterface(bytes4 interfaceId) external view returns (bool);\\n}\\n\",\"keccak256\":\"0x79796192ec90263f21b464d5bc90b777a525971d3de8232be80d9c4f9fb353b8\",\"license\":\"MIT\"},\"contracts/AgentEnsOffchainResolver.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.28;\\n\\nimport {AccessControl} from \\\"@openzeppelin/contracts/access/AccessControl.sol\\\";\\n\\nimport {IExtendedResolver} from \\\"@ensdomains/ens-contracts/contracts/resolvers/profiles/IExtendedResolver.sol\\\";\\nimport {OffchainLookup} from \\\"@ensdomains/ens-contracts/contracts/ccipRead/EIP3668.sol\\\";\\n\\nimport {IAgentEnsOffchainResolver} from \\\"./interfaces/IAgentEnsOffchainResolver/IAgentEnsOffchainResolver.sol\\\";\\nimport {SignatureVerifier} from \\\"./libraries/SignatureVerifier.sol\\\";\\n\\n/// @title Agent off-chain ENS resolver\\n/// @dev ERC-3668 / ENSIP-10 resolver, deployed on an ENS-bearing chain\\n///      (Ethereum L1 / Sepolia). `resolve` always reverts with `OffchainLookup`\\n///      to send CCIP-Read clients to the gateway, which reads records from\\n///      `AgentEnsRegistry` and returns a signed response; `resolveWithProof`\\n///      checks that signature against the trusted signer set.\\ncontract AgentEnsOffchainResolver is AccessControl, IAgentEnsOffchainResolver {\\n    string[] private _urls;\\n    mapping(address => bool) public signers;\\n\\n    /// @dev Deployer becomes DEFAULT_ADMIN.\\n    constructor(string[] memory urls_, address signer) {\\n        _urls = urls_;\\n        signers[signer] = true;\\n\\n        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);\\n\\n        emit UrlsUpdated(urls_);\\n        emit SignerUpdated(signer, true);\\n    }\\n\\n    function urls(uint256 index) external view returns (string memory) {\\n        return _urls[index];\\n    }\\n\\n    function resolve(bytes calldata name, bytes calldata data)\\n        external\\n        view\\n        returns (bytes memory)\\n    {\\n        bytes memory callData = abi.encodeWithSelector(\\n            IExtendedResolver.resolve.selector,\\n            name,\\n            data\\n        );\\n\\n        revert OffchainLookup(\\n            address(this),\\n            _urls,\\n            callData,\\n            this.resolveWithProof.selector,\\n            callData\\n        );\\n    }\\n\\n    function resolveWithProof(bytes calldata response, bytes calldata extraData)\\n        external\\n        view\\n        returns (bytes memory)\\n    {\\n        (address signer, bytes memory result) = SignatureVerifier.verify(\\n            address(this),\\n            extraData,\\n            response\\n        );\\n\\n        if (!signers[signer]) {\\n            revert UntrustedSigner(signer);\\n        }\\n\\n        return result;\\n    }\\n\\n    function setUrls(string[] calldata newUrls) external onlyRole(DEFAULT_ADMIN_ROLE) {\\n        _urls = newUrls;\\n        emit UrlsUpdated(newUrls);\\n    }\\n\\n    function setSigner(address signer, bool trusted) external onlyRole(DEFAULT_ADMIN_ROLE) {\\n        signers[signer] = trusted;\\n        emit SignerUpdated(signer, trusted);\\n    }\\n\\n    function supportsInterface(bytes4 interfaceId)\\n        public\\n        view\\n        override(AccessControl)\\n        returns (bool)\\n    {\\n        return\\n            interfaceId == type(IExtendedResolver).interfaceId ||\\n            super.supportsInterface(interfaceId);\\n    }\\n}\\n\",\"keccak256\":\"0xead0ba2c0f2f661b98ee908e0176c31667f6de9350972d0aeaa927f6d2582dab\",\"license\":\"MIT\"},\"contracts/interfaces/IAgentEnsOffchainResolver/IAgentEnsOffchainResolver.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.28;\\n\\nimport {IAccessControl} from \\\"@openzeppelin/contracts/access/IAccessControl.sol\\\";\\n\\nimport {IExtendedResolver} from \\\"@ensdomains/ens-contracts/contracts/resolvers/profiles/IExtendedResolver.sol\\\";\\nimport {IAgentEnsOffchainResolverStates} from \\\"./IAgentEnsOffchainResolverStates.sol\\\";\\nimport {IAgentEnsOffchainResolverEvents} from \\\"./IAgentEnsOffchainResolverEvents.sol\\\";\\nimport {IAgentEnsOffchainResolverErrors} from \\\"./IAgentEnsOffchainResolverErrors.sol\\\";\\nimport {IAgentEnsOffchainResolverAdminActions} from \\\"./IAgentEnsOffchainResolverAdminActions.sol\\\";\\n\\ninterface IAgentEnsOffchainResolver is\\n    IAccessControl,\\n    IExtendedResolver,\\n    IAgentEnsOffchainResolverStates,\\n    IAgentEnsOffchainResolverEvents,\\n    IAgentEnsOffchainResolverErrors,\\n    IAgentEnsOffchainResolverAdminActions\\n{\\n    /// @dev ERC-3668 callback. Verifies the gateway's signed response against a\\n    ///      trusted signer and returns the resolved record bytes.\\n    /// @param response The gateway response: abi.encode(bytes result, uint64 expires, bytes sig).\\n    /// @param extraData The original lookup callData carried through from `resolve`.\\n    function resolveWithProof(bytes calldata response, bytes calldata extraData)\\n        external\\n        view\\n        returns (bytes memory);\\n}\\n\",\"keccak256\":\"0x031a10d126d00fbbd392a85021c0e9bc0335801a1f56ab8344bf350e235a21c6\",\"license\":\"MIT\"},\"contracts/interfaces/IAgentEnsOffchainResolver/IAgentEnsOffchainResolverAdminActions.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.28;\\n\\ninterface IAgentEnsOffchainResolverAdminActions {\\n    /// @dev Replace the off-chain gateway URL list.\\n    function setUrls(string[] calldata newUrls) external;\\n\\n    /// @dev Add or remove a trusted gateway signer.\\n    function setSigner(address signer, bool trusted) external;\\n}\\n\",\"keccak256\":\"0x69999f4b54986f1e26acfa42dbaf97629459b44187e831cb68ae0371a030b19f\",\"license\":\"MIT\"},\"contracts/interfaces/IAgentEnsOffchainResolver/IAgentEnsOffchainResolverErrors.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.28;\\n\\ninterface IAgentEnsOffchainResolverErrors {\\n    /// @dev The signer recovered from the gateway response is not trusted.\\n    error UntrustedSigner(address signer);\\n}\\n\",\"keccak256\":\"0x55b0105a596c4e4037a1a5ee75c827b46bcb278f0757cb3beef12e02f5ca457b\",\"license\":\"MIT\"},\"contracts/interfaces/IAgentEnsOffchainResolver/IAgentEnsOffchainResolverEvents.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.28;\\n\\ninterface IAgentEnsOffchainResolverEvents {\\n    /// @dev Emitted when the gateway URL list is set (at deploy and on `setUrls`).\\n    event UrlsUpdated(string[] urls);\\n\\n    /// @dev Emitted when a signer's trust is set (at deploy and on `setSigner`).\\n    event SignerUpdated(address indexed signer, bool trusted);\\n}\\n\",\"keccak256\":\"0x4ca48bea8b4276cdb4de326f49cc7bbd381bda698b4d79dfd66c976f563e493d\",\"license\":\"MIT\"},\"contracts/interfaces/IAgentEnsOffchainResolver/IAgentEnsOffchainResolverStates.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.28;\\n\\ninterface IAgentEnsOffchainResolverStates {\\n    /// @dev The off-chain gateway URL at the given index, used in the ERC-3668\\n    ///      `OffchainLookup` revert.\\n    function urls(uint256 index) external view returns (string memory);\\n\\n    /// @dev Whether an address is a trusted gateway signer.\\n    function signers(address signer) external view returns (bool);\\n}\\n\",\"keccak256\":\"0xd880339488c13b110376439b1094a9ee48872f1c4778c96e2dc99dd13ee26729\",\"license\":\"MIT\"},\"contracts/libraries/SignatureVerifier.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.28;\\n\\nimport {ECDSA} from \\\"@openzeppelin/contracts/utils/cryptography/ECDSA.sol\\\";\\n\\n/// @title Signature verifier for ERC-3668 signed gateway responses\\n/// @dev Mirrors the ENS offchain-resolver `SignatureVerifier`. The gateway signs\\n///      keccak256(0x1900 || target || expires || keccak256(request) || keccak256(result)).\\n///      The leading `0x1900` matches the EIP-191 \\\"version 0x00\\\" prefix used by\\n///      the ENS reference implementation \\u2014 keep it byte-for-byte in sync with\\n///      the off-chain gateway's signing code.\\nlibrary SignatureVerifier {\\n    /// @dev The signed response has already expired.\\n    error SignatureExpired(uint64 expires);\\n\\n    function makeSignatureHash(\\n        address target,\\n        uint64 expires,\\n        bytes memory request,\\n        bytes memory result\\n    ) internal pure returns (bytes32) {\\n        return\\n            keccak256(\\n                abi.encodePacked(\\n                    hex\\\"1900\\\",\\n                    target,\\n                    expires,\\n                    keccak256(request),\\n                    keccak256(result)\\n                )\\n            );\\n    }\\n\\n    /// @dev Decodes `response` as (result, expires, sig), checks it has not\\n    ///      expired, and recovers the address that signed it.\\n    /// @param target The resolver address the gateway signed against.\\n    /// @param request The original lookup callData (= extraData).\\n    /// @param response The gateway response: abi.encode(bytes result, uint64 expires, bytes sig).\\n    function verify(\\n        address target,\\n        bytes calldata request,\\n        bytes calldata response\\n    ) internal view returns (address signer, bytes memory result) {\\n        uint64 expires;\\n        bytes memory sig;\\n        (result, expires, sig) = abi.decode(response, (bytes, uint64, bytes));\\n\\n        if (expires < block.timestamp) {\\n            revert SignatureExpired(expires);\\n        }\\n\\n        bytes32 hash = makeSignatureHash(target, expires, request, result);\\n        signer = ECDSA.recover(hash, sig);\\n    }\\n}\\n\",\"keccak256\":\"0xdc15123e2cee994443a661a7e2db81464c697f1f7ee45364a11b1eb02d3f5887\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x60806040523461039c576114b08038038061001981610415565b928339810160408282031261039c5781516001600160401b03811161039c5782019181601f8401121561039c578251916001600160401b0383116102fd578260051b936020610069818701610415565b809581520191602083968301019181831161039c5760208101935b8385106103a15760208601516001600160a01b0381169088908a9083900361039c5781516801000000000000000081116102fd5760015481600155808210610313575b50600160009081526000805160206114708339815191529190835b8282106101e057505050508260005260026020526040600020600160ff1982541617905561010f336104ae565b506040519160208301906020845251809152604083019060408160051b85010192916000905b82821061019d57867fc320ea45f3697c23c0a846b66e374215bea4a3cfef9a23233e9d9c2a1e7df06887870388a17ffcaa24b1276bfa7dbf77797c0a984b9df924acbeaabd48cd2f1b0eca379b78fa602060405160018152a2604051610f33908161053d8239f35b9091929360208080600193603f198a820301865288516101c88151809281855285808601910161043a565b601f01601f1916010196019493919091019101610135565b80518051906001600160401b0382116102fd576101fd865461045d565b601f81116102c0575b50602090601f8311600114610253579282600194936020938695600092610248575b5050600019600383901b1c191690841b1787555b019401910190926100e2565b015190508c80610228565b90601f1983169187600052816000209260005b8181106102a8575093602093600196938796938388951061028f575b505050811b01875561023c565b015160001960f88460031b161c191690558c8080610282565b92936020600181928786015181550195019301610266565b6102ed90876000526020600020601f850160051c810191602086106102f3575b601f0160051c0190610497565b89610206565b90915081906102e0565b634e487b7160e01b600052604160045260246000fd5b60016000526000805160206114708339815191529081019082015b81811061033b57506100c7565b806103486001925461045d565b80610355575b500161032e565b601f8111831461036b5750600081555b8761034e565b610389908260005283601f6020600020920160051c82019101610497565b8060005260006020812081835555610365565b600080fd5b84516001600160401b03811161039c5782019083603f8301121561039c576020820151906001600160401b0382116102fd576103e6601f8301601f1916602001610415565b828152604084840101861061039c5761040a6020949385946040868501910161043a565b815201940193610084565b6040519190601f01601f191682016001600160401b038111838210176102fd57604052565b60005b83811061044d5750506000910152565b818101518382015260200161043d565b90600182811c9216801561048d575b602083101461047757565b634e487b7160e01b600052602260045260246000fd5b91607f169161046c565b8181106104a2575050565b60008155600101610497565b6001600160a01b0381166000908152600080516020611490833981519152602052604090205460ff16610536576001600160a01b0316600081815260008051602061149083398151915260205260408120805460ff191660011790553391907f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d8180a4600190565b5060009056fe608080604052600436101561001357600080fd5b60003560e01c90816301ffc9a71461091857508063248a9ca3146108e35780632f2ff15d146108a357806331cb61051461082457806336568abe146107de5780636cc895a914610491578063736c0d5b14610452578063796676be146103d85780639061b923146102be57806391d1485414610271578063a217fddf14610255578063d547741f1461020e5763f4d4d2f8146100ae57600080fd5b34610209576100bc36610a1f565b9290918101916060828403126102095781356001600160401b03811161020957836100e8918401610d66565b936020830135926001600160401b038416948585036102095760408201356001600160401b0381116102095761011e9201610d66565b934281106101f557509161013b6101a19492610198943691610d20565b6020815191012085516020870120604051916020830193601960f81b85523060601b60228501526001600160401b0360c01b9060c01b166036840152603e830152605e820152605e8152610190607e82610b64565b519020610d84565b90929192610dc0565b6001600160a01b031660008181526002602052604090205490919060ff16156101e0576101dc906040519182916020835260208301906109b1565b0390f35b50635292db3160e01b60005260045260246000fd5b63fcd4a11f60e01b60005260045260246000fd5b600080fd5b346102095760403660031901126102095761025360043561022d610985565b9061024e61024982600052600060205260016040600020015490565b610bd8565b610c9e565b005b3461020957600036600319011261020957602060405160008152f35b346102095760403660031901126102095761028a610985565b600435600052600060205260406000209060018060a01b0316600052602052602060ff604060002054166040519015158152f35b346102095761030f61031d6102d236610a1f565b6102fd60409693949651968795639061b92360e01b6020880152604060248801526064870191610ac0565b84810360231901604486015291610ac0565b03601f198101835282610b64565b604051630556f18360e41b815260a4810130600483015260a0602483015260015480915260c4820160c48260051b840101916001600052600080516020610ede833981519152916000905b8282106103ae5785850360031901604487015285806103aa8961038b89826109b1565b631e9a9a5f60e31b6064850152838103600319016084850152906109b1565b0390fd5b90919293602060016103ca819360c3198a820301865288610ae1565b960192019201909291610368565b346102095760203660031901126102095760043560015481101561043c576104216104286101dc92600160005260405192838092600080516020610ede83398151915201610ae1565b0382610b64565b6040519182916020835260208301906109b1565b634e487b7160e01b600052603260045260246000fd5b34610209576020366003190112610209576001600160a01b0361047361099b565b166000526002602052602060ff604060002054166040519015158152f35b34610209576020366003190112610209576004356001600160401b0381116102095736602382011215610209578060040135906001600160401b03821161020957602481018260051b923660248585010111610209576104ef610b85565b6801000000000000000081116107c85760015481600155808210610733575b5091819391926001600052600080516020610ede833981519152600060421984360301955b8382106105e757505050604051938160208601602087525260408086019486010195926000915b838310610589577fc320ea45f3697c23c0a846b66e374215bea4a3cfef9a23233e9d9c2a1e7df06887890388a1005b909192939496603f1987820301885285358281121561020957830190604460248301359201916001600160401b038111610209578036038313610209576105d66020928392600195610ac0565b99919091019601949301919061055a565b8097959394969735888112156102095787016024810135906001600160401b038211610209578136036044820113610209576000906106268654610a6f565b601f81116106f8575b508190601f84116001146106865792808360019693879660209693610676575b505050600019600383901b1c191690841b1786555b01930191019091969593929496610533565b0185016024013591508e8061064f565b90601f19841687845260208420935b8181106106dd57509360209360019693879693838895106106be575b505050811b018655610664565b01850160240135600019600384901b60f8161c191690558d80806106b1565b60448484010135855560019094019360209283019201610695565b6107239087845260208420601f860160051c81019160208710610729575b601f0160051c0190610aa9565b8b61062f565b9091508190610716565b6001600052600080516020610ede8339815191520181600080516020610ede833981519152015b818110610767575061050e565b8061077460019254610a6f565b80610781575b500161075a565b601f811183146107975750600081555b8761077a565b6107b5908260005283601f6020600020920160051c82019101610aa9565b8060005260006020812081835555610791565b634e487b7160e01b600052604160045260246000fd5b34610209576040366003190112610209576107f7610985565b336001600160a01b038216036108135761025390600435610c9e565b63334bd91960e11b60005260046000fd5b346102095760403660031901126102095761083d61099b565b602435908115158092036102095760207ffcaa24b1276bfa7dbf77797c0a984b9df924acbeaabd48cd2f1b0eca379b78fa91610877610b85565b60018060a01b0316928360005260028252604060002060ff1981541660ff8316179055604051908152a2005b34610209576040366003190112610209576102536004356108c2610985565b906108de61024982600052600060205260016040600020015490565b610c13565b34610209576020366003190112610209576020610910600435600052600060205260016040600020015490565b604051908152f35b34610209576020366003190112610209576004359063ffffffff60e01b821680920361020957602091639061b92360e01b811490811561095a575b5015158152f35b637965db0b60e01b811491508115610974575b5083610953565b6301ffc9a760e01b1490508361096d565b602435906001600160a01b038216820361020957565b600435906001600160a01b038216820361020957565b919082519283825260005b8481106109dd575050826000602080949584010152601f8019910116010190565b806020809284010151828286010152016109bc565b9181601f84011215610209578235916001600160401b038311610209576020838186019501011161020957565b6040600319820112610209576004356001600160401b0381116102095781610a49916004016109f2565b92909291602435906001600160401b03821161020957610a6b916004016109f2565b9091565b90600182811c92168015610a9f575b6020831014610a8957565b634e487b7160e01b600052602260045260246000fd5b91607f1691610a7e565b818110610ab4575050565b60008155600101610aa9565b908060209392818452848401376000828201840152601f01601f1916010190565b60009291815491610af183610a6f565b8083529260018116908115610b475750600114610b0d57505050565b60009081526020812093945091925b838310610b2d575060209250010190565b600181602092949394548385870101520191019190610b1c565b915050602093945060ff929192191683830152151560051b010190565b90601f801991011681019081106001600160401b038211176107c857604052565b3360009081527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5602052604090205460ff1615610bbe57565b63e2517d3f60e01b60005233600452600060245260446000fd5b60008181526020818152604080832033845290915290205460ff1615610bfb5750565b63e2517d3f60e01b6000523360045260245260446000fd5b6000818152602081815260408083206001600160a01b038616845290915290205460ff16610c97576000818152602081815260408083206001600160a01b0395909516808452949091528120805460ff19166001179055339291907f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d9080a4600190565b5050600090565b6000818152602081815260408083206001600160a01b038616845290915290205460ff1615610c97576000818152602081815260408083206001600160a01b0395909516808452949091528120805460ff19169055339291907ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b9080a4600190565b9291926001600160401b0382116107c85760405191610d49601f8201601f191660200184610b64565b829481845281830111610209578281602093846000960137010152565b9080601f8301121561020957816020610d8193359101610d20565b90565b8151919060418303610db557610dae92506020820151906060604084015193015160001a90610e48565b9192909190565b505060009160029190565b9190916004811015610e325780610dd657509050565b600060018203610df15763f645eedf60e01b60005260046000fd5b5060028103610e0f578263fce698f760e01b60005260045260246000fd5b9091600360009214610e1f575050565b6335e2f38360e21b825260045260249150fd5b634e487b7160e01b600052602160045260246000fd5b91907f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a08411610ed1579160209360809260ff60009560405194855216868401526040830152606082015282805260015afa15610ec5576000516001600160a01b03811615610eb95790600090600090565b50600090600190600090565b6040513d6000823e3d90fd5b5050506000916003919056feb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6a26469706673582212208c76590dc80ca1729c0476b8e9779f0b63db1613977f1d40eacc53de2c6811b064736f6c634300081c0033b10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6ad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5",
+  "deployedBytecode": "0x608080604052600436101561001357600080fd5b60003560e01c90816301ffc9a71461091857508063248a9ca3146108e35780632f2ff15d146108a357806331cb61051461082457806336568abe146107de5780636cc895a914610491578063736c0d5b14610452578063796676be146103d85780639061b923146102be57806391d1485414610271578063a217fddf14610255578063d547741f1461020e5763f4d4d2f8146100ae57600080fd5b34610209576100bc36610a1f565b9290918101916060828403126102095781356001600160401b03811161020957836100e8918401610d66565b936020830135926001600160401b038416948585036102095760408201356001600160401b0381116102095761011e9201610d66565b934281106101f557509161013b6101a19492610198943691610d20565b6020815191012085516020870120604051916020830193601960f81b85523060601b60228501526001600160401b0360c01b9060c01b166036840152603e830152605e820152605e8152610190607e82610b64565b519020610d84565b90929192610dc0565b6001600160a01b031660008181526002602052604090205490919060ff16156101e0576101dc906040519182916020835260208301906109b1565b0390f35b50635292db3160e01b60005260045260246000fd5b63fcd4a11f60e01b60005260045260246000fd5b600080fd5b346102095760403660031901126102095761025360043561022d610985565b9061024e61024982600052600060205260016040600020015490565b610bd8565b610c9e565b005b3461020957600036600319011261020957602060405160008152f35b346102095760403660031901126102095761028a610985565b600435600052600060205260406000209060018060a01b0316600052602052602060ff604060002054166040519015158152f35b346102095761030f61031d6102d236610a1f565b6102fd60409693949651968795639061b92360e01b6020880152604060248801526064870191610ac0565b84810360231901604486015291610ac0565b03601f198101835282610b64565b604051630556f18360e41b815260a4810130600483015260a0602483015260015480915260c4820160c48260051b840101916001600052600080516020610ede833981519152916000905b8282106103ae5785850360031901604487015285806103aa8961038b89826109b1565b631e9a9a5f60e31b6064850152838103600319016084850152906109b1565b0390fd5b90919293602060016103ca819360c3198a820301865288610ae1565b960192019201909291610368565b346102095760203660031901126102095760043560015481101561043c576104216104286101dc92600160005260405192838092600080516020610ede83398151915201610ae1565b0382610b64565b6040519182916020835260208301906109b1565b634e487b7160e01b600052603260045260246000fd5b34610209576020366003190112610209576001600160a01b0361047361099b565b166000526002602052602060ff604060002054166040519015158152f35b34610209576020366003190112610209576004356001600160401b0381116102095736602382011215610209578060040135906001600160401b03821161020957602481018260051b923660248585010111610209576104ef610b85565b6801000000000000000081116107c85760015481600155808210610733575b5091819391926001600052600080516020610ede833981519152600060421984360301955b8382106105e757505050604051938160208601602087525260408086019486010195926000915b838310610589577fc320ea45f3697c23c0a846b66e374215bea4a3cfef9a23233e9d9c2a1e7df06887890388a1005b909192939496603f1987820301885285358281121561020957830190604460248301359201916001600160401b038111610209578036038313610209576105d66020928392600195610ac0565b99919091019601949301919061055a565b8097959394969735888112156102095787016024810135906001600160401b038211610209578136036044820113610209576000906106268654610a6f565b601f81116106f8575b508190601f84116001146106865792808360019693879660209693610676575b505050600019600383901b1c191690841b1786555b01930191019091969593929496610533565b0185016024013591508e8061064f565b90601f19841687845260208420935b8181106106dd57509360209360019693879693838895106106be575b505050811b018655610664565b01850160240135600019600384901b60f8161c191690558d80806106b1565b60448484010135855560019094019360209283019201610695565b6107239087845260208420601f860160051c81019160208710610729575b601f0160051c0190610aa9565b8b61062f565b9091508190610716565b6001600052600080516020610ede8339815191520181600080516020610ede833981519152015b818110610767575061050e565b8061077460019254610a6f565b80610781575b500161075a565b601f811183146107975750600081555b8761077a565b6107b5908260005283601f6020600020920160051c82019101610aa9565b8060005260006020812081835555610791565b634e487b7160e01b600052604160045260246000fd5b34610209576040366003190112610209576107f7610985565b336001600160a01b038216036108135761025390600435610c9e565b63334bd91960e11b60005260046000fd5b346102095760403660031901126102095761083d61099b565b602435908115158092036102095760207ffcaa24b1276bfa7dbf77797c0a984b9df924acbeaabd48cd2f1b0eca379b78fa91610877610b85565b60018060a01b0316928360005260028252604060002060ff1981541660ff8316179055604051908152a2005b34610209576040366003190112610209576102536004356108c2610985565b906108de61024982600052600060205260016040600020015490565b610c13565b34610209576020366003190112610209576020610910600435600052600060205260016040600020015490565b604051908152f35b34610209576020366003190112610209576004359063ffffffff60e01b821680920361020957602091639061b92360e01b811490811561095a575b5015158152f35b637965db0b60e01b811491508115610974575b5083610953565b6301ffc9a760e01b1490508361096d565b602435906001600160a01b038216820361020957565b600435906001600160a01b038216820361020957565b919082519283825260005b8481106109dd575050826000602080949584010152601f8019910116010190565b806020809284010151828286010152016109bc565b9181601f84011215610209578235916001600160401b038311610209576020838186019501011161020957565b6040600319820112610209576004356001600160401b0381116102095781610a49916004016109f2565b92909291602435906001600160401b03821161020957610a6b916004016109f2565b9091565b90600182811c92168015610a9f575b6020831014610a8957565b634e487b7160e01b600052602260045260246000fd5b91607f1691610a7e565b818110610ab4575050565b60008155600101610aa9565b908060209392818452848401376000828201840152601f01601f1916010190565b60009291815491610af183610a6f565b8083529260018116908115610b475750600114610b0d57505050565b60009081526020812093945091925b838310610b2d575060209250010190565b600181602092949394548385870101520191019190610b1c565b915050602093945060ff929192191683830152151560051b010190565b90601f801991011681019081106001600160401b038211176107c857604052565b3360009081527fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5602052604090205460ff1615610bbe57565b63e2517d3f60e01b60005233600452600060245260446000fd5b60008181526020818152604080832033845290915290205460ff1615610bfb5750565b63e2517d3f60e01b6000523360045260245260446000fd5b6000818152602081815260408083206001600160a01b038616845290915290205460ff16610c97576000818152602081815260408083206001600160a01b0395909516808452949091528120805460ff19166001179055339291907f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d9080a4600190565b5050600090565b6000818152602081815260408083206001600160a01b038616845290915290205460ff1615610c97576000818152602081815260408083206001600160a01b0395909516808452949091528120805460ff19169055339291907ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b9080a4600190565b9291926001600160401b0382116107c85760405191610d49601f8201601f191660200184610b64565b829481845281830111610209578281602093846000960137010152565b9080601f8301121561020957816020610d8193359101610d20565b90565b8151919060418303610db557610dae92506020820151906060604084015193015160001a90610e48565b9192909190565b505060009160029190565b9190916004811015610e325780610dd657509050565b600060018203610df15763f645eedf60e01b60005260046000fd5b5060028103610e0f578263fce698f760e01b60005260045260246000fd5b9091600360009214610e1f575050565b6335e2f38360e21b825260045260249150fd5b634e487b7160e01b600052602160045260246000fd5b91907f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a08411610ed1579160209360809260ff60009560405194855216868401526040830152606082015282805260015afa15610ec5576000516001600160a01b03811615610eb95790600090600090565b50600090600190600090565b6040513d6000823e3d90fd5b5050506000916003919056feb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6a26469706673582212208c76590dc80ca1729c0476b8e9779f0b63db1613977f1d40eacc53de2c6811b064736f6c634300081c0033",
+  "devdoc": {
+    "details": "ERC-3668 / ENSIP-10 resolver, deployed on an ENS-bearing chain      (Ethereum L1 / Sepolia). `resolve` always reverts with `OffchainLookup`      to send CCIP-Read clients to the gateway, which reads records from      `AgentEnsRegistry` and returns a signed response; `resolveWithProof`      checks that signature against the trusted signer set.",
+    "errors": {
+      "AccessControlBadConfirmation()": [
+        {
+          "details": "The caller of a function is not the expected one. NOTE: Don't confuse with {AccessControlUnauthorizedAccount}."
+        }
+      ],
+      "AccessControlUnauthorizedAccount(address,bytes32)": [
+        {
+          "details": "The `account` is missing a role."
+        }
+      ],
+      "ECDSAInvalidSignature()": [
+        {
+          "details": "The signature derives the `address(0)`."
+        }
+      ],
+      "ECDSAInvalidSignatureLength(uint256)": [
+        {
+          "details": "The signature has an invalid length."
+        }
+      ],
+      "ECDSAInvalidSignatureS(bytes32)": [
+        {
+          "details": "The signature has an S value that is in the upper half order."
+        }
+      ],
+      "OffchainLookup(address,string[],bytes,bytes4,bytes)": [
+        {
+          "details": "https://eips.ethereum.org/EIPS/eip-3668 Error selector: `0x556f1830`"
+        }
+      ],
+      "SignatureExpired(uint64)": [
+        {
+          "details": "The signed response has already expired."
+        }
+      ],
+      "UntrustedSigner(address)": [
+        {
+          "details": "The signer recovered from the gateway response is not trusted."
+        }
+      ]
+    },
+    "events": {
+      "RoleAdminChanged(bytes32,bytes32,bytes32)": {
+        "details": "Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole` `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite {RoleAdminChanged} not being emitted to signal this."
+      },
+      "RoleGranted(bytes32,address,address)": {
+        "details": "Emitted when `account` is granted `role`. `sender` is the account that originated the contract call. This account bears the admin role (for the granted role). Expected in cases where the role was granted using the internal {AccessControl-_grantRole}."
+      },
+      "RoleRevoked(bytes32,address,address)": {
+        "details": "Emitted when `account` is revoked `role`. `sender` is the account that originated the contract call:   - if using `revokeRole`, it is the admin role bearer   - if using `renounceRole`, it is the role bearer (i.e. `account`)"
+      },
+      "SignerUpdated(address,bool)": {
+        "details": "Emitted when a signer's trust is set (at deploy and on `setSigner`)."
+      },
+      "UrlsUpdated(string[])": {
+        "details": "Emitted when the gateway URL list is set (at deploy and on `setUrls`)."
+      }
+    },
+    "kind": "dev",
+    "methods": {
+      "constructor": {
+        "details": "Deployer becomes DEFAULT_ADMIN."
+      },
+      "getRoleAdmin(bytes32)": {
+        "details": "Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}."
+      },
+      "grantRole(bytes32,address)": {
+        "details": "Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleGranted} event."
+      },
+      "hasRole(bytes32,address)": {
+        "details": "Returns `true` if `account` has been granted `role`."
+      },
+      "renounceRole(bytes32,address)": {
+        "details": "Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been revoked `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `callerConfirmation`. May emit a {RoleRevoked} event."
+      },
+      "resolveWithProof(bytes,bytes)": {
+        "details": "ERC-3668 callback. Verifies the gateway's signed response against a      trusted signer and returns the resolved record bytes.",
+        "params": {
+          "extraData": "The original lookup callData carried through from `resolve`.",
+          "response": "The gateway response: abi.encode(bytes result, uint64 expires, bytes sig)."
+        }
+      },
+      "revokeRole(bytes32,address)": {
+        "details": "Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role. May emit a {RoleRevoked} event."
+      },
+      "setSigner(address,bool)": {
+        "details": "Add or remove a trusted gateway signer."
+      },
+      "setUrls(string[])": {
+        "details": "Replace the off-chain gateway URL list."
+      },
+      "supportsInterface(bytes4)": {
+        "details": "See {IERC165-supportsInterface}."
+      },
+      "urls(uint256)": {
+        "details": "The off-chain gateway URL at the given index, used in the ERC-3668      `OffchainLookup` revert."
+      }
+    },
+    "stateVariables": {
+      "signers": {
+        "details": "Whether an address is a trusted gateway signer."
+      }
+    },
+    "title": "Agent off-chain ENS resolver",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 1906,
+        "contract": "contracts/AgentEnsOffchainResolver.sol:AgentEnsOffchainResolver",
+        "label": "_roles",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_mapping(t_bytes32,t_struct(RoleData)1901_storage)"
+      },
+      {
+        "astId": 11998,
+        "contract": "contracts/AgentEnsOffchainResolver.sol:AgentEnsOffchainResolver",
+        "label": "_urls",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_array(t_string_storage)dyn_storage"
+      },
+      {
+        "astId": 12002,
+        "contract": "contracts/AgentEnsOffchainResolver.sol:AgentEnsOffchainResolver",
+        "label": "signers",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_mapping(t_address,t_bool)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_string_storage)dyn_storage": {
+        "base": "t_string_storage",
+        "encoding": "dynamic_array",
+        "label": "string[]",
+        "numberOfBytes": "32"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_bytes32": {
+        "encoding": "inplace",
+        "label": "bytes32",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_address,t_bool)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => bool)",
+        "numberOfBytes": "32",
+        "value": "t_bool"
+      },
+      "t_mapping(t_bytes32,t_struct(RoleData)1901_storage)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+        "numberOfBytes": "32",
+        "value": "t_struct(RoleData)1901_storage"
+      },
+      "t_string_storage": {
+        "encoding": "bytes",
+        "label": "string",
+        "numberOfBytes": "32"
+      },
+      "t_struct(RoleData)1901_storage": {
+        "encoding": "inplace",
+        "label": "struct AccessControl.RoleData",
+        "members": [
+          {
+            "astId": 1898,
+            "contract": "contracts/AgentEnsOffchainResolver.sol:AgentEnsOffchainResolver",
+            "label": "hasRole",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_mapping(t_address,t_bool)"
+          },
+          {
+            "astId": 1900,
+            "contract": "contracts/AgentEnsOffchainResolver.sol:AgentEnsOffchainResolver",
+            "label": "adminRole",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_bytes32"
+          }
+        ],
+        "numberOfBytes": "64"
+      }
+    }
+  }
+}
