@@ -23,15 +23,20 @@ if (existsSync(join(__dirname, "typechain-types"))) {
 
   // AgentCollectionsManager tasks
   require("./tasks/agent-collections-manager/add-creator-to-manager");
-  require("./tasks/agent-collections-manager/add-signer-to-manager");
   require("./tasks/agent-collections-manager/remove-creator-from-manager");
+  require("./tasks/agent-collections-manager/add-admin-to-manager");
+  require("./tasks/agent-collections-manager/remove-admin-from-manager");
 
   // AgentCollectionCreator tasks
   require("./tasks/agent-collection-creator/create-collection");
+  require("./tasks/agent-collection-creator/add-admin-to-creator");
+  require("./tasks/agent-collection-creator/remove-admin-from-creator");
 
   // AgentCollectionsDescriptor tasks
   require("./tasks/agent-collections-descriptor/build-token-uri");
   require("./tasks/agent-collections-descriptor/update-collections-descriptor");
+  require("./tasks/agent-collections-descriptor/add-admin-to-descriptor");
+  require("./tasks/agent-collections-descriptor/remove-admin-from-descriptor");
 
   // AgentEnsRegistry tasks
   require("./tasks/agent-ens-registry/get-ens-registry-manager");
@@ -70,7 +75,7 @@ const config: HardhatUserConfig = {
       viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 1,
+        runs: 200,
       },
     },
   },
