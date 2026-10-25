@@ -77,7 +77,7 @@ Copy `.env.example` to `.env` and fill in `PRIVATE_KEY`, `ALCHEMY_KEY` and
 `SCAN_API_KEY`. Per-network parameters (ENS parent node, gateway URLs, signer)
 live in the `networks` section of `hardhat.config.ts`; each `deploy/` script
 skips itself on networks where its config is absent, so the network selects
-what gets deployed (core + registry on polygon/amoy, core on citreaTestnet,
+what gets deployed (core + registry on polygon/amoy/anvil, core on citreaTestnet,
 resolver on ethereum/sepolia).
 
 ```shell
@@ -92,6 +92,21 @@ npx hardhat etherscan-verify --network <NETWORK>
 ```
 
 The Creator deployment automatically grants it `CREATOR_ROLE` on the Manager.
+
+### Local Anvil chain
+
+[`scripts/deploy-anvil.sh`](scripts/deploy-anvil.sh) deploys to Anvil (chain id
+31337) once, then only checks the contracts are at `EXPECTED_CONTRACTS`. Anvil's
+account 0 deploys, so addresses never change.
+
+```shell
+EXPECTED_CONTRACTS="AgentEnsRegistry=0x5fc8d32690cc91d4c39d9d3abcbd16989f875707,..." \
+  ANVIL_RPC_URL=http://127.0.0.1:8545 sh scripts/deploy-anvil.sh
+```
+
+It ships as `ghcr.io/6022-labs/agentic-smart-contracts-anvil-deployer`
+([`anvil-deployer.Dockerfile`](anvil-deployer.Dockerfile)), used by
+agentic-agent-node. A deploy that fails midway needs a fresh chain.
 
 ## Tasks
 
@@ -109,7 +124,8 @@ typechain bindings).
 ## CI
 
 Every push and pull request to `main` runs build, unit tests, coverage and
-slither (`.github/workflows/`).
+slither and the Anvil deployer image build (`.github/workflows/`). Pushes to
+`main` publish the image as `main`; `v*` tags as the version and `latest`.
 
 ## License
 
