@@ -1,7 +1,7 @@
 # One-shot deployer of the 6022 contracts to a local Anvil chain (see scripts/deploy-anvil.sh); used by agentic-agent-node.
 
 # Compiles once on the build machine's own platform: under arm64 emulation Hardhat falls back to the much slower solcjs.
-FROM --platform=$BUILDPLATFORM node:22-slim AS compile
+FROM --platform=$BUILDPLATFORM node:24-slim AS compile
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN npm ci
 COPY . .
 RUN npx hardhat compile
 
-FROM node:22-slim
+FROM node:24-slim
 
 WORKDIR /app
 

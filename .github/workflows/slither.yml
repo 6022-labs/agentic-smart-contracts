@@ -19,5 +19,5 @@ jobs:
       - name: Run Slither
         uses: crytic/slither-action@v0.4.2
         with:
-          node-version: "22"
+          node-version: "24"
           fail-on: medium
