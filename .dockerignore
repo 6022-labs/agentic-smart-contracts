@@ -1,5 +1,8 @@
-.env
+.env*
+!.env.example
 .git
+.github
+.claude
 node_modules
 artifacts
 cache
@@ -7,3 +10,5 @@ coverage
 coverage.json
 typechain-types
 deployments/anvil
+test
+README.md
