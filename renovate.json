@@ -1,0 +1,102 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "reviewers": [
+    "FournyP"
+  ],
+  "timezone": "Europe/Paris",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "prHourlyLimit": 0,
+  "minimumReleaseAge": "3 days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
+  "enabledManagers": [
+    "npm",
+    "dockerfile",
+    "github-actions",
+    "custom.regex"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Slither workflow node version.",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/slither\\.yml$/"
+      ],
+      "matchStrings": [
+        "node-version:\\s*[\"']?(?<currentValue>\\d+)[\"']?"
+      ],
+      "datasourceTemplate": "node-version",
+      "versioningTemplate": "node",
+      "depNameTemplate": "node"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Group npm non-major.",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "npm non-major"
+    },
+    {
+      "description": "Group actions non-major.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "github actions non-major"
+    },
+    {
+      "description": "Bump node everywhere at once.",
+      "matchDepNames": [
+        "node"
+      ],
+      "groupName": "node toolchain"
+    },
+    {
+      "description": "Hardhat majors on approval.",
+      "matchPackageNames": [
+        "hardhat",
+        "@nomicfoundation/**",
+        "hardhat-deploy"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Compiled into deployed contracts: on approval.",
+      "matchPackageNames": [
+        "@openzeppelin/**"
+      ],
+      "groupName": "openzeppelin",
+      "dependencyDashboardApproval": true,
+      "prBodyNotes": [
+        "Changes contract source: check bytecode and upgradeable storage layout against deployed contracts before merging."
+      ]
+    },
+    {
+      "description": "Compiled into deployed contracts: on approval.",
+      "matchPackageNames": [
+        "@ensdomains/**"
+      ],
+      "groupName": "ens contracts",
+      "dependencyDashboardApproval": true,
+      "prBodyNotes": [
+        "Changes contract source: check bytecode and upgradeable storage layout against deployed contracts before merging."
+      ]
+    }
+  ]
+}
