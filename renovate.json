@@ -1,0 +1,102 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "reviewers": [
+    "FournyP"
+  ],
+  "timezone": "Europe/Paris",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "prHourlyLimit": 0,
+  "minimumReleaseAge": "3 days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
+  "enabledManagers": [
+    "npm",
+    "dockerfile",
+    "github-actions",
+    "custom.regex"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Node version in the Slither workflow (no setup-node step there).",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/slither\\.yml$/"
+      ],
+      "matchStrings": [
+        "node-version:\\s*[\"']?(?<currentValue>\\d+)[\"']?"
+      ],
+      "datasourceTemplate": "node-version",
+      "versioningTemplate": "node",
+      "depNameTemplate": "node"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "npm minor/patch updates in one PR.",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "npm non-major"
+    },
+    {
+      "description": "Action minor/patch updates in one PR.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "github actions non-major"
+    },
+    {
+      "description": "Node version moves together everywhere it is pinned.",
+      "matchDepNames": [
+        "node"
+      ],
+      "groupName": "node toolchain"
+    },
+    {
+      "description": "Hardhat 3 is a migration across hardhat, the toolbox and hardhat-deploy: PR only on request.",
+      "matchPackageNames": [
+        "hardhat",
+        "@nomicfoundation/**",
+        "hardhat-deploy"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "OpenZeppelin is compiled into deployed contracts: PR only on request from the Dependency Dashboard.",
+      "matchPackageNames": [
+        "@openzeppelin/**"
+      ],
+      "groupName": "openzeppelin",
+      "dependencyDashboardApproval": true,
+      "prBodyNotes": [
+        "Changes contract source: check bytecode and upgradeable storage layout against deployed contracts before merging."
+      ]
+    },
+    {
+      "description": "ENS contracts are compiled into deployed contracts: PR only on request from the Dependency Dashboard.",
+      "matchPackageNames": [
+        "@ensdomains/**"
+      ],
+      "groupName": "ens contracts",
+      "dependencyDashboardApproval": true,
+      "prBodyNotes": [
+        "Changes contract source: check bytecode and upgradeable storage layout against deployed contracts before merging."
+      ]
+    }
+  ]
+}
