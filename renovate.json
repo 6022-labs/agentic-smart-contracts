@@ -22,7 +22,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Node version in the Slither workflow (no setup-node step there).",
+      "description": "Slither workflow node version.",
       "managerFilePatterns": [
         "/^\\.github/workflows/slither\\.yml$/"
       ],
@@ -36,7 +36,7 @@
   ],
   "packageRules": [
     {
-      "description": "npm minor/patch updates in one PR.",
+      "description": "Group npm non-major.",
       "matchManagers": [
         "npm"
       ],
@@ -47,7 +47,7 @@
       "groupName": "npm non-major"
     },
     {
-      "description": "Action minor/patch updates in one PR.",
+      "description": "Group actions non-major.",
       "matchManagers": [
         "github-actions"
       ],
@@ -58,14 +58,14 @@
       "groupName": "github actions non-major"
     },
     {
-      "description": "Node version moves together everywhere it is pinned.",
+      "description": "Bump node everywhere at once.",
       "matchDepNames": [
         "node"
       ],
       "groupName": "node toolchain"
     },
     {
-      "description": "Hardhat 3 is a migration across hardhat, the toolbox and hardhat-deploy: PR only on request.",
+      "description": "Hardhat majors on approval.",
       "matchPackageNames": [
         "hardhat",
         "@nomicfoundation/**",
@@ -77,7 +77,7 @@
       "dependencyDashboardApproval": true
     },
     {
-      "description": "OpenZeppelin is compiled into deployed contracts: PR only on request from the Dependency Dashboard.",
+      "description": "Compiled into deployed contracts: on approval.",
       "matchPackageNames": [
         "@openzeppelin/**"
       ],
@@ -88,7 +88,7 @@
       ]
     },
     {
-      "description": "ENS contracts are compiled into deployed contracts: PR only on request from the Dependency Dashboard.",
+      "description": "Compiled into deployed contracts: on approval.",
       "matchPackageNames": [
         "@ensdomains/**"
       ],
