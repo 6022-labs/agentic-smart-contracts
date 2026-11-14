@@ -58,6 +58,12 @@ npx hardhat compile
 npx hardhat test
 ```
 
+Git hooks (needs [gitleaks](https://github.com/gitleaks/gitleaks) on `PATH`): secret scan on commit, `hardhat test` on push.
+
+```shell
+npm run hooks
+```
+
 Coverage and gas reports:
 
 ```shell
