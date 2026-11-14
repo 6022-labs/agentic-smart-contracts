@@ -1,0 +1,10 @@
+pre-commit:
+  jobs:
+    - name: secrets
+      run: gitleaks git --pre-commit --staged --redact --verbose --no-banner
+
+pre-push:
+  jobs:
+    - name: contracts-test
+      glob: "*.{sol,ts,json}"
+      run: npx hardhat test
